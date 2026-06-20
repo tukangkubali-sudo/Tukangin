@@ -1,271 +1,1155 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>TukangKu Bali — Tukang Terpercaya #1 di Bali</title>
-<meta name="description" content="Platform jasa tukang perbaikan rumah terpercaya di Bali. AI Vision analisis foto, cari tukang terdekat otomatis, escrow, garansi nyata."/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0D5953">
+<title>Tukangin — Jasa Tukang Bali</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
-*{margin:0;padding:0;box-sizing:border-box;}
 :root{
-  --p:#0F7B6C;--pd:#0A5C51;--pl:#14A896;--s:#1565C0;
-  --acc:#FFB300;--ok:#2E7D32;--err:#C62828;--warn:#F57F17;
-  --esc:#6A1B9A;--em:#B71C1C;
-  --bg:#F0F7F6;--txt:#1A2E2C;--muted:#607D7A;--brd:#D0E8E4;
+  --teal:#0D5953; --teal-d:#093E3A; --teal-l:#127A71;
+  --brass:#E89A2D; --brass-d:#C97D17;
+  --ink:#15211F; --muted:#6A7B77; --line:#E4E9E7;
+  --surface:#FBFAF6; --card:#FFFFFF;
+  --ok:#1E9E6A; --warn:#E89A2D; --bad:#D8473B;
+  --hold:#B5760E; --hold-bg:#FDF4E3;
+  --shadow:0 1px 3px rgba(13,89,83,.06),0 8px 24px rgba(13,89,83,.07);
+  --r:16px;
+  --font:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
 }
-body{font-family:'Nunito',sans-serif;color:var(--txt);background:#fff;overflow-x:hidden;}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 24px;border-radius:16px;font-weight:800;font-size:15px;font-family:'Nunito',sans-serif;cursor:pointer;border:none;transition:all .2s;text-decoration:none;justify-content:center;}
-.btn:hover{transform:translateY(-2px);filter:brightness(1.07);}
-.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
-.btn-p{background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;}
-.btn-ok{background:linear-gradient(135deg,var(--ok),#1B5E20);color:#fff;}
-.btn-esc{background:linear-gradient(135deg,var(--esc),#4A148C);color:#fff;}
-.btn-out{background:transparent;border:2px solid var(--p);color:var(--p);}
-.btn-out:hover{background:var(--p);color:#fff;}
-.btn-em{background:linear-gradient(135deg,var(--em),#7F0000);color:#fff;}
-.btn-loc{background:linear-gradient(135deg,#1565C0,#0D47A1);color:#fff;}
-.w100{width:100%;}
-.card{background:#fff;border-radius:20px;padding:20px;box-shadow:0 4px 20px rgba(15,123,108,.08);border:1px solid var(--brd);}
-.section{padding:72px 0;}
-.container{max-width:1120px;margin:0 auto;padding:0 24px;}
-.tc{text-align:center;}
-.slbl{font-size:12px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--p);margin-bottom:10px;}
-.stitle{font-size:34px;font-weight:900;line-height:1.2;margin-bottom:14px;}
-.ssub{font-size:16px;color:var(--muted);line-height:1.7;}
-.lbl{font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.8px;}
-.inp{width:100%;padding:12px 14px;border:1.5px solid var(--brd);border-radius:13px;font-size:14px;font-family:'Nunito',sans-serif;color:var(--txt);outline:none;transition:.2s;background:#fff;box-sizing:border-box;}
-.inp:focus{border-color:var(--p);box-shadow:0 0 0 4px rgba(15,123,108,.1);}
-textarea.inp{resize:none;height:78px;}
-
-/* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(255,255,255,.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--brd);}
-.nav-in{max-width:1120px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;}
-.logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
-.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--p),var(--pd));border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;}
-.logo-txt{font-size:18px;font-weight:900;color:var(--txt);}
-.logo-txt span{color:var(--p);}
-.nav-links{display:flex;gap:24px;align-items:center;}
-.nav-links a{font-size:13px;font-weight:700;color:var(--muted);text-decoration:none;transition:.2s;}
-.nav-links a:hover{color:var(--p);}
-
-/* HERO */
-.hero{min-height:100vh;background:linear-gradient(135deg,var(--pd) 0%,var(--p) 55%,var(--s) 100%);display:flex;align-items:center;padding-top:64px;position:relative;overflow:hidden;}
-.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");}
-.hero-in{max-width:1120px;margin:0 auto;padding:80px 24px;display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:center;}
-.hero h1{font-size:48px;font-weight:900;color:#fff;line-height:1.1;margin-bottom:16px;}
-.hero h1 em{font-style:normal;color:#FFD54F;}
-.hero p{font-size:16px;color:rgba(255,255,255,.82);line-height:1.7;margin-bottom:24px;}
-.hero-btns{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px;}
-.hero-stats{display:flex;gap:24px;}
-.hero-stat strong{font-size:24px;font-weight:900;color:#fff;display:block;}
-.hero-stat p{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px;}
-.hold-pill{display:inline-flex;align-items:center;gap:10px;background:rgba(255,179,0,.15);border:1.5px solid rgba(255,179,0,.4);border-radius:13px;padding:9px 15px;margin-bottom:18px;}
-.ai-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:28px;padding:7px 14px;margin-bottom:18px;}
-
-/* LOCATION BANNER */
-.loc-banner{background:linear-gradient(135deg,#E3F2FD,#E8F5E9);border:2px solid #42A5F5;border-radius:18px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
-.loc-banner.detected{border-color:var(--ok);background:linear-gradient(135deg,#E8F5E9,#F1F8E9);}
-.loc-banner.error{border-color:var(--err);background:linear-gradient(135deg,#FFEBEE,#FCE4EC);}
-.loc-dot{width:10px;height:10px;border-radius:50%;background:#42A5F5;animation:locpulse 1.5s infinite;flex-shrink:0;}
-.loc-dot.ok{background:var(--ok);}
-.loc-dot.err{background:var(--err);animation:none;}
-@keyframes locpulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.4);}}
-
-/* TUKANG TERDEKAT */
-.tukang-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:16px;}
-.tukang-card{background:#fff;border-radius:18px;padding:16px;border:1.5px solid var(--brd);transition:.3s;position:relative;overflow:hidden;}
-.tukang-card:hover{border-color:var(--p);transform:translateY(-3px);box-shadow:0 10px 28px rgba(15,123,108,.12);}
-.tukang-card.nearest{border-color:var(--ok);background:linear-gradient(135deg,#E8F5E9,#fff);}
-.tukang-avatar{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;flex-shrink:0;}
-.tukang-badge{position:absolute;top:10px;right:10px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:8px;}
-.tukang-badge.nearest-badge{background:#E8F5E9;color:var(--ok);}
-.tukang-badge.online{background:#E3F2FD;color:var(--s);}
-.tukang-badge.busy{background:#FFF3E0;color:var(--warn);}
-.dist-pill{display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--brd);border-radius:20px;padding:3px 9px;font-size:11px;font-weight:800;color:var(--p);}
-.dist-pill.near{background:#E8F5E9;border-color:#A5D6A7;color:var(--ok);}
-.skill-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;}
-.skill-chip{font-size:10px;font-weight:700;padding:2px 7px;background:var(--bg);border-radius:7px;color:var(--muted);}
-
-/* MOCK */
-.mock{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;overflow:hidden;}
-.mock-bar{background:rgba(255,255,255,.1);padding:9px 13px;display:flex;align-items:center;gap:8px;}
-.mock-dots{display:flex;gap:5px;}
-.mock-dots span{width:8px;height:8px;border-radius:50%;display:block;}
-.mock-url{flex:1;background:rgba(255,255,255,.1);border-radius:7px;padding:4px 10px;font-size:11px;color:rgba(255,255,255,.5);}
-.mock-body{padding:13px;}
-.mock-card{background:#fff;border-radius:13px;padding:11px;margin-bottom:9px;}
-.mock-card:last-child{margin-bottom:0;}
-
-/* GARANSI */
-.g-section{background:linear-gradient(135deg,#FFF8F0,#FFF3E0);border-top:3px solid var(--acc);}
-.g-table{width:100%;border-collapse:separate;border-spacing:0;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.07);}
-.g-table th{background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;padding:12px 15px;text-align:left;font-size:12px;}
-.g-table td{padding:12px 15px;font-size:12px;border-bottom:1px solid var(--brd);background:#fff;vertical-align:middle;}
-.g-table tr:last-child td{border-bottom:none;}
-.g-table tr:hover td{background:var(--bg);}
-.g-pill{display:inline-flex;align-items:center;gap:5px;background:var(--bg);border:1.5px solid var(--brd);border-radius:20px;padding:3px 10px;font-weight:800;font-size:11px;color:var(--p);}
-.g-pill.sp{background:#FFF3E0;border-color:var(--acc);color:var(--warn);}
-
-/* FLOW */
-.flow{display:flex;align-items:center;overflow-x:auto;padding-bottom:6px;margin:28px 0;}
-.flow-step{flex:1;min-width:110px;text-align:center;padding:14px 8px;background:#fff;border-radius:13px;margin:0 4px;border:1.5px solid var(--brd);}
-.flow-step.hl{background:linear-gradient(135deg,#EDE7F6,#F3E5F5);border-color:var(--esc);}
-.flow-step.ok{background:linear-gradient(135deg,#E8F5E9,#F1F8E9);border-color:var(--ok);}
-.flow-arrow{font-size:16px;color:var(--muted);flex-shrink:0;}
-.flow-step .fi{font-size:24px;margin-bottom:5px;}
-.flow-step h4{font-size:11px;font-weight:800;margin-bottom:2px;}
-.flow-step p{font-size:10px;color:var(--muted);line-height:1.4;}
-
-/* LAYANAN GRID */
-.cat-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
-.cat-tab{padding:7px 14px;border-radius:20px;border:1.5px solid var(--brd);font-size:12px;font-weight:700;cursor:pointer;transition:.2s;background:#fff;color:var(--muted);}
-.cat-tab.active,.cat-tab:hover{border-color:var(--p);background:var(--p);color:#fff;}
-.svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:13px;}
-.svc-card{border-radius:16px;padding:18px 14px;cursor:pointer;transition:.3s;border:1.5px solid var(--brd);background:#fff;text-align:center;position:relative;}
-.svc-card:hover{border-color:var(--p);transform:translateY(-3px);box-shadow:0 10px 28px rgba(15,123,108,.12);}
-.svc-emoji{font-size:30px;margin-bottom:8px;display:block;}
-.svc-card h3{font-size:13px;font-weight:800;margin-bottom:3px;line-height:1.3;}
-.svc-card p{font-size:10px;color:var(--muted);line-height:1.4;}
-.svc-price{font-size:11px;font-weight:800;color:var(--p);margin-top:5px;}
-.svc-g{font-size:10px;font-weight:700;color:var(--warn);background:#FFF3E0;border-radius:7px;padding:2px 7px;display:inline-block;margin-top:3px;}
-.svc-badge{position:absolute;top:8px;right:8px;font-size:9px;font-weight:800;padding:2px 6px;border-radius:8px;}
-.svc-badge.new{background:#E3F2FD;color:var(--s);}
-.svc-badge.hot{background:#FFEBEE;color:var(--em);}
-
-/* ORDER SECTION */
-.order-section{background:linear-gradient(135deg,var(--pd),var(--p));}
-.form-wrap{background:#fff;border-radius:22px;padding:28px;max-width:740px;margin:0 auto;}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
-.form-group{margin-bottom:14px;}
-
-/* AI PHOTO ANALYZER */
-.ai-analyzer{border:2px solid var(--acc);border-radius:18px;background:linear-gradient(135deg,#FFFDE7,#FFF8E1);overflow:hidden;margin-bottom:16px;}
-.ai-analyzer-header{background:linear-gradient(135deg,#FF8F00,#E65100);padding:12px 16px;display:flex;align-items:center;gap:10px;}
-.ai-analyzer-header h3{font-size:14px;font-weight:900;color:#fff;margin:0;}
-.ai-analyzer-header p{font-size:11px;color:rgba(255,255,255,.8);margin:0;}
-.ai-upload-zone{padding:16px;border-bottom:1px solid rgba(255,179,0,.3);}
-.ai-drop{border:2px dashed rgba(255,179,0,.5);border-radius:13px;padding:20px;text-align:center;cursor:pointer;transition:.2s;background:rgba(255,255,255,.6);}
-.ai-drop:hover{border-color:var(--acc);background:rgba(255,255,255,.9);}
-.ai-drop input{display:none;}
-.ai-preview-wrap{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
-.ai-thumb-wrap{position:relative;display:inline-block;}
-.ai-thumb{width:72px;height:72px;border-radius:10px;object-fit:cover;border:2px solid var(--acc);}
-.ai-thumb-del{position:absolute;top:-5px;right:-5px;width:18px;height:18px;background:var(--err);border-radius:50%;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:800;}
-.ai-result{padding:16px;display:none;}
-.ai-result.show{display:block;}
-.ai-result-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
-.ai-scanning{display:none;padding:16px;text-align:center;}
-.ai-scanning.show{display:block;}
-.ai-scan-anim{font-size:36px;animation:scanpulse 1s infinite;}
-@keyframes scanpulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.1);}}
-.price-breakdown{background:#fff;border-radius:13px;padding:14px;border:1px solid var(--brd);}
-.price-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--brd);font-size:13px;}
-.price-row:last-child{border-bottom:none;font-weight:900;font-size:15px;color:var(--p);}
-.price-row .label{color:var(--muted);font-size:12px;}
-.price-row .val{font-weight:700;}
-.confidence-bar{background:var(--brd);border-radius:10px;height:6px;overflow:hidden;margin-top:4px;}
-.confidence-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--ok),var(--pl));transition:width 1s;}
-.fair-badge{display:inline-flex;align-items:center;gap:5px;background:#E8F5E9;border:1px solid #A5D6A7;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:800;color:var(--ok);margin-top:8px;}
-.market-compare{background:var(--bg);border-radius:11px;padding:11px;margin-top:10px;font-size:12px;}
-.market-row{display:flex;justify-content:space-between;margin-bottom:5px;}
-.market-row:last-child{margin-bottom:0;}
-.ai-vision-badge{display:inline-flex;align-items:center;gap:5px;background:#E8EAF6;border:1px solid #7986CB;border-radius:10px;padding:4px 10px;font-size:10px;font-weight:800;color:#3949AB;margin-bottom:8px;}
-
-/* STATS */
-.stats-sec{background:linear-gradient(135deg,var(--pd),var(--s));}
-.stat-item{text-align:center;padding:26px 16px;}
-.stat-item strong{font-size:40px;font-weight:900;color:#fff;display:block;}
-.stat-item span{font-size:12px;color:rgba(255,255,255,.7);}
-
-/* TESTIMONI */
-.testi-card{border-radius:16px;padding:20px;background:#fff;border:1px solid var(--brd);}
-.stars{color:var(--acc);font-size:14px;margin-bottom:7px;}
-.reviewer{display:flex;align-items:center;gap:10px;margin-top:11px;}
-.rev-av{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#fff;}
-
-/* TUKANG JOIN */
-.tukang-sec{background:linear-gradient(135deg,var(--s),#0D47A1);}
-.t-benefit{display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;}
-.tb-icon{width:40px;height:40px;border-radius:13px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
-
-/* COVERAGE */
-.area-pill{background:#fff;border:2px solid var(--brd);border-radius:28px;padding:6px 14px;font-size:12px;font-weight:700;transition:.2s;}
-.area-pill:hover{border-color:var(--p);color:var(--p);}
-.area-pill.hot{border-color:var(--acc);background:#FFF8E1;color:#E65100;}
-.cov-map{background:linear-gradient(135deg,#E8F5E9,#E3F2FD);border-radius:16px;padding:26px;text-align:center;position:relative;overflow:hidden;min-height:220px;display:flex;align-items:center;justify-content:center;}
-.cov-map::before{content:'🌴';font-size:150px;position:absolute;opacity:.07;right:-10px;bottom:-10px;}
-.area-wrap{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;position:relative;z-index:1;}
-
-/* FAQ */
-.faq-item{border:1px solid var(--brd);border-radius:13px;overflow:hidden;margin-bottom:7px;}
-.faq-q{width:100%;padding:14px 17px;background:#fff;border:none;text-align:left;font-size:13px;font-weight:700;font-family:'Nunito',sans-serif;cursor:pointer;display:flex;justify-content:space-between;align-items:center;color:var(--txt);}
-.faq-q:hover{background:var(--bg);}
-.faq-a{padding:0 17px;max-height:0;overflow:hidden;transition:all .3s;font-size:13px;color:var(--muted);line-height:1.7;}
-.faq-a.open{max-height:300px;padding:0 17px 13px;}
-
-/* WA FLOAT */
-.wa-float{position:fixed;bottom:26px;right:26px;z-index:150;}
-.wa-btn{width:56px;height:56px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 8px 24px rgba(37,211,102,.4);text-decoration:none;animation:wapulse 2s infinite;}
-@keyframes wapulse{0%,100%{box-shadow:0 8px 24px rgba(37,211,102,.4);}50%{box-shadow:0 8px 32px rgba(37,211,102,.7);}}
-.wa-tip{position:absolute;right:64px;bottom:11px;background:var(--txt);color:#fff;padding:6px 11px;border-radius:9px;font-size:11px;font-weight:700;white-space:nowrap;opacity:0;transition:.2s;pointer-events:none;}
-.wa-float:hover .wa-tip{opacity:1;}
-
-/* MODALS */
-.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
-.modal-ov.show{display:flex;}
-.modal{background:#fff;border-radius:22px;padding:28px;max-width:460px;width:100%;text-align:center;max-height:90vh;overflow-y:auto;}
-.mitra-modal{max-width:580px;text-align:left;}
-.mitra-modal .modal-header{text-align:center;margin-bottom:22px;}
-.step-dots{display:flex;gap:6px;justify-content:center;margin-bottom:18px;}
-.step-dot{width:7px;height:7px;border-radius:50%;background:var(--brd);transition:.3s;}
-.step-dot.active{background:var(--p);width:22px;border-radius:4px;}
-.step-panel{display:none;}
-.step-panel.active{display:block;}
-.upload-area{border:2px dashed var(--brd);border-radius:13px;padding:18px;text-align:center;cursor:pointer;transition:.2s;background:var(--bg);}
-.upload-area:hover{border-color:var(--p);background:#E8F5F3;}
-.upload-area input{display:none;}
-.skill-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px;}
-.skill-tag{padding:5px 12px;border-radius:20px;border:1.5px solid var(--brd);font-size:12px;font-weight:700;cursor:pointer;transition:.2s;background:#fff;}
-.skill-tag.selected{border-color:var(--p);background:#E8F5F3;color:var(--p);}
-.success-icon{width:68px;height:68px;background:linear-gradient(135deg,var(--ok),#1B5E20);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:30px;}
-
-/* LOADING SPINNER */
-.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
-
-footer{background:var(--txt);padding:50px 0 26px;}
-.footer-in{max-width:1120px;margin:0 auto;padding:0 24px;}
-.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px;margin-bottom:32px;}
-.footer-brand p{font-size:12px;color:rgba(255,255,255,.5);line-height:1.7;margin-top:9px;}
-.footer-col h4{font-size:12px;font-weight:800;color:#fff;margin-bottom:12px;}
-.footer-col a{display:block;font-size:12px;color:rgba(255,255,255,.5);text-decoration:none;margin-bottom:6px;transition:.2s;}
-.footer-col a:hover{color:#fff;}
-.footer-bot{border-top:1px solid rgba(255,255,255,.1);padding-top:20px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:9px;}
-.footer-bot p{font-size:11px;color:rgba(255,255,255,.4);}
-
-@media(max-width:768px){
-  .hero-in{grid-template-columns:1fr;}
-  .hero h1{font-size:30px;}
-  .mock,.nav-links{display:none;}
-  .stitle{font-size:24px;}
-  .form-row{grid-template-columns:1fr;}
-  .flow{flex-direction:column;}
-  .flow-arrow{transform:rotate(90deg);align-self:center;}
-  .mitra-modal{padding:18px;}
-  .footer-grid{grid-template-columns:1fr 1fr;}
-  .svc-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));}
-  .tukang-grid{grid-template-columns:1fr;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--font);color:var(--ink);background:#E9ECEA;
+  font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;
+  display:flex;justify-content:center;
 }
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;font-size:15px}
+img{display:block}
+
+/* phone frame */
+#phone{
+  width:100%;max-width:440px;min-height:100vh;background:var(--surface);
+  position:relative;display:flex;flex-direction:column;
+  box-shadow:0 0 60px rgba(0,0,0,.12);overflow:hidden;
+}
+@media(min-width:480px){#phone{margin:18px 0;min-height:calc(100vh - 36px);border-radius:30px}}
+
+/* ---- top bar ---- */
+.topbar{
+  background:linear-gradient(135deg,var(--teal) 0%,var(--teal-d) 100%);
+  color:#fff;padding:14px 18px 16px;position:sticky;top:0;z-index:30;
+}
+.topbar.flat{background:#fff;color:var(--ink);border-bottom:1px solid var(--line)}
+.tb-row{display:flex;align-items:center;gap:12px}
+.brandwrap{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--brass);display:grid;place-items:center;flex:none;box-shadow:0 2px 8px rgba(232,154,45,.4)}
+.logo svg{width:20px;height:20px}
+.brand b{font-weight:800;font-size:17px;letter-spacing:-.02em;display:block;line-height:1.1}
+.brand small{font-size:11px;opacity:.85;font-weight:500}
+.flat .brand small{color:var(--muted)}
+.rolepill{font-size:11px;font-weight:700;background:rgba(255,255,255,.16);padding:5px 11px;border-radius:20px;display:flex;align-items:center;gap:5px}
+.flat .rolepill{background:var(--surface);border:1px solid var(--line)}
+.demo-pill{font-size:10px;font-weight:700;letter-spacing:.04em;background:rgba(255,255,255,.14);padding:4px 9px;border-radius:7px}
+
+.balance{margin-top:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
+.balance .lbl{font-size:11px;opacity:.85;font-weight:600}
+.balance .amt{font-size:21px;font-weight:800;letter-spacing:-.02em;margin-top:1px}
+.balance button{background:#fff;color:var(--teal-d);font-weight:700;font-size:13px;padding:9px 14px;border-radius:10px}
+
+/* ---- scroll body ---- */
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px 16px 90px;-webkit-overflow-scrolling:touch}
+.scroll::-webkit-scrollbar{width:0}
+
+.sec-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:18px 2px 10px}
+.sec-title:first-child{margin-top:2px}
+
+/* ---- cards ---- */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.card+.card{margin-top:12px}
+
+/* category grid */
+.catgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.cat{background:var(--card);border-radius:14px;padding:12px 4px 9px;text-align:center;box-shadow:var(--shadow);transition:transform .12s}
+.cat:active{transform:scale(.94)}
+.cat .ic{font-size:22px;display:block;margin-bottom:5px}
+.cat .nm{font-size:10.5px;font-weight:600;color:var(--ink);line-height:1.15}
+
+/* hero post button */
+.hero{
+  background:linear-gradient(135deg,#127A71,#0D5953);color:#fff;border-radius:18px;
+  padding:18px;box-shadow:0 8px 24px rgba(13,89,83,.22);position:relative;overflow:hidden;
+}
+.hero h3{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.hero p{font-size:12.5px;opacity:.9;margin-top:3px;max-width:230px}
+.hero button{margin-top:13px;background:var(--brass);color:#3a2400;font-weight:800;font-size:14px;padding:11px 16px;border-radius:11px;display:inline-flex;align-items:center;gap:7px}
+.hero .blob{position:absolute;right:-26px;top:-26px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.07)}
+.hero .blob2{position:absolute;right:18px;bottom:-40px;width:90px;height:90px;border-radius:50%;background:rgba(232,154,45,.18)}
+
+/* order card */
+.ocard{padding:14px}
+.ocard .top{display:flex;gap:12px;align-items:flex-start}
+.othumb{width:48px;height:48px;border-radius:12px;background:var(--surface);display:grid;place-items:center;font-size:24px;flex:none;border:1px solid var(--line)}
+.ocard .ti{flex:1;min-width:0}
+.ocard h4{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.ocard .meta{font-size:12px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ocard .price{font-weight:800;font-size:15px;text-align:right;white-space:nowrap}
+.ocard .price small{display:block;font-size:10px;color:var(--muted);font-weight:600}
+
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:7px;letter-spacing:.01em}
+.b-draft{background:#EEF1F0;color:#5b6b68}
+.b-wait{background:#FEF3E0;color:var(--hold)}
+.b-hold{background:var(--hold-bg);color:var(--hold)}
+.b-work{background:#E5F0FF;color:#2563c9}
+.b-confirm{background:#EAF6F0;color:#15875a}
+.b-done{background:#E7F5EC;color:var(--ok)}
+.b-dispute{background:#FBE9E7;color:var(--bad)}
+
+.divider{height:1px;background:var(--line);margin:13px 0}
+.ocard .foot{display:flex;gap:9px}
+.dot{width:3px;height:3px;border-radius:50%;background:var(--muted);opacity:.5}
+
+/* buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border-radius:13px;font-weight:700;font-size:15px;transition:transform .1s,opacity .15s}
+.btn:active{transform:scale(.985)}
+.btn-primary{background:var(--teal);color:#fff}
+.btn-brass{background:var(--brass);color:#3a2400}
+.btn-ghost{background:var(--surface);color:var(--ink);border:1.5px solid var(--line)}
+.btn-danger{background:#fff;color:var(--bad);border:1.5px solid #f3cdc9}
+.btn:disabled{opacity:.45;pointer-events:none}
+.btn-sm{padding:10px 14px;font-size:13px;border-radius:10px;width:auto}
+.btnrow{display:flex;gap:9px;margin-top:12px}
+.btnrow .btn{flex:1}
+
+/* tukang job card */
+.jobcard{padding:14px}
+.jdist{font-size:11px;font-weight:700;color:var(--teal);background:#E7F1EF;padding:3px 8px;border-radius:7px}
+.tukmini{display:flex;align-items:center;gap:8px}
+.tukav{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--brass),var(--brass-d));display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;flex:none}
+.stars{color:var(--brass);font-size:12px;font-weight:700}
+
+/* ---- bottom nav ---- */
+.botnav{position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;padding:7px 6px 9px;z-index:30}
+.navb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px;color:var(--muted);font-size:10.5px;font-weight:600;position:relative}
+.navb svg{width:23px;height:23px}
+.navb.on{color:var(--teal)}
+.navb .nbadge{position:absolute;top:0;right:50%;transform:translateX(16px);background:var(--bad);color:#fff;font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:9px;display:grid;place-items:center;padding:0 4px}
+
+/* ---- sheet / overlay ---- */
+.overlay{position:fixed;inset:0;background:rgba(8,30,28,.55);z-index:100;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
+.overlay.show{display:flex}
+@media(min-width:480px){.overlay{align-items:center}}
+.sheet{background:var(--surface);width:100%;max-width:440px;max-height:92vh;border-radius:24px 24px 0 0;overflow-y:auto;animation:up .28s cubic-bezier(.2,.9,.3,1)}
+@media(min-width:480px){.sheet{border-radius:24px;max-height:88vh}}
+@keyframes up{from{transform:translateY(40px);opacity:.6}to{transform:translateY(0);opacity:1}}
+.sheet-hd{position:sticky;top:0;background:var(--surface);padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);z-index:5}
+.sheet-hd h3{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.xbtn{width:32px;height:32px;border-radius:9px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;font-size:18px;color:var(--muted)}
+.sheet-bd{padding:16px 18px 24px}
+
+.grip{width:38px;height:4px;border-radius:3px;background:var(--line);margin:8px auto 0}
+
+/* form */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:700;margin-bottom:6px;color:var(--ink)}
+.field .hint{font-size:11.5px;color:var(--muted);font-weight:500}
+.input,textarea.input,select.input{width:100%;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;font-size:15px;color:var(--ink);outline:none;transition:border .15s}
+.input:focus{border-color:var(--teal)}
+textarea.input{resize:vertical;min-height:80px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:9px 13px;border-radius:10px;background:#fff;border:1.5px solid var(--line);font-size:13px;font-weight:600;color:var(--muted)}
+.chip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+
+.uploadbox{border:1.5px dashed var(--line);border-radius:13px;padding:22px;text-align:center;background:#fff;color:var(--muted)}
+.uploadbox .ic{font-size:26px}
+.uploadbox span{display:block;font-size:12.5px;font-weight:600;margin-top:4px}
+.thumb-prev{width:100%;height:150px;object-fit:cover;border-radius:13px;border:1px solid var(--line)}
+
+/* price estimate box */
+.estbox{background:linear-gradient(135deg,#FDF4E3,#FBEAC8);border:1px solid #f0dca8;border-radius:14px;padding:14px}
+.estbox .lab{font-size:11px;font-weight:700;color:var(--brass-d);text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:6px}
+.estbox .rng{font-size:21px;font-weight:800;color:#5a3d05;margin-top:3px;letter-spacing:-.02em}
+.estbox .note{font-size:11px;color:#8a6a2a;margin-top:4px}
+
+/* fee breakdown */
+.fee{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px}
+.feerow{display:flex;justify-content:space-between;font-size:13.5px;padding:5px 0}
+.feerow.tot{border-top:1.5px dashed var(--line);margin-top:6px;padding-top:11px;font-weight:800;font-size:16px}
+.feerow .sub{color:var(--muted);font-size:11.5px}
+
+/* escrow tracker (signature) */
+.escrow-banner{background:linear-gradient(135deg,#093E3A,#0D5953);border-radius:16px;padding:16px;color:#fff;position:relative;overflow:hidden}
+.escrow-banner .lk{position:absolute;right:-10px;bottom:-14px;font-size:90px;opacity:.08}
+.escrow-banner .st{font-size:11px;font-weight:700;opacity:.85;text-transform:uppercase;letter-spacing:.05em}
+.escrow-banner .amt{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+.escrow-banner .sub{font-size:12px;opacity:.9;margin-top:5px;max-width:250px}
+
+.tracker{margin-top:6px}
+.tstep{display:flex;gap:13px;position:relative;padding-bottom:18px}
+.tstep:last-child{padding-bottom:0}
+.tstep .line{position:absolute;left:13px;top:26px;bottom:-2px;width:2px;background:var(--line)}
+.tstep.done .line{background:var(--teal)}
+.tstep .node{width:26px;height:26px;border-radius:50%;background:#fff;border:2px solid var(--line);display:grid;place-items:center;flex:none;z-index:1;font-size:12px;color:var(--muted)}
+.tstep.done .node{background:var(--teal);border-color:var(--teal);color:#fff}
+.tstep.active .node{background:#fff;border-color:var(--teal);color:var(--teal);box-shadow:0 0 0 4px rgba(13,89,83,.12)}
+.tstep .txt h5{font-size:14px;font-weight:700}
+.tstep .txt p{font-size:12px;color:var(--muted);margin-top:1px}
+.tstep.active .txt h5{color:var(--teal)}
+
+/* OTP code card */
+.otpcard{background:#fff;border:2px dashed var(--brass);border-radius:16px;padding:16px;text-align:center}
+.otpcard .lab{font-size:11.5px;font-weight:700;color:var(--brass-d);text-transform:uppercase;letter-spacing:.05em}
+.otpcard .code{font-size:38px;font-weight:800;letter-spacing:.18em;color:var(--ink);margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.otpcard .note{font-size:11.5px;color:var(--muted);line-height:1.4}
+.otp-inputs{display:flex;gap:10px;justify-content:center;margin:8px 0}
+.otp-inputs input{width:52px;height:60px;text-align:center;font-size:26px;font-weight:800;border:1.5px solid var(--line);border-radius:13px;background:#fff;outline:none}
+.otp-inputs input:focus{border-color:var(--teal)}
+
+/* chat */
+.chatbox{background:#fff;border-radius:14px;border:1px solid var(--line);overflow:hidden}
+.chat-warn{background:var(--hold-bg);color:var(--hold);font-size:11px;font-weight:600;padding:8px 12px;display:flex;gap:7px;align-items:center;border-bottom:1px solid #f0dca8}
+.msgs{padding:12px;display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto}
+.msg{max-width:78%;padding:9px 12px;border-radius:14px;font-size:13.5px;line-height:1.35}
+.msg.me{align-self:flex-end;background:var(--teal);color:#fff;border-bottom-right-radius:4px}
+.msg.them{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.chat-in{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+.chat-in input{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:10px 14px;outline:none}
+.chat-in button{width:42px;height:42px;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;flex:none}
+
+/* audit log */
+.logitem{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+.logitem:last-child{border-bottom:none}
+.logitem .ldot{width:9px;height:9px;border-radius:50%;background:var(--teal);margin-top:5px;flex:none}
+.logitem .lc{flex:1}
+.logitem h6{font-size:13px;font-weight:700}
+.logitem p{font-size:11.5px;color:var(--muted);margin-top:1px}
+.logitem .hash{font-size:9.5px;color:#b3beba;font-family:ui-monospace,monospace;margin-top:2px}
+
+/* profile */
+.profhd{display:flex;align-items:center;gap:14px}
+.profav{width:62px;height:62px;border-radius:18px;background:linear-gradient(135deg,var(--brass),var(--brass-d));display:grid;place-items:center;color:#fff;font-weight:800;font-size:26px}
+.kyc{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--ok);background:#E7F5EC;padding:3px 9px;border-radius:7px;margin-top:5px}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.statbox{background:#fff;border:1px solid var(--line);border-radius:13px;padding:12px;text-align:center}
+.statbox .n{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.statbox .l{font-size:10.5px;color:var(--muted);font-weight:600;margin-top:1px}
+
+/* misc */
+.empty{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty .ic{font-size:46px;opacity:.5}
+.empty p{font-size:13.5px;margin-top:10px;max-width:240px;margin-inline:auto}
+.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:13.5px;font-weight:600;z-index:200;opacity:0;transition:.28s;box-shadow:0 8px 30px rgba(0,0,0,.3);max-width:380px;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.infoline{display:flex;gap:8px;font-size:12px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:11px;padding:10px 12px;align-items:flex-start}
+.infoline b{color:var(--ink)}
+.countdown{font-variant-numeric:tabular-nums;font-weight:800;color:var(--hold)}
+.switch-role{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:3px;gap:3px}
+.switch-role button{flex:1;padding:9px;border-radius:9px;font-size:12.5px;font-weight:700;color:var(--muted)}
+.switch-role button.on{background:#fff;color:var(--teal);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.guarantee{display:flex;gap:9px;align-items:center;background:#E7F1EF;border-radius:11px;padding:11px 12px}
+.guarantee .g-ic{font-size:18px}
+.guarantee p{font-size:11.5px;color:var(--teal-d);font-weight:600;line-height:1.35}
 </style>
 </head>
 <body>
+<div id="phone">
+  <div id="top"></div>
+  <div class="scroll" id="scroll"></div>
+  <div id="nav"></div>
+</div>
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeSheet()">
+  <div class="sheet" id="sheet"></div>
+</div>
+<div class="toast" id="toast"></div>
 
-<!-- NAV -->
-<nav id="navbar">
-  <div class="nav-in">
-    <a href="#" class="logo">
-      <div class="logo-icon">🔧</div>
-      <div class="logo-txt">Tukang<span>Ku</span> <small style="font-size:10px;color:var(--muted);font-weight:600;">Bali</small></div>
-    </a>
-    <div cla
+<script>
+/* ============================================================
+   TUKANGIN — prototip siap-publish (escrow + anti-curang)
+   Catatan integrasi nyata:
+   - Escrow uang asli WAJIB lewat PJP berlisensi (Xendit/Midtrans/Doku)
+     sesuai aturan Bank Indonesia. Fungsi bayar() di sini = simulasi
+     status escrow; titik colok Xendit ditandai // <== XENDIT.
+   - Persistensi & auth: ganti store.* dengan Supabase. // <== SUPABASE
+   ============================================================ */
+
+/* ---------- penyimpanan aman (localStorage + fallback memori) ---------- */
+const mem={};
+const store={
+  get(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):(k in mem?mem[k]:null)}catch(e){return k in mem?mem[k]:null}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){mem[k]=v}}
+};
+
+/* ---------- util ---------- */
+const rp=n=>'Rp'+Math.round(n).toLocaleString('id-ID');
+const $=id=>document.getElementById(id);
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,8);
+const otp=()=>String(Math.floor(1000+Math.random()*9000));
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400)}
+
+/* ---------- AI pricing endpoint ----------
+   Di preview Claude.ai, endpoint Anthropic langsung jalan.
+   Untuk PRODUKSI saat di-host sendiri: ganti ke Cloudflare Worker Anda
+   yang menyimpan API key (jangan taruh key di sisi klien). */
+const AI_ENDPOINT="https://api.anthropic.com/v1/messages"; // <== ganti ke Worker Anda di produksi
+
+/* ---------- biaya platform (transparan) ---------- */
+const FEE={layanan:0.05, komisi:0.06}; // pemilik +5% (biaya layanan & proteksi) ; tukang -6% (komisi)
+function hitungBiaya(harga){
+  const layanan=Math.round(harga*FEE.layanan);
+  const komisi=Math.round(harga*FEE.komisi);
+  return {harga, layanan, komisi, escrow:harga+layanan, payout:harga-komisi};
+}
+
+/* ---------- kategori ---------- */
+const KAT=[
+ {id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa/Ledeng',ic:'🔧'},
+ {id:'ac',nm:'Servis AC',ic:'❄️'},{id:'las',nm:'Las/Pagar',ic:'🔥'},
+ {id:'cat',nm:'Cat',ic:'🎨'},{id:'bocor',nm:'Atap Bocor',ic:'🏠'},
+ {id:'kunci',nm:'Kunci',ic:'🔑'},{id:'kayu',nm:'Kayu/Mebel',ic:'🪚'},
+ {id:'pompa',nm:'Pompa Air',ic:'💧'},{id:'umum',nm:'Lainnya',ic:'🛠️'},
+];
+const katOf=id=>KAT.find(k=>k.id===id)||KAT[9];
+
+/* ---------- status meta ---------- */
+const ST={
+ DRAFT:{lbl:'Draft',cls:'b-draft'},
+ MENUNGGU_DANA:{lbl:'Menunggu Pembayaran',cls:'b-wait'},
+ DANA_DITAHAN:{lbl:'Dana Ditahan',cls:'b-hold'},
+ DIKERJAKAN:{lbl:'Dikerjakan',cls:'b-work'},
+ MENUNGGU_KONFIRMASI:{lbl:'Menunggu Konfirmasi',cls:'b-confirm'},
+ SELESAI:{lbl:'Selesai',cls:'b-done'},
+ SENGKETA:{lbl:'Sengketa',cls:'b-dispute'},
+};
+
+/* ---------- seed tukang ---------- */
+const TUKANG=[
+ {id:'t1',nm:'Wayan Sudira',inisial:'WS',kat:['listrik','pompa','umum'],rating:4.9,job:214,batal:'1%',verif:true,jarak:1.2},
+ {id:'t2',nm:'Komang Arta',inisial:'KA',kat:['las','pagar','kunci','umum'],rating:4.8,job:156,batal:'2%',verif:true,jarak:2.4},
+ {id:'t3',nm:'Made Surya',inisial:'MS',kat:['pipa','bocor','umum'],rating:4.7,job:98,batal:'3%',verif:true,jarak:3.1},
+ {id:'t4',nm:'Putu Yasa',inisial:'PY',kat:['ac','listrik','umum'],rating:5.0,job:67,batal:'0%',verif:true,jarak:0.8},
+];
+const ME_TUKANG=TUKANG[1]; // akun tukang demo = Komang Arta
+
+/* ---------- state ---------- */
+let S=store.get('tk_state');
+if(!S){
+  S={
+    role:'pemilik', tab:'beranda', view:null,
+    pemilik:{nm:'Budi Santoso',inisial:'BS'},
+    saldoTukang: 1850000,
+    orders:[
+      seedOrder('las','Perbaikan pagar besi roboh','Pagar depan miring & engsel lepas akibat angin. Perlu las ulang 2 titik.',650000,'Jl. Pantai Berawa, Canggu',ME_TUKANG.id,'DIKERJAKAN'),
+      seedOrder('listrik','MCB sering turun','Listrik di dapur sering jepret kalau nyalain microwave + kulkas bareng.',300000,'Jl. Raya Kerobokan',null,'MENUNGGU_DANA'),
+    ],
+    draft:null,
+  };
+  store.set('tk_state',S);
+}
+function save(){store.set('tk_state',S)}
+
+function seedOrder(kat,judul,desk,harga,lokasi,tukangId,status){
+  const b=hitungBiaya(harga);
+  const o={
+    id:uid(),kat,judul,desk,harga,lokasi,jarakKm:(Math.random()*3+0.5).toFixed(1),
+    pemilik:'Budi Santoso',tukangId,status,kodeSelesai:otp(),
+    biaya:b, checkin:status==='DIKERJAKAN',
+    fotoSebelum:status==='DIKERJAKAN', fotoSesudah:false,
+    dibuat:Date.now()-86400000, autoRelease:null,
+    chat:[{me:false,t:'Siap pak, saya berangkat sekarang nggih.'}],
+    riwayat:[]
+  };
+  logAdd(o,'Pesanan dibuat','Pemilik membuat pesanan '+katOf(kat).nm);
+  if(tukangId){logAdd(o,'Tukang menerima',ME_TUKANG.nm+' menerima pekerjaan');logAdd(o,'Dana masuk escrow',rp(b.escrow)+' ditahan sistem');}
+  if(status==='DIKERJAKAN')logAdd(o,'Check-in GPS','Tukang tiba di lokasi (jarak 18m)');
+  return o;
+}
+
+/* ---------- audit log (kesan tamper-evident: rantai hash sederhana) ---------- */
+function logAdd(o,judul,detail){
+  const prev=o.riwayat.length?o.riwayat[o.riwayat.length-1].hash:'0000';
+  const raw=prev+judul+detail+o.riwayat.length;
+  let h=0;for(let i=0;i<raw.length;i++){h=(h*31+raw.charCodeAt(i))>>>0}
+  o.riwayat.push({judul,detail,t:Date.now(),hash:('00000000'+h.toString(16)).slice(-8)});
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render(){
+  renderTop();
+  renderNav();
+  if(S.role==='pemilik') renderPemilik();
+  else renderTukang();
+  save();
+}
+
+/* ---------- TOP BAR ---------- */
+function renderTop(){
+  const inDetail=S.view&&S.view.name==='detail';
+  if(inDetail){
+    $('top').innerHTML=`<div class="topbar flat"><div class="tb-row">
+      <button class="xbtn" onclick="back()" style="margin-right:2px">‹</button>
+      <div class="brand" style="flex:1"><b style="font-size:16px">Detail Pesanan</b><small>Pantau status & keamanan dana</small></div>
+    </div></div>`;
+    return;
+  }
+  if(S.role==='tukang'){
+    $('top').innerHTML=`<div class="topbar">
+      <div class="tb-row">
+        <div class="brandwrap"><div class="logo">${logoSVG()}</div>
+          <div class="brand"><b>Tukangin Mitra</b><small>Halo, ${ME_TUKANG.nm.split(' ')[0]} 👋</small></div></div>
+        <span class="rolepill">🛠️ Tukang</span>
+      </div>
+      <div class="balance">
+        <div><div class="lbl">Saldo dapat dicairkan</div><div class="amt">${rp(S.saldoTukang)}</div></div>
+        <button onclick="sheetTarik()">Tarik</button>
+      </div></div>`;
+  }else{
+    $('top').innerHTML=`<div class="topbar">
+      <div class="tb-row">
+        <div class="brandwrap"><div class="logo">${logoSVG()}</div>
+          <div class="brand"><b>Tukangin</b><small>Tukang tepercaya, dana aman</small></div></div>
+        <span class="demo-pill">DEMO</span>
+      </div></div>`;
+  }
+}
+function logoSVG(){return `<svg viewBox="0 0 24 24" fill="none"><path d="M14.5 3.5a4 4 0 0 0-5 5l-6 6 2.5 2.5 6-6a4 4 0 0 0 5-5l-2.3 2.3-1.7-.3-.3-1.7L14.5 3.5z" stroke="#3a2400" stroke-width="1.6" stroke-linejoin="round"/></svg>`}
+
+/* ---------- BOTTOM NAV ---------- */
+function renderNav(){
+  if(S.view&&S.view.name==='detail'){$('nav').innerHTML='';return}
+  const tabs = S.role==='pemilik'
+    ? [['beranda','Beranda',icHome()],['pesanan','Pesanan',icList()],['akun','Akun',icUser()]]
+    : [['kerja','Cari Kerja',icSearch()],['aktif','Aktif',icList()],['dompet','Dompet',icWallet()],['profil','Profil',icUser()]];
+  $('nav').innerHTML=`<div class="botnav">${tabs.map(([id,nm,ic])=>{
+    let badge='';
+    if(S.role==='pemilik'&&id==='pesanan'){const n=S.orders.filter(o=>o.status==='MENUNGGU_KONFIRMASI'||o.status==='MENUNGGU_DANA').length;if(n)badge=`<span class="nbadge">${n}</span>`}
+    if(S.role==='tukang'&&id==='aktif'){const n=S.orders.filter(o=>o.tukangId===ME_TUKANG.id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status)).length;if(n)badge=`<span class="nbadge">${n}</span>`}
+    return `<button class="navb ${S.tab===id?'on':''}" onclick="go('${id}')">${ic}${badge}<span>${nm}</span></button>`}).join('')}</div>`;
+}
+
+/* ============================================================
+   PEMILIK
+   ============================================================ */
+function renderPemilik(){
+  if(S.view&&S.view.name==='detail'){renderDetailPemilik();return}
+  const sc=$('scroll');
+  if(S.tab==='beranda'){
+    sc.innerHTML=`
+      <div class="hero">
+        <div class="blob"></div><div class="blob2"></div>
+        <h3>Butuh tukang hari ini?</h3>
+        <p>Posting pekerjaan, bandingkan tukang terverifikasi, bayar aman lewat escrow.</p>
+        <button onclick="sheetBuat()">＋ Buat Pesanan</button>
+      </div>
+      <div class="guarantee" style="margin-top:14px"><span class="g-ic">🔒</span>
+        <p>Uang Anda <b>ditahan sistem</b> dan baru diteruskan ke tukang setelah Anda konfirmasi pekerjaan selesai.</p></div>
+      <div class="sec-title">Pilih Kategori</div>
+      <div class="catgrid">${KAT.map(k=>`<button class="cat" onclick="sheetBuat('${k.id}')"><span class="ic">${k.ic}</span><span class="nm">${k.nm}</span></button>`).join('')}</div>
+      <div class="sec-title">Tukang Top di Sekitar Canggu</div>
+      ${TUKANG.map(t=>tukangRow(t)).join('')}`;
+  }
+  else if(S.tab==='pesanan'){
+    const list=[...S.orders].sort((a,b)=>b.dibuat-a.dibuat);
+    sc.innerHTML=`<div class="sec-title">Pesanan Saya</div>${list.length?list.map(orderCard).join(''):emptyBox('📋','Belum ada pesanan','Buat pesanan pertama Anda dari Beranda.')}`;
+  }
+  else if(S.tab==='akun'){
+    sc.innerHTML=akunPemilik();
+  }
+}
+
+function tukangRow(t){
+  return `<div class="card jobcard" style="margin-bottom:10px"><div class="top" style="display:flex;align-items:center;gap:12px">
+    <div class="tukav" style="width:44px;height:44px;font-size:16px">${t.inisial}</div>
+    <div style="flex:1;min-width:0"><h4 style="font-size:14.5px;font-weight:700">${t.nm} ${t.verif?'<span style="color:#1E9E6A">✔</span>':''}</h4>
+      <div class="meta" style="font-size:12px;color:var(--muted);margin-top:2px"><span class="stars">★ ${t.rating}</span><span class="dot"></span>${t.job} pekerjaan<span class="dot"></span>batal ${t.batal}</div>
+      <div style="margin-top:4px;display:flex;gap:5px;flex-wrap:wrap">${t.kat.slice(0,3).map(k=>`<span style="font-size:10px;background:var(--surface);border:1px solid var(--line);padding:2px 7px;border-radius:6px;color:var(--muted)">${katOf(k).nm}</span>`).join('')}</div>
+    </div>
+    <span class="jdist">${t.jarak} km</span></div></div>`;
+}
+
+function orderCard(o){
+  const k=katOf(o.kat),s=ST[o.status];
+  const tk=o.tukangId?TUKANG.find(t=>t.id===o.tukangId):null;
+  return `<div class="card ocard" onclick="openDetail('${o.id}')">
+    <div class="top">
+      <div class="othumb">${k.ic}</div>
+      <div class="ti"><h4>${esc(o.judul)}</h4>
+        <div class="meta">📍 ${esc(o.lokasi)}</div>
+        <div class="meta" style="margin-top:4px"><span class="badge ${s.cls}">${s.lbl}</span>${tk?`<span class="dot"></span>${tk.nm}`:''}</div>
+      </div>
+      <div class="price">${rp(o.harga)}<small>${k.nm}</small></div>
+    </div></div>`;
+}
+
+function akunPemilik(){
+  const p=S.pemilik;
+  return `<div class="card" style="padding:16px"><div class="profhd">
+    <div class="profav" style="background:linear-gradient(135deg,#127A71,#0D5953)">${p.inisial}</div>
+    <div><h4 style="font-size:18px;font-weight:800">${p.nm}</h4>
+      <div class="kyc">✔ Akun terverifikasi</div></div></div>
+    <div class="statgrid">
+      <div class="statbox"><div class="n">${S.orders.length}</div><div class="l">Total Pesanan</div></div>
+      <div class="statbox"><div class="n">${S.orders.filter(o=>o.status==='SELESAI').length}</div><div class="l">Selesai</div></div>
+      <div class="statbox"><div class="n">4.9</div><div class="l">Rating Anda</div></div>
+    </div></div>
+    <div class="sec-title">Mode Demo</div>
+    <div class="card" style="padding:14px">
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Coba dari sisi tukang untuk melihat alur terima kerja, check-in GPS, dan pencairan dana.</p>
+      <div class="switch-role"><button class="on">👤 Pemilik</button><button onclick="setRole('tukang')">🛠️ Tukang</button></div>
+    </div>
+    ${infoPlatform()}`;
+}
+
+/* ---------- DETAIL (PEMILIK) ---------- */
+function renderDetailPemilik(){
+  const o=S.orders.find(x=>x.id===S.view.id);if(!o){back();return}
+  const k=katOf(o.kat),tk=o.tukangId?TUKANG.find(t=>t.id===o.tukangId):null;
+  const sc=$('scroll');
+  let actions='';
+
+  if(o.status==='MENUNGGU_DANA'){
+    actions=`<button class="btn btn-primary" onclick="bayarEscrow('${o.id}')">🔒 Bayar ke Escrow ${rp(o.biaya.escrow)}</button>
+      <p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">Dana ditahan Tukangin — aman, baru cair setelah Anda setujui.</p>`;
+  }
+  else if(o.status==='MENUNGGU_KONFIRMASI'){
+    actions=`<div class="card" style="padding:14px;margin-bottom:12px"><h5 style="font-size:14px;font-weight:700;margin-bottom:8px">Tukang menyatakan pekerjaan selesai</h5>
+      <div style="display:flex;gap:9px">
+        <div style="flex:1;text-align:center"><div style="height:80px;border-radius:10px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;font-size:24px">📷</div><span style="font-size:10.5px;color:var(--muted)">Foto sebelum</span></div>
+        <div style="flex:1;text-align:center"><div style="height:80px;border-radius:10px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;font-size:24px">✅</div><span style="font-size:10.5px;color:var(--muted)">Foto sesudah</span></div>
+      </div></div>
+      ${o.autoRelease?`<div class="infoline" style="margin-bottom:12px">⏳ <span>Dana otomatis cair ke tukang dalam <span class="countdown" data-cd="${o.autoRelease}"></span> bila tidak ada konfirmasi. Ini melindungi tukang dari penahanan dana.</span></div>`:''}
+      <button class="btn btn-primary" onclick="konfirmasiSelesai('${o.id}')">✔ Konfirmasi & Cairkan Dana</button>
+      <button class="btn btn-danger" style="margin-top:9px" onclick="sheetSengketa('${o.id}')">⚠ Ada Masalah / Ajukan Sengketa</button>`;
+  }
+  else if(o.status==='SELESAI'){
+    actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:34px">🎉</div>
+      <h5 style="font-weight:800;margin-top:4px">Pekerjaan Selesai</h5>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:3px">Dana ${rp(o.biaya.payout)} sudah diteruskan ke ${tk?tk.nm:'tukang'}.</p>
+      ${o.rating?`<div class="stars" style="font-size:18px;margin-top:8px">${'★'.repeat(o.rating)}${'☆'.repeat(5-o.rating)}</div>`:`<button class="btn btn-brass" style="margin-top:12px" onclick="sheetRating('${o.id}')">Beri Rating Tukang</button>`}</div>`;
+  }
+  else if(o.status==='SENGKETA'){
+    actions=`<div class="card" style="padding:16px"><div class="badge b-dispute" style="font-size:12px">⚠ Sengketa sedang ditinjau</div>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:9px">Dana <b>dibekukan</b> dan tim mediasi Tukangin akan menghubungi kedua pihak dalam 1×24 jam. Bukti foto, GPS, dan chat digunakan sebagai dasar.</p></div>`;
+  }
+  else { // DANA_DITAHAN / DIKERJAKAN
+    actions=`<div class="infoline">⏱️ <span>Tukang sedang menuju / mengerjakan. Anda akan diminta konfirmasi saat pekerjaan selesai.</span></div>`;
+  }
+
+  sc.innerHTML=`
+    ${escrowBanner(o)}
+    <div class="card ocard" style="margin-top:12px"><div class="top">
+      <div class="othumb">${k.ic}</div>
+      <div class="ti"><h4>${esc(o.judul)}</h4><div class="meta">📍 ${esc(o.lokasi)} <span class="dot"></span>${o.jarakKm} km</div></div>
+    </div>
+    <div class="divider"></div>
+    <p style="font-size:13.5px;color:#37514d">${esc(o.desk)}</p></div>
+
+    ${tk?tukangContactCard(tk,o):''}
+
+    <div class="sec-title">Status & Keamanan</div>
+    <div class="card" style="padding:16px">${tracker(o)}</div>
+
+    ${o.tukangId&&['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status)?kodeSelesaiCard(o):''}
+
+    <div class="sec-title">Rincian Pembayaran</div>
+    <div class="fee">
+      <div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div>
+      <div class="feerow"><span>Biaya layanan & proteksi <span class="sub">(5%)</span></span><span>${rp(o.biaya.layanan)}</span></div>
+      <div class="feerow tot"><span>Total escrow</span><span>${rp(o.biaya.escrow)}</span></div>
+    </div>
+    ${usulanSection(o,'pemilik')}
+
+    ${o.tukangId&&['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status)?chatBox(o,true):''}
+
+    <div style="margin-top:18px">${actions}</div>
+
+    <div class="sec-title">Riwayat Aktivitas (anti-curang)</div>
+    <div class="card" style="padding:14px 16px">${auditLog(o)}</div>
+  `;
+  startCountdowns();
+}
+
+function escrowBanner(o){
+  let st='Dana ditahan sistem',sub='Aman di escrow Tukangin sampai Anda konfirmasi.';
+  if(o.status==='MENUNGGU_DANA'){st='Menunggu pembayaran';sub='Dana belum masuk. Bayar untuk mengunci tukang.'}
+  if(o.status==='SELESAI'){st='Dana telah dicairkan';sub='Transaksi selesai & aman.'}
+  if(o.status==='SENGKETA'){st='Dana dibekukan';sub='Sedang dimediasi tim Tukangin.'}
+  return `<div class="escrow-banner"><div class="lk">🔒</div>
+    <div class="st">${st}</div><div class="amt">${rp(o.biaya.escrow)}</div>
+    <div class="sub">${sub}</div></div>`;
+}
+
+function tukangContactCard(tk,o){
+  return `<div class="card" style="padding:14px;margin-top:12px"><div style="display:flex;align-items:center;gap:12px">
+    <div class="tukav" style="width:44px;height:44px;font-size:16px">${tk.inisial}</div>
+    <div style="flex:1"><h4 style="font-size:14.5px;font-weight:700">${tk.nm} <span style="color:#1E9E6A">✔</span></h4>
+      <div class="meta" style="font-size:12px;color:var(--muted)"><span class="stars">★ ${tk.rating}</span><span class="dot"></span>${tk.job} pekerjaan</div></div>
+    <button class="btn btn-ghost btn-sm" onclick="toast('Nomor disamarkan demi keamanan — chat lewat aplikasi')">💬 Chat</button>
+  </div></div>`;
+}
+
+function kodeSelesaiCard(o){
+  if(o.status==='MENUNGGU_KONFIRMASI'||o.status==='SELESAI')return '';
+  return `<div class="sec-title">Kode Selesai Anda</div>
+    <div class="otpcard"><div class="lab">🔑 Berikan kode ini saat puas</div>
+    <div class="code">${o.kodeSelesai}</div>
+    <p class="note">Sebutkan kode ini ke tukang <b>hanya jika</b> pekerjaan benar-benar selesai & memuaskan. Tukang butuh kode ini untuk menyelesaikan pesanan — mencegah klaim selesai palsu.</p></div>`;
+}
+
+function tracker(o){
+  const order=['MENUNGGU_DANA','DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI','SELESAI'];
+  const steps=[
+    {k:'MENUNGGU_DANA',h:'Pesanan dibuat',p:'Detail & lokasi tercatat'},
+    {k:'DANA_DITAHAN',h:'Dana masuk escrow',p:'Uang ditahan sistem 🔒'},
+    {k:'DIKERJAKAN',h:'Tukang check-in GPS',p:'Diverifikasi di lokasi'},
+    {k:'MENUNGGU_KONFIRMASI',h:'Pekerjaan + foto bukti',p:'Foto sebelum & sesudah'},
+    {k:'SELESAI',h:'Dana dicairkan',p:'Diteruskan ke tukang'},
+  ];
+  let cur=o.status==='SENGKETA'?3:order.indexOf(o.status);
+  return `<div class="tracker">${steps.map((s,i)=>{
+    const done=i<cur, active=i===cur;
+    return `<div class="tstep ${done?'done':''} ${active?'active':''}">
+      ${i<steps.length-1?'<div class="line"></div>':''}
+      <div class="node">${done?'✓':(active?'●':i+1)}</div>
+      <div class="txt"><h5>${s.h}</h5><p>${s.p}</p></div></div>`}).join('')}</div>`;
+}
+
+function chatBox(o,asPemilik){
+  return `<div class="sec-title">Pesan</div>
+    <div class="chatbox"><div class="chat-warn">🛡️ Jaga transaksi di dalam aplikasi. Bayar di luar = tidak terlindungi.</div>
+    <div class="msgs" id="msgs">${o.chat.map(m=>`<div class="msg ${(m.me===asPemilik)?'me':'them'}">${esc(m.t)}</div>`).join('')}</div>
+    <div class="chat-in"><input id="chatin" placeholder="Tulis pesan…" onkeydown="if(event.key==='Enter')kirimChat('${o.id}',${asPemilik})">
+    <button onclick="kirimChat('${o.id}',${asPemilik})">➤</button></div></div>`;
+}
+
+function auditLog(o){
+  return o.riwayat.slice().reverse().map(r=>`<div class="logitem"><div class="ldot"></div>
+    <div class="lc"><h6>${esc(r.judul)}</h6><p>${esc(r.detail)} · ${timeAgo(r.t)}</p>
+    <div class="hash">🔗 ${r.hash}</div></div></div>`).join('');
+}
+
+/* ============================================================
+   TUKANG
+   ============================================================ */
+function renderTukang(){
+  if(S.view&&S.view.name==='detail'){renderDetailTukang();return}
+  const sc=$('scroll');
+  if(S.tab==='kerja'){
+    const avail=S.orders.filter(o=>!o.tukangId&&o.status==='MENUNGGU_DANA');
+    // tampilkan juga yang sudah dibayar tapi belum ada tukang? di demo: yg MENUNGGU_DANA = peluang
+    sc.innerHTML=`<div class="guarantee"><span class="g-ic">💰</span><p>Ambil kerja, datang & check-in, lalu dana cair otomatis ke saldo Anda. Tidak ada utang dari pelanggan.</p></div>
+      <div class="sec-title">Pekerjaan Tersedia di Sekitar Anda</div>
+      ${avail.length?avail.map(jobCardTukang).join(''):emptyBox('🔍','Belum ada pekerjaan baru','Pekerjaan baru muncul otomatis. Tarik untuk menyegarkan.')}`;
+  }
+  else if(S.tab==='aktif'){
+    const mine=S.orders.filter(o=>o.tukangId===ME_TUKANG.id).sort((a,b)=>b.dibuat-a.dibuat);
+    sc.innerHTML=`<div class="sec-title">Pekerjaan Saya</div>${mine.length?mine.map(orderCardTukang).join(''):emptyBox('🧰','Belum ada pekerjaan aktif','Ambil pekerjaan dari tab Cari Kerja.')}`;
+  }
+  else if(S.tab==='dompet'){
+    sc.innerHTML=dompet();
+  }
+  else if(S.tab==='profil'){
+    sc.innerHTML=profilTukang();
+  }
+}
+
+function jobCardTukang(o){
+  const k=katOf(o.kat),b=hitungBiaya(o.harga);
+  return `<div class="card jobcard" style="margin-bottom:11px">
+    <div class="top" style="display:flex;gap:12px;align-items:flex-start">
+      <div class="othumb">${k.ic}</div>
+      <div style="flex:1;min-width:0"><h4 style="font-size:15px;font-weight:700">${esc(o.judul)}</h4>
+        <div class="meta" style="font-size:12px;color:var(--muted);margin-top:2px">📍 ${esc(o.lokasi)}</div></div>
+      <span class="jdist">${o.jarakKm} km</span>
+    </div>
+    <p style="font-size:12.5px;color:#46605c;margin-top:9px">${esc(o.desk)}</p>
+    <div class="divider"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div><div style="font-size:11px;color:var(--muted)">Anda terima bersih</div>
+        <div style="font-size:18px;font-weight:800;color:var(--ok)">${rp(b.payout)}</div></div>
+      <button class="btn btn-primary btn-sm" onclick="ambilKerja('${o.id}')">Ambil Pekerjaan</button>
+    </div></div>`;
+}
+
+function orderCardTukang(o){
+  const k=katOf(o.kat),s=ST[o.status];
+  return `<div class="card ocard" onclick="openDetail('${o.id}')"><div class="top">
+    <div class="othumb">${k.ic}</div>
+    <div class="ti"><h4>${esc(o.judul)}</h4><div class="meta">📍 ${esc(o.lokasi)}</div>
+      <div class="meta" style="margin-top:4px"><span class="badge ${s.cls}">${s.lbl}</span></div></div>
+    <div class="price" style="color:var(--ok)">${rp(o.biaya.payout)}<small>diterima</small></div>
+  </div></div>`;
+}
+
+function renderDetailTukang(){
+  const o=S.orders.find(x=>x.id===S.view.id);if(!o){back();return}
+  const k=katOf(o.kat);const sc=$('scroll');
+  let actions='';
+
+  if(o.status==='DANA_DITAHAN'){
+    actions=`<div class="guarantee" style="margin-bottom:12px"><span class="g-ic">✅</span><p>Dana <b>${rp(o.biaya.escrow)} sudah ditahan sistem</b>. Pelanggan tidak bisa kabur — aman dikerjakan.</p></div>
+      <button class="btn btn-primary" onclick="checkinGPS('${o.id}')">📍 Check-in di Lokasi (GPS)</button>
+      <p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">Wajib check-in saat tiba agar bisa mulai & sebagai bukti kehadiran.</p>`;
+  }
+  else if(o.status==='DIKERJAKAN'){
+    const fotoOk=o.fotoSebelum&&o.fotoSesudah;
+    actions=`<div class="card" style="padding:14px;margin-bottom:12px"><h5 style="font-size:14px;font-weight:700;margin-bottom:10px">Bukti Pekerjaan (wajib)</h5>
+      <div style="display:flex;gap:10px">
+        <button onclick="uploadFoto('${o.id}','sebelum')" style="flex:1" class="uploadbox">${o.fotoSebelum?'<div class="ic">✅</div><span>Foto sebelum ✓</span>':'<div class="ic">📷</div><span>Foto sebelum</span>'}</button>
+        <button onclick="uploadFoto('${o.id}','sesudah')" style="flex:1" class="uploadbox">${o.fotoSesudah?'<div class="ic">✅</div><span>Foto sesudah ✓</span>':'<div class="ic">📷</div><span>Foto sesudah</span>'}</button>
+      </div></div>
+      <button class="btn ${fotoOk?'btn-primary':'btn-ghost'}" ${fotoOk?'':'disabled'} onclick="sheetInputKode('${o.id}')">🔑 Selesaikan — Masukkan Kode dari Pelanggan</button>
+      <p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">${fotoOk?'Minta kode 4 digit ke pelanggan untuk menyelesaikan.':'Unggah kedua foto dulu untuk bisa menyelesaikan.'}</p>`;
+  }
+  else if(o.status==='MENUNGGU_KONFIRMASI'){
+    actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:30px">⏳</div>
+      <h5 style="font-weight:800;margin-top:4px">Menunggu konfirmasi pelanggan</h5>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:4px">Dana ${rp(o.biaya.payout)} cair ke saldo Anda setelah pelanggan konfirmasi${o.autoRelease?', atau otomatis dalam <span class="countdown" data-cd="'+o.autoRelease+'"></span>':''}.</p></div>`;
+  }
+  else if(o.status==='SELESAI'){
+    actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:34px">💰</div>
+      <h5 style="font-weight:800;margin-top:4px">Dana Cair</h5>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:3px">${rp(o.biaya.payout)} masuk ke saldo Anda.</p></div>`;
+  }
+  else if(o.status==='SENGKETA'){
+    actions=`<div class="card" style="padding:16px"><div class="badge b-dispute" style="font-size:12px">⚠ Dalam mediasi</div>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:9px">Tim Tukangin meninjau bukti foto, GPS & chat. Dana ditahan sampai keputusan.</p></div>`;
+  }
+
+  sc.innerHTML=`
+    ${escrowBanner(o)}
+    <div class="card ocard" style="margin-top:12px"><div class="top">
+      <div class="othumb">${k.ic}</div>
+      <div class="ti"><h4>${esc(o.judul)}</h4><div class="meta">📍 ${esc(o.lokasi)} <span class="dot"></span>${o.jarakKm} km</div></div>
+      <div class="price" style="color:var(--ok)">${rp(o.biaya.payout)}<small>bersih</small></div>
+    </div><div class="divider"></div><p style="font-size:13.5px;color:#37514d">${esc(o.desk)}</p></div>
+
+    <div class="sec-title">Status</div>
+    <div class="card" style="padding:16px">${tracker(o)}</div>
+
+    <div class="sec-title">Rincian Bayaran Anda</div>
+    <div class="fee">
+      <div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div>
+      <div class="feerow"><span>Komisi platform <span class="sub">(6%)</span></span><span style="color:var(--bad)">−${rp(o.biaya.komisi)}</span></div>
+      <div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(o.biaya.payout)}</span></div>
+    </div>
+    ${usulanSection(o,'tukang')}
+
+    ${chatBox(o,false)}
+    <div style="margin-top:18px">${actions}</div>
+    <div class="sec-title">Riwayat Aktivitas</div>
+    <div class="card" style="padding:14px 16px">${auditLog(o)}</div>
+  `;
+  startCountdowns();
+}
+
+function dompet(){
+  const tx=[
+    {t:'Pencairan ke BCA •••4821',a:-500000,d:'2 hari lalu',ic:'🏦'},
+    {t:'Servis AC — Putu',a:470000,d:'3 hari lalu',ic:'❄️'},
+    {t:'Las pagar — Budi',a:611000,d:'5 hari lalu',ic:'🔥'},
+    {t:'Perbaikan kunci — Sari',a:188000,d:'1 minggu lalu',ic:'🔑'},
+  ];
+  return `<div class="card" style="padding:18px;background:linear-gradient(135deg,#093E3A,#0D5953);color:#fff">
+    <div style="font-size:12px;opacity:.85;font-weight:600">Saldo aktif</div>
+    <div style="font-size:30px;font-weight:800;letter-spacing:-.02em;margin-top:2px">${rp(S.saldoTukang)}</div>
+    <button class="btn btn-brass" style="margin-top:14px" onclick="sheetTarik()">Tarik Saldo ke Bank</button></div>
+    <div class="infoline" style="margin-top:12px">🔒 <span>Bayaran dilindungi escrow: dana sudah ditahan sistem sebelum Anda mengerjakan, jadi pasti dibayar.</span></div>
+    <div class="sec-title">Riwayat Transaksi</div>
+    <div class="card" style="padding:6px 16px">${tx.map(t=>`<div class="logitem"><div style="font-size:18px">${t.ic}</div>
+      <div class="lc"><h6>${t.t}</h6><p>${t.d}</p></div>
+      <div style="font-weight:800;font-size:14px;color:${t.a<0?'var(--muted)':'var(--ok)'}">${t.a<0?'−':'+'}${rp(Math.abs(t.a))}</div></div>`).join('')}</div>`;
+}
+
+function profilTukang(){
+  const t=ME_TUKANG;
+  return `<div class="card" style="padding:16px"><div class="profhd">
+    <div class="profav">${t.inisial}</div>
+    <div><h4 style="font-size:18px;font-weight:800">${t.nm}</h4>
+      <div class="kyc">✔ KTP & Wajah Terverifikasi</div></div></div>
+    <div class="statgrid">
+      <div class="statbox"><div class="n" style="color:var(--brass-d)">★${t.rating}</div><div class="l">Rating</div></div>
+      <div class="statbox"><div class="n">${t.job}</div><div class="l">Pekerjaan</div></div>
+      <div class="statbox"><div class="n">${t.batal}</div><div class="l">Batal</div></div>
+    </div></div>
+    <div class="sec-title">Keahlian</div>
+    <div class="card" style="padding:14px"><div class="chips">${t.kat.map(k=>`<span class="chip on">${katOf(k).nm}</span>`).join('')}</div></div>
+    <div class="sec-title">Verifikasi Akun (anti-akun palsu)</div>
+    <div class="card" style="padding:6px 14px">
+      ${['KTP terverifikasi','Selfie cocok dengan KTP','Nomor HP aktif','Rekening bank terdaftar'].map(v=>`<div class="logitem"><div style="color:var(--ok);font-size:16px">✔</div><div class="lc"><h6 style="font-weight:600">${v}</h6></div></div>`).join('')}
+    </div>
+    <div class="sec-title">Mode Demo</div>
+    <div class="card" style="padding:14px"><div class="switch-role"><button onclick="setRole('pemilik')">👤 Pemilik</button><button class="on">🛠️ Tukang</button></div></div>`;
+}
+
+/* ============================================================
+   AKSI
+   ============================================================ */
+function setRole(r){S.role=r;S.view=null;S.tab=r==='pemilik'?'beranda':'kerja';render()}
+function go(t){S.tab=t;S.view=null;render();$('scroll').scrollTop=0}
+function openDetail(id){S.view={name:'detail',id};render();$('scroll').scrollTop=0}
+function back(){S.view=null;render()}
+
+/* ---- pemilik: buat pesanan ---- */
+function sheetBuat(kat){
+  const k=kat||'umum';
+  S.draft={kat:k,judul:'',desk:'',harga:'',lokasi:'Jl. Pantai Berawa, Canggu'};
+  openSheet(`<div class="grip"></div><div class="sheet-hd"><h3>Buat Pesanan</h3><button class="xbtn" onclick="closeSheet()">✕</button></div>
+    <div class="sheet-bd">
+      <div class="field"><label>Kategori</label><div class="chips" id="katchips">${KAT.map(c=>`<button class="chip ${c.id===k?'on':''}" onclick="pickKat('${c.id}')">${c.ic} ${c.nm}</button>`).join('')}</div></div>
+      <div class="field"><label>Judul singkat</label><input class="input" id="f_judul" placeholder="Cth: Stop kontak dapur mati" oninput="S.draft.judul=this.value"></div>
+      <div class="field"><label>Deskripsi masalah</label><textarea class="input" id="f_desk" placeholder="Jelaskan kondisi, lokasi di rumah, sejak kapan… makin detail, makin akurat taksiran AI" oninput="S.draft.desk=this.value"></textarea></div>
+      <div class="field"><label>Foto kerusakan <span class="hint">(opsional, bantu tukang & AI menaksir)</span></label>
+        <button class="uploadbox" style="width:100%" onclick="toast('Demo: foto tersimpan. Di versi nyata pakai kamera HP.');this.querySelector('span').textContent='Foto ditambahkan ✓'"><div class="ic">📷</div><span>Ambil / unggah foto</span></button></div>
+      <div class="field"><label>Lokasi</label><input class="input" id="f_lok" value="Jl. Pantai Berawa, Canggu" oninput="S.draft.lokasi=this.value">
+        <div class="hint" style="margin-top:5px">📍 GPS aktif — jarak ke tukang dihitung otomatis.</div></div>
+      <div class="field"><label>Harga ditaksir AI</label>
+        <div class="estbox" id="estbox"><div class="lab">✨ Estimasi Tukangin AI</div><div class="rng">Belum ditaksir</div><div class="note">Tekan tombol di bawah — AI menaksir dari kategori & deskripsi Anda.</div></div>
+        <button class="btn btn-brass" id="aibtn" style="margin-top:10px" onclick="estimasiAI()">✨ Taksir Harga dengan AI</button></div>
+      <div class="field"><label>Harga yang Anda tawarkan <span class="hint">(bisa diubah dari hasil AI)</span></label>
+        <input class="input" id="f_harga" inputmode="numeric" placeholder="Rp" oninput="S.draft.harga=this.value.replace(/\\D/g,'');this.value=S.draft.harga?rp(+S.draft.harga):''"></div>
+      <div class="infoline" style="margin-bottom:14px">🤝 <span>Harga bukan harga mati. Setelah tukang melihat kondisi asli, <b>harga bisa disesuaikan</b> bila kedua pihak setuju.</span></div>
+      <button class="btn btn-primary" onclick="submitPesanan()">Posting Pesanan</button>
+      <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:9px">Belum ditagih. Anda bayar ke escrow setelah memilih tukang.</p>
+    </div>`);
+}
+function pickKat(id){S.draft.kat=id;document.querySelectorAll('#katchips .chip').forEach(c=>c.classList.remove('on'));event.target.classList.add('on');
+  const box=$('estbox');if(box){box.querySelector('.rng').textContent='Belum ditaksir';box.querySelector('.note').textContent='Tekan tombol di bawah — AI menaksir dari kategori & deskripsi Anda.'}}
+
+/* ---- taksir harga oleh AI ---- */
+async function estimasiAI(){
+  const d=S.draft, box=$('estbox'), btn=$('aibtn');
+  if((d.desk||'').trim().length<6){toast('Isi deskripsi dulu agar AI bisa menaksir');return}
+  if(btn){btn.disabled=true;btn.textContent='✨ AI sedang menaksir…'}
+  box.querySelector('.rng').textContent='Menganalisis…';
+  box.querySelector('.note').textContent='AI membaca deskripsi & kategori Anda.';
+  const h=await taksirHarga(d.kat,d.desk);
+  box.querySelector('.rng').textContent=`${rp(h.min)} – ${rp(h.max)}`;
+  box.querySelector('.note').innerHTML=`${esc(h.alasan)} · Keyakinan: <b>${esc(h.keyakinan)}</b>${h.ai?'':' · <i>mode offline</i>'}`;
+  // isi rekomendasi ke kolom harga
+  const f=$('f_harga');
+  if(f){S.draft.harga=String(h.rekomendasi);f.value=rp(h.rekomendasi)}
+  S.draft.hargaAI=h.rekomendasi;
+  if(btn){btn.disabled=false;btn.textContent='✨ Taksir Ulang dengan AI'}
+}
+
+async function taksirHarga(kat,desk){
+  const katNm=katOf(kat).nm;
+  const prompt=`Anda penaksir harga JASA tukang di Bali, Indonesia. Taksir hanya UPAH/JASA tenaga (belum termasuk material besar) untuk pekerjaan kecil-menengah rumah tangga.
+Kategori: ${katNm}
+Deskripsi dari pelanggan: "${desk}"
+Pertimbangkan tarif wajar tukang harian/borongan kecil di Bali (Canggu/Seminyak/Kerobokan).
+Balas HANYA JSON, tanpa teks lain, tanpa markdown:
+{"min":<rupiah_angka>,"max":<rupiah_angka>,"rekomendasi":<rupiah_angka>,"alasan":"<maks 12 kata>","keyakinan":"tinggi|sedang|rendah"}`;
+  try{
+    const res=await fetch(AI_ENDPOINT,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})
+    });
+    const data=await res.json();
+    const txt=(data.content||[]).map(i=>i.text||"").join("").replace(/```json|```/g,"").trim();
+    const j=JSON.parse(txt);
+    if(typeof j.min==='number'&&typeof j.max==='number'){
+      return {ai:true,min:j.min,max:j.max,rekomendasi:j.rekomendasi||Math.round((j.min+j.max)/2),alasan:j.alasan||'Taksiran AI',keyakinan:j.keyakinan||'sedang'};
+    }
+    throw new Error('format');
+  }catch(e){
+    return taksirLokal(kat,desk); // fallback offline (saat di-host tanpa Worker / jaringan mati)
+  }
+}
+
+function taksirLokal(kat,desk){
+  const base={listrik:[150000,400000],pipa:[150000,450000],ac:[200000,500000],las:[300000,900000],cat:[400000,1500000],bocor:[250000,800000],kunci:[100000,300000],kayu:[200000,700000],pompa:[200000,600000],umum:[150000,500000]};
+  let [lo,hi]=base[kat]||base.umum;
+  const t=(desk||'').toLowerCase();
+  let f=1;
+  if(/ganti|pasang baru|total|semua|beberapa|banyak|besar|parah/.test(t))f+=0.4;
+  if(/cek|kecil|satu|sedikit|ringan|mudah/.test(t))f-=0.25;
+  f=Math.max(0.7,Math.min(1.6,f));
+  lo=Math.round(lo*f/10000)*10000; hi=Math.round(hi*f/10000)*10000;
+  return {ai:false,min:lo,max:hi,rekomendasi:Math.round((lo+hi)/2/10000)*10000,alasan:'Estimasi pola kategori',keyakinan:'sedang'};
+}
+function submitPesanan(){
+  const d=S.draft;
+  if(!d.judul||!d.harga){toast('Isi judul & tawaran harga dulu');return}
+  const o=seedOrder(d.kat,d.judul,d.desk||'-',+d.harga,d.lokasi,null,'MENUNGGU_DANA');
+  o.dibuat=Date.now();
+  S.orders.unshift(o);
+  closeSheet();S.tab='pesanan';S.view={name:'detail',id:o.id};render();
+  toast('Pesanan dibuat — lanjut bayar ke escrow');
+}
+
+/* ---- pemilik: bayar escrow ---- */
+function bayarEscrow(id){
+  const o=S.orders.find(x=>x.id===id);
+  openSheet(`<div class="grip"></div><div class="sheet-hd"><h3>Bayar ke Escrow</h3><button class="xbtn" onclick="closeSheet()">✕</button></div>
+    <div class="sheet-bd">
+      <div class="estbox" style="background:linear-gradient(135deg,#E7F1EF,#dfeeeb);border-color:#bfe0da"><div class="lab" style="color:var(--teal-d)">🔒 Dana ditahan, bukan ke tukang</div>
+        <div class="rng" style="color:var(--teal-d)">${rp(o.biaya.escrow)}</div>
+        <div class="note" style="color:#37635d">Tukangin menahan dana sampai Anda konfirmasi selesai. Bila batal/bermasalah, dana dikembalikan.</div></div>
+      <div class="sec-title" style="margin-top:16px">Metode Pembayaran</div>
+      ${['QRIS','Transfer Virtual Account','GoPay / OVO / DANA','Kartu Kredit/Debit'].map((m,i)=>`<button class="card" style="padding:14px;width:100%;display:flex;align-items:center;gap:12px;margin-bottom:9px;text-align:left" onclick="prosesBayar('${id}')">
+        <span style="font-size:20px">${['📱','🏧','💳','💳'][i]}</span><b style="flex:1;font-weight:700;font-size:14px">${m}</b><span style="color:var(--muted)">›</span></button>`).join('')}
+      <div class="infoline" style="margin-top:6px">ℹ️ <span>Pembayaran asli diproses lewat <b>Xendit</b> (PJP berlisensi BI). Saldo escrow dipegang penyedia, bukan rekening pribadi.</span></div>
+    </div>`);
+}
+function prosesBayar(id){ // <== XENDIT: ganti dengan create invoice + webhook konfirmasi
+  const o=S.orders.find(x=>x.id===id);
+  // simulasi: pemilik membayar -> sistem mencari/menetapkan tukang (di demo: tetapkan tukang demo bila belum)
+  if(!o.tukangId){o.tukangId=ME_TUKANG.id;logAdd(o,'Tukang ditugaskan',ME_TUKANG.nm+' menerima pekerjaan');}
+  o.status='DANA_DITAHAN';
+  logAdd(o,'Dana masuk escrow',rp(o.biaya.escrow)+' ditahan sistem (Xendit)');
+  closeSheet();render();toast('✅ Dana aman di escrow. Tukang menuju lokasi.');
+}
+
+/* ---- pemilik: konfirmasi & sengketa & rating ---- */
+function konfirmasiSelesai(id){
+  const o=S.orders.find(x=>x.id===id);
+  o.status='SELESAI';o.autoRelease=null;
+  S.saldoTukang+=o.biaya.payout;
+  logAdd(o,'Pemilik konfirmasi selesai','Dana '+rp(o.biaya.payout)+' dicairkan ke tukang');
+  render();toast('Dana dicairkan ke tukang 🎉');
+}
+function sheetSengketa(id){
+  openSheet(`<div class="grip"></div><div class="sheet-hd"><h3>Ajukan Sengketa</h3><button class="xbtn" onclick="closeSheet()">✕</button></div>
+    <div class="sheet-bd">
+      <div class="infoline" style="margin-bottom:14px">🛡️ <span>Dana <b>tetap dibekukan</b> dan tidak cair ke tukang selama sengketa. Tim mediasi meninjau bukti.</span></div>
+      <div class="field"><label>Apa masalahnya?</label>
+        <div class="chips" style="flex-direction:column;align-items:stretch">
+        ${['Pekerjaan belum selesai','Hasil tidak sesuai','Tukang tidak datang','Ada kerusakan lain'].map(a=>`<button class="chip" style="text-align:left" onclick="kirimSengketa('${id}','${a}')">${a}</button>`).join('')}
+        </div></div>
+    </div>`);
+}
+function kirimSengketa(id,alasan){
+  const o=S.orders.find(x=>x.id===id);
+  o.status='SENGKETA';o.autoRelease=null;
+  logAdd(o,'Sengketa diajukan','Alasan: '+alasan+' — dana dibekukan');
+  closeSheet();render();toast('Sengketa dikirim. Dana dibekukan & ditinjau.');
+}
+function sheetRating(id){
+  openSheet(`<div class="grip"></div><div class="sheet-hd"><h3>Beri Rating</h3><button class="xbtn" onclick="closeSheet()">✕</button></div>
+    <div class="sheet-bd" style="text-align:center">
+      <p style="font-size:13.5px;color:var(--muted);margin-bottom:14px">Seberapa puas dengan pekerjaan tukang?</p>
+      <div style="font-size:38px;letter-spacing:8px" id="ratestars">${[1,2,3,4,5].map(n=>`<span style="cursor:pointer;color:#ddd" onclick="setRate('${id}',${n})" data-n="${n}">★</span>`).join('')}</div>
+      <button class="btn btn-primary" style="margin-top:20px" id="ratebtn" disabled onclick="submitRate('${id}')">Kirim Rating</button>
+    </div>`);
+}
+let _rate=0;
+function setRate(id,n){_rate=n;document.querySelectorAll('#ratestars span').forEach(s=>s.style.color=(+s.dataset.n<=n)?'#E89A2D':'#ddd');$('ratebtn').disabled=false}
+function submitRate(id){const o=S.orders.find(x=>x.id===id);o.rating=_rate;logAdd(o,'Rating diberikan',_rate+' bintang untuk tukang');closeSheet();render();toast('Terima kasih atas rating Anda')}
+
+/* ============================================================
+   PENYESUAIAN HARGA (harus disetujui kedua pihak)
+   ============================================================ */
+const ALASAN_TUKANG=['Ternyata lebih mudah dari perkiraan','Ada pekerjaan tambahan','Butuh material lebih banyak','Lebih rumit dari perkiraan'];
+const ALASAN_PEMILIK=['Lingkup saya tambah','Sebagian saya kerjakan sendiri','Sesuai kondisi di lapangan'];
+
+function sheetSesuaikan(id,oleh){
+  const o=S.orders.find(x=>x.id===id);
+  const alasan = oleh==='tukang'?ALASAN_TUKANG:ALASAN_PEMILIK;
+  S._usul={harga:o.harga,alasan:alasan[0]};
+  openSheet(`<div class="grip"></div><div class="sheet-hd"><h3>Sesuaikan Harga</h3><button class="xbtn" onclick="closeSheet()">✕</button></div>
+    <div class="sheet-bd">
+      <div class="infoline" style="margin-bottom:14px">🤝 <span>Usulan ini <b>tidak berlaku otomatis</b>. Harga hanya berubah jika ${oleh==='tukang'?'pemilik':'tukang'} menyetujui.</span></div>
+      <div class="fee" style="margin-bottom:14px"><div class="feerow"><span>Harga saat ini</span><span>${rp(o.harga)}</span></div></div>
+      <div class="field"><label>Alasan penyesuaian</label>
+        <div class="chips" id="alasanchips" style="flex-direction:column;align-items:stretch">
+          ${alasan.map((a,i)=>`<button class="chip ${i===0?'on':''}" style="text-align:left" onclick="pickAlasan(this,'${esc(a)}')">${a}</button>`).join('')}
+        </div></div>
+      <div class="field"><label>Harga baru yang diusulkan</label>
+        <input class="input" id="u_harga" inputmode="numeric" value="${rp(o.harga)}" oninput="S._usul.harga=+this.value.replace(/\\D/g,'')||0;this.value=S._usul.harga?rp(S._usul.harga):'';previewUsul('${id}')"></div>
+      <div class="estbox" id="u_prev" style="margin-bottom:14px"></div>
+      <button class="btn btn-primary" onclick="ajukanUsulan('${id}','${oleh}')">Kirim Usulan ke ${oleh==='tukang'?'Pemilik':'Tukang'}</button>
+    </div>`);
+  previewUsul(id);
+}
+function pickAlasan(el,a){document.querySelectorAll('#alasanchips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');S._usul.alasan=a}
+function previewUsul(id){
+  const o=S.orders.find(x=>x.id===id), box=$('u_prev'); if(!box)return;
+  const baru=hitungBiaya(S._usul.harga||0);
+  const selisih=(S._usul.harga||0)-o.harga;
+  const turun=selisih<0;
+  box.style.background=turun?'linear-gradient(135deg,#E7F5EC,#d7efe0)':'linear-gradient(135deg,#FDF4E3,#FBEAC8)';
+  box.style.borderColor=turun?'#bfe0ca':'#f0dca8';
+  box.innerHTML=`<div class="lab" style="color:${turun?'#15875a':'var(--brass-d)'}">${selisih===0?'Tidak ada perubahan':(turun?'⬇ Harga turun':'⬆ Harga naik')} ${selisih?rp(Math.abs(selisih)):''}</div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:8px"><span>Tukang terima bersih</span><b>${rp(baru.payout)}</b></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:3px"><span>Total escrow pemilik</span><b>${rp(baru.escrow)}</b></div>
+    <div class="note" style="margin-top:6px">${turun?'Selisih dikembalikan ke pemilik.':(selisih>0?'Pemilik menambah selisih ke escrow saat menyetujui.':'')}</div>`;
+}
+function ajukanUsulan(id,oleh){
+  const o=S.orders.find(x=>x.id===id);
+  const baru=S._usul.harga||0;
+  if(baru<50000){toast('Masukkan harga yang wajar');return}
+  if(baru===o.harga){toast('Harga belum berubah');return}
+  o.usulan={oleh,hargaBaru:baru,alasan:S._usul.alasan,t:Date.now()};
+  logAdd(o,'Usulan penyesuaian harga',`${oleh==='tukang'?'Tukang':'Pemilik'} usul ${rp(o.harga)} → ${rp(baru)} (${S._usul.alasan})`);
+  closeSheet();render();
+  toast(`Usulan dikirim. Menunggu persetujuan ${oleh==='tukang'?'pemilik':'tukang'}.`);
+}
+function setujuUsulan(id){
+  const o=S.orders.find(x=>x.id===id), u=o.usulan, lama=o.harga;
+  const naik=u.hargaBaru>lama, selisih=Math.abs(u.hargaBaru-lama);
+  o.harga=u.hargaBaru; o.biaya=hitungBiaya(o.harga);            // <== XENDIT: jika naik, buat invoice top-up; jika turun, refund partial
+  logAdd(o,'Penyesuaian harga disetujui',`${rp(lama)} → ${rp(u.hargaBaru)} disepakati kedua pihak`);
+  logAdd(o, naik?'Top-up escrow':'Refund selisih', `${rp(selisih)} ${naik?'ditambahkan pemilik ke escrow':'dikembalikan ke pemilik'}`);
+  o.usulan=null; render();
+  toast(naik?'Disetujui — pemilik menambah selisih ke escrow':'Disetujui — selisih dikembalikan ke pemilik');
+}
+function tolakUsulan(id){const o=S.orders.find(x=>x.id===id);logAdd(o,'Usulan penyesuaian ditolak','Harga tetap '+rp(o.harga));o.usulan=null;render();toast('Usulan ditolak. Harga tetap.')}
+function batalUsulan(id){const o=S.orders.find(x=>x.id===id);o.usulan=null;logAdd(o,'Usulan dibatalkan','Usulan penyesuaian ditarik');render();toast('Usulan dibatalkan')}
+
+/* render bagian penyesuaian harga di detail; role = sudut pandang yang melihat */
+function usulanSection(o,role){
+  if(!['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))return '';
+  if(o.usulan)return usulanCard(o,role);
+  return `<button class="btn btn-ghost" style="margin-top:12px" onclick="sheetSesuaikan('${o.id}','${role}')">✎ Usulkan Penyesuaian Harga</button>`;
+}
+function usulanCard(o,role){
+  const u=o.usulan, turun=u.hargaBaru<o.harga, selisih=Math.abs(u.hargaBaru-o.harga);
+  const baru=hitungBiaya(u.hargaBaru);
+  const mine=u.oleh===role;
+  if(mine){
+    return `<div class="card" style="padding:16px;margin-top:12px;border:1.5px solid var(--brass)">
+      <div class="badge b-wait" style="font-size:11px">⏳ Menunggu persetujuan ${role==='tukang'?'pemilik':'tukang'}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:15px;font-weight:700">
+        <span style="color:var(--muted);text-decoration:line-through">${rp(o.harga)}</span> → <span>${rp(u.hargaBaru)}</span>
+        <span class="badge ${turun?'b-done':'b-hold'}" style="margin-left:auto">${turun?'⬇':'⬆'} ${rp(selisih)}</span></div>
+      <p style="font-size:12px;color:var(--muted);margin-top:6px">Alasan Anda: ${esc(u.alasan)}</p>
+      <button class="btn btn-danger" style="margin-top:12px" onclick="batalUsulan('${o.id}')">Batalkan Usulan</button></div>`;
+  }
+  return `<div class="card" style="padding:16px;margin-top:12px;border:1.5px solid var(--brass)">
+    <h5 style="font-size:14px;font-weight:800">${u.oleh==='tukang'?'Tukang':'Pemilik'} mengusulkan harga baru</h5>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:17px;font-weight:800">
+      <span style="color:var(--muted);text-decoration:line-through;font-size:14px">${rp(o.harga)}</span> →
+      <span style="color:${turun?'var(--ok)':'var(--hold)'}">${rp(u.hargaBaru)}</span>
+      <span class="badge ${turun?'b-done':'b-hold'}" style="margin-left:auto">${turun?'⬇ turun':'⬆ naik'} ${rp(selisih)}</span></div>
+    <p style="font-size:12.5px;color:#46605c;margin-top:8px">"${esc(u.alasan)}"</p>
+    <div class="divider"></div>
+    <div class="feerow" style="font-size:13px"><span>${role==='tukang'?'Anda terima bersih':'Total escrow Anda'}</span><b>${role==='tukang'?rp(baru.payout):rp(baru.escrow)}</b></div>
+    ${turun?'<p style="font-size:11.5px;color:var(--ok);margin-top:4px">✓ Selisih dikembalikan ke pemilik.</p>':`<p style="font-size:11.5px;color:var(--hold);margin-top:4px">Pemilik menambah ${rp(selisih)} ke escrow.</p>`}
+    <div class="btnrow"><button class="btn btn-danger" onclick="tolakUsulan('${o.id}')">Tolak</button>
+      <button class="btn btn-primary" onclick="setujuUsulan('${o.id}')">Setuju</button></div></div>`;
+}
+
+/* ---- tukang: ambil, checkin, foto, kode ---- */
+function ambilKerja(id){
+  const o=S.orders.find(x=>x.id===id);
+  o.tukangId=ME_TUKANG.id;
+  // Di alur nyata: tukang ambil -> pelanggan diminta bayar. Untuk demo, tandai menunggu dana dr pemilik.
+  logAdd(o,'Tukang ambil pekerjaan',ME_TUKANG.nm+' siap mengerjakan');
+  S.tab='aktif';S.view={name:'detail',id};render();
+  toast('Pekerjaan diambil. Menunggu pelanggan bayar ke escrow.');
+}
+function checkinGPS(id){
+  const o=S.orders.find(x=>x.id===id);
+  o.status='DIKERJAKAN';o.checkin=true;
+  logAdd(o,'Check-in GPS','Tukang terverifikasi di lokasi (jarak 12m)');
+  render();toast('📍 Check-in berhasil — selamat bekerja');
+}
+function uploadFoto(id,jenis){
+  const o=S.orders.find(x=>x.id===id);
+  if(jenis==='sebelum')o.fotoSebelum=true;else o.fotoSesudah=true;
+  logAdd(o,'Foto bukti diunggah','Foto '+jenis+' ditambahkan');
+  toast('Foto '+jenis+' tersimpan');render();
+}
+function sheetInputKode(id){
+  openSheet(`<div class="grip"></div><div class="sheet-hd"><h3>Kode Selesai</h3><button class="xbtn" onclick="closeSheet()">✕</button></div>
+    <div class="sheet-bd" style="text-align:center">
+      <div style="font-size:34px">🔑</div>
+      <p style="font-size:13.5px;color:var(--muted);margin:8px 0 16px">Minta <b>kode 4 digit</b> ke pelanggan. Mereka memberi kode hanya jika puas — ini bukti pekerjaan benar selesai.</p>
+      <div class="otp-inputs" id="otpwrap">
+        ${[0,1,2,3].map(i=>`<input inputmode="numeric" maxlength="1" data-i="${i}" oninput="otpNext(this,${i},'${id}')">`).join('')}
+      </div>
+      <p id="otperr" style="color:var(--bad);font-size:12.5px;font-weight:600;height:16px"></p>
+      <button class="btn btn-primary" id="otpbtn" disabled onclick="cekKode('${id}')" style="margin-top:8px">Selesaikan Pekerjaan</button>
+    </div>`);
+  setTimeout(()=>document.querySelector('#otpwrap input')?.focus(),250);
+}
+function otpNext(el,i,id){
+  el.value=el.value.replace(/\D/g,'');
+  if(el.value&&i<3)document.querySelector(`#otpwrap input[data-i="${i+1}"]`).focus();
+  const all=[...document.querySelectorAll('#otpwrap input')].map(x=>x.value).join('');
+  $('otpbtn').disabled=all.length!==4;
+}
+function cekKode(id){
+  const o=S.orders.find(x=>x.id===id);
+  const val=[...document.querySelectorAll('#otpwrap input')].map(x=>x.value).join('');
+  if(val!==o.kodeSelesai){$('otperr').textContent='Kode salah. Pastikan dari pelanggan.';logAdd(o,'Kode salah dimasukkan','Percobaan kode tidak cocok');return}
+  o.status='MENUNGGU_KONFIRMASI';
+  o.autoRelease=Date.now()+24*3600*1000;
+  logAdd(o,'Kode selesai benar','Pekerjaan diselesaikan, menunggu konfirmasi pemilik');
+  closeSheet();render();toast('✅ Berhasil! Menunggu konfirmasi pelanggan.');
+}
+
+/* ---- tarik saldo ---- */
+function sheetTarik(){
+  openSheet(`<div class="grip"></div><div class="sheet-hd"><h3>Tarik Saldo</h3><button class="xbtn" onclick="closeSheet()">✕</button></div>
+    <div class="sheet-bd">
+      <div class="estbox" style="background:linear-gradient(135deg,#E7F1EF,#dfeeeb);border-color:#bfe0da">
+        <div class="lab" style="color:var(--teal-d)">Saldo tersedia</div>
+        <div class="rng" style="color:var(--teal-d)">${rp(S.saldoTukang)}</div></div>
+      <div class="field" style="margin-top:16px"><label>Rekening tujuan</label>
+        <select class="input"><option>BCA •••• 4821 — Komang Arta</option><option>Mandiri •••• 9930</option></select></div>
+      <div class="field"><label>Jumlah tarik</label><input class="input" inputmode="numeric" value="${rp(S.saldoTukang)}"></div>
+      <div class="infoline" style="margin-bottom:14px">⏱️ <span>Dana masuk rekening maks. 1×24 jam. Pencairan diproses lewat Xendit Disbursement.</span></div>
+      <button class="btn btn-primary" onclick="closeSheet();toast('Penarikan diproses ke bank Anda')">Tarik Sekarang</button>
+    </div>`);
+}
+
+/* ---- chat ---- */
+function kirimChat(id,asPemilik){
+  const inp=$('chatin');if(!inp||!inp.value.trim())return;
+  const o=S.orders.find(x=>x.id===id);
+  o.chat.push({me:asPemilik,t:inp.value.trim()});
+  render();
+  setTimeout(()=>{const m=$('msgs');if(m)m.scrollTop=m.scrollHeight},30);
+}
+
+/* ---- sheet helpers ---- */
+function openSheet(html){$('sheet').innerHTML=html;$('overlay').classList.add('show');document.body.style.overflow='hidden'}
+function closeSheet(){$('overlay').classList.remove('show');document.body.style.overflow=''}
+
+/* ---- info platform ---- */
+function infoPlatform(){
+  return `<div class="sec-title">Tentang Keamanan</div>
+  <div class="card" style="padding:6px 16px">
+  ${[['🔒','Escrow dana','Uang ditahan PJP berlisensi (Xendit), cair setelah Anda setujui'],
+     ['🔑','Kode selesai','Tukang butuh kode dari Anda — cegah klaim selesai palsu'],
+     ['📍','Verifikasi GPS','Tukang wajib check-in di lokasi'],
+     ['📷','Foto bukti','Foto sebelum & sesudah tiap pekerjaan'],
+     ['🆔','KYC tukang','KTP & wajah diverifikasi sebelum aktif'],
+     ['⚖️','Mediasi sengketa','Dana dibekukan & ditinjau tim bila ada masalah']].map(([i,t,d])=>`<div class="logitem"><div style="font-size:18px">${i}</div><div class="lc"><h6>${t}</h6><p>${d}</p></div></div>`).join('')}
+  </div>`;
+}
+
+/* ---- countdown ---- */
+function startCountdowns(){
+  document.querySelectorAll('.countdown[data-cd]').forEach(el=>{
+    const end=+el.dataset.cd;
+    const tick=()=>{const d=end-Date.now();if(d<=0){el.textContent='0:00:00';return}
+      const h=Math.floor(d/3600000),m=Math.floor(d%3600000/60000),s=Math.floor(d%60000/1000);
+      el.textContent=`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`};
+    tick();clearInterval(el._iv);el._iv=setInterval(tick,1000);
+  });
+}
+function timeAgo(t){const d=(Date.now()-t)/1000;if(d<60)return'baru saja';if(d<3600)return Math.floor(d/60)+' mnt lalu';if(d<86400)return Math.floor(d/3600)+' jam lalu';return Math.floor(d/86400)+' hari lalu'}
+
+/* ---- icons ---- */
+function icHome(){return svg('<path d="M3 11l9-7 9 7M5 10v10h14V10"/>')}
+function icList(){return svg('<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>')}
+function icUser(){return svg('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>')}
+function icSearch(){return svg('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>')}
+function icWallet(){return svg('<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M16 12h3M3 9h18"/>')}
+function svg(p){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`}
+function emptyBox(ic,t,p){return `<div class="empty"><div class="ic">${ic}</div><h4 style="font-size:15px;margin-top:8px">${t}</h4><p>${p}</p></div>`}
+
+render();
+</script>
+</body>
+</html>
