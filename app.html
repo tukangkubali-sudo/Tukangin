@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0D5953">
+<title>Tukangin — Jasa Tukang Bali</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --teal:#0D5953;--teal-d:#093E3A;--brass:#E89A2D;--brass-d:#C97D17;
+  --ink:#15211F;--muted:#6A7B77;--line:#E4E9E7;--surface:#FBFAF6;--card:#fff;
+  --ok:#1E9E6A;--bad:#D8473B;--hold:#B5760E;--hold-bg:#FDF4E3;
+  --shadow:0 1px 3px rgba(13,89,83,.06),0 8px 24px rgba(13,89,83,.07);
+  --font:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);color:var(--ink);background:#E9ECEA;display:flex;justify-content:center;font-size:15px;line-height:1.45}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;font-size:15px}
+#phone{width:100%;max-width:440px;min-height:100vh;background:var(--surface);position:relative;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 60px rgba(0,0,0,.12)}
+@media(min-width:480px){#phone{margin:18px 0;min-height:calc(100vh - 36px);border-radius:30px}}
+.scroll{flex:1;overflow-y:auto;padding:16px 16px 92px}
+.scroll::-webkit-scrollbar{width:0}
+.topbar{background:linear-gradient(135deg,var(--teal),var(--teal-d));color:#fff;padding:14px 18px 16px;position:sticky;top:0;z-index:20}
+.tb-row{display:flex;align-items:center;gap:12px}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--brass);display:grid;place-items:center;flex:none;font-size:18px}
+.brand b{font-weight:800;font-size:17px;letter-spacing:-.02em;display:block;line-height:1.1}
+.brand small{font-size:11px;opacity:.85}
+.rolepill{font-size:11px;font-weight:700;background:rgba(255,255,255,.16);padding:5px 11px;border-radius:20px;margin-left:auto}
+.balance{margin-top:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
+.balance .lbl{font-size:11px;opacity:.85;font-weight:600}
+.balance .amt{font-size:20px;font-weight:800;margin-top:1px}
+.sec-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:18px 2px 10px}
+.sec-title:first-child{margin-top:2px}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.card+.card{margin-top:12px}
+.hero{background:linear-gradient(135deg,#127A71,#0D5953);color:#fff;border-radius:18px;padding:18px;box-shadow:0 8px 24px rgba(13,89,83,.22)}
+.hero h3{font-size:17px;font-weight:800}
+.hero p{font-size:12.5px;opacity:.9;margin-top:3px}
+.hero button{margin-top:13px;background:var(--brass);color:#3a2400;font-weight:800;font-size:14px;padding:11px 16px;border-radius:11px}
+.catgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.cat{background:var(--card);border-radius:14px;padding:12px 4px 9px;text-align:center;box-shadow:var(--shadow)}
+.cat .ic{font-size:22px;display:block;margin-bottom:5px}
+.cat .nm{font-size:10.5px;font-weight:600;line-height:1.15}
+.ocard{padding:14px}
+.ocard .top{display:flex;gap:12px;align-items:flex-start}
+.othumb{width:48px;height:48px;border-radius:12px;background:var(--surface);display:grid;place-items:center;font-size:24px;flex:none;border:1px solid var(--line)}
+.ocard h4{font-size:15px;font-weight:700}
+.ocard .meta{font-size:12px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ocard .price{font-weight:800;font-size:15px;text-align:right;white-space:nowrap;margin-left:auto}
+.ocard .price small{display:block;font-size:10px;color:var(--muted);font-weight:600}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:7px}
+.b-wait{background:#FEF3E0;color:var(--hold)}.b-hold{background:var(--hold-bg);color:var(--hold)}
+.b-work{background:#E5F0FF;color:#2563c9}.b-confirm{background:#EAF6F0;color:#15875a}
+.b-done{background:#E7F5EC;color:var(--ok)}.b-dispute{background:#FBE9E7;color:var(--bad)}
+.divider{height:1px;background:var(--line);margin:13px 0}
+.dot{width:3px;height:3px;border-radius:50%;background:var(--muted);opacity:.5}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border-radius:13px;font-weight:700;font-size:15px}
+.btn:active{transform:scale(.985)}
+.btn-primary{background:var(--teal);color:#fff}.btn-brass{background:var(--brass);color:#3a2400}
+.btn-ghost{background:var(--surface);color:var(--ink);border:1.5px solid var(--line)}
+.btn-danger{background:#fff;color:var(--bad);border:1.5px solid #f3cdc9}
+.btn:disabled{opacity:.45;pointer-events:none}
+.btn-sm{padding:10px 14px;font-size:13px;border-radius:10px;width:auto}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:700;margin-bottom:6px}
+.field .hint{font-size:11.5px;color:var(--muted);font-weight:500}
+.input{width:100%;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;font-size:15px;color:var(--ink);outline:none}
+.input:focus{border-color:var(--teal)}
+textarea.input{resize:vertical;min-height:78px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:9px 13px;border-radius:10px;background:#fff;border:1.5px solid var(--line);font-size:13px;font-weight:600;color:var(--muted)}
+.chip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.estbox{background:linear-gradient(135deg,#FDF4E3,#FBEAC8);border:1px solid #f0dca8;border-radius:14px;padding:14px}
+.estbox .lab{font-size:11px;font-weight:700;color:var(--brass-d);text-transform:uppercase}
+.estbox .rng{font-size:20px;font-weight:800;color:#5a3d05;margin-top:3px}
+.estbox .note{font-size:11px;color:#8a6a2a;margin-top:4px}
+.fee{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px}
+.feerow{display:flex;justify-content:space-between;font-size:13.5px;padding:5px 0}
+.feerow.tot{border-top:1.5px dashed var(--line);margin-top:6px;padding-top:11px;font-weight:800;font-size:16px}
+.feerow .sub{color:var(--muted);font-size:11.5px}
+.escrow-banner{background:linear-gradient(135deg,#093E3A,#0D5953);border-radius:16px;padding:16px;color:#fff;position:relative;overflow:hidden}
+.escrow-banner .lk{position:absolute;right:-10px;bottom:-14px;font-size:90px;opacity:.08}
+.escrow-banner .st{font-size:11px;font-weight:700;opacity:.85;text-transform:uppercase}
+.escrow-banner .amt{font-size:25px;font-weight:800;margin-top:2px}
+.escrow-banner .sub{font-size:12px;opacity:.9;margin-top:5px}
+.otpcard{background:#fff;border:2px dashed var(--brass);border-radius:16px;padding:16px;text-align:center}
+.otpcard .lab{font-size:11.5px;font-weight:700;color:var(--brass-d);text-transform:uppercase}
+.otpcard .code{font-size:36px;font-weight:800;letter-spacing:.18em;margin:6px 0 2px}
+.otpcard .note{font-size:11.5px;color:var(--muted)}
+.chatbox{background:#fff;border-radius:14px;border:1px solid var(--line);overflow:hidden}
+.chat-warn{background:var(--hold-bg);color:var(--hold);font-size:11px;font-weight:600;padding:8px 12px}
+.msgs{padding:12px;display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto}
+.msg{max-width:78%;padding:9px 12px;border-radius:14px;font-size:13.5px}
+.msg.me{align-self:flex-end;background:var(--teal);color:#fff;border-bottom-right-radius:4px}
+.msg.them{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.chat-in{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+.chat-in input{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:10px 14px;outline:none}
+.chat-in button{width:42px;height:42px;border-radius:50%;background:var(--teal);color:#fff;flex:none}
+.logitem{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+.logitem:last-child{border-bottom:none}
+.logitem .ldot{width:9px;height:9px;border-radius:50%;background:var(--teal);margin-top:5px;flex:none}
+.logitem h6{font-size:13px;font-weight:700}
+.logitem p{font-size:11.5px;color:var(--muted);margin-top:1px}
+.botnav{position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;padding:7px 6px 9px;z-index:20}
+.navb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px;color:var(--muted);font-size:10.5px;font-weight:600}
+.navb svg{width:23px;height:23px}.navb.on{color:var(--teal)}
+.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:13.5px;font-weight:600;z-index:200;opacity:0;transition:.28s;max-width:380px;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{text-align:center;padding:42px 20px;color:var(--muted)}
+.empty .ic{font-size:44px;opacity:.5}.empty p{font-size:13.5px;margin-top:8px}
+.infoline{display:flex;gap:8px;font-size:12px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:11px;padding:10px 12px;align-items:flex-start}
+.profav{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--brass),var(--brass-d));display:grid;place-items:center;color:#fff;font-weight:800;font-size:22px}
+.kyc{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--ok);background:#E7F5EC;padding:3px 9px;border-radius:7px;margin-top:5px}
+/* auth */
+.auth{flex:1;display:flex;flex-direction:column;justify-content:center;padding:28px 22px;min-height:100vh}
+.auth .logo-lg{width:60px;height:60px;border-radius:16px;background:var(--brass);display:grid;place-items:center;font-size:30px;margin-bottom:16px}
+.auth h1{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.auth p.sub{font-size:13.5px;color:var(--muted);margin:4px 0 22px}
+.seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px;margin-bottom:18px}
+.seg button{flex:1;padding:10px;border-radius:9px;font-size:13.5px;font-weight:700;color:var(--muted)}
+.seg button.on{background:#fff;color:var(--teal);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.errbox{background:#FBE9E7;color:#a8352a;font-size:12.5px;font-weight:600;padding:11px 13px;border-radius:11px;margin-bottom:14px}
+.loadwrap{flex:1;display:grid;place-items:center;min-height:100vh;color:var(--muted)}
+.spinner{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="phone"><div id="app"><div class="loadwrap"><div><div class="spinner"></div>Memuat…</div></div></div></div>
+<div class="toast" id="toast"></div>
+<script>
+/* ====== KONFIGURASI ====== */
+const SUPA_URL="https://uzngebmqhksfmmqwrelk.supabase.co";
+const SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6bmdlYm1xaGtzZm1tcXdyZWxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5Mjc2NzEsImV4cCI6MjA5NzUwMzY3MX0.yFMZojlMQz9GQ_r-33G_DEYHchg2Kt-phfWNo3UQDiM";
+const AI_ENDPOINT=""; // <== isi URL Cloudflare Worker Anda untuk taksir AI. Kosong = pakai estimator lokal.
+
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+/* ====== util ====== */
+const rp=n=>'Rp'+Math.round(n||0).toLocaleString('id-ID');
+const $=id=>document.getElementById(id);
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const initial=n=>(n||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600)}
+const FEE={layanan:0.05,komisi:0.06};
+function fee(h){h=+h||0;const layanan=Math.round(h*FEE.layanan),komisi=Math.round(h*FEE.komisi);return{harga:h,layanan,komisi,escrow:h+layanan,payout:h-komisi}}
+const KAT=[{id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa',ic:'🔧'},{id:'ac',nm:'AC',ic:'❄️'},{id:'las',nm:'Las/Pagar',ic:'🔥'},{id:'cat',nm:'Cat',ic:'🎨'},{id:'bocor',nm:'Atap Bocor',ic:'🏠'},{id:'kunci',nm:'Kunci',ic:'🔑'},{id:'umum',nm:'Lainnya',ic:'🛠️'}];
+const katOf=id=>KAT.find(k=>k.id===id)||KAT[7];
+const ST={MENUNGGU_DANA:{l:'Menunggu Pembayaran',c:'b-wait'},DANA_DITAHAN:{l:'Dana Ditahan',c:'b-hold'},DIKERJAKAN:{l:'Dikerjakan',c:'b-work'},MENUNGGU_KONFIRMASI:{l:'Menunggu Konfirmasi',c:'b-confirm'},SELESAI:{l:'Selesai',c:'b-done'},SENGKETA:{l:'Sengketa',c:'b-dispute'}};
+const otp=()=>String(Math.floor(1000+Math.random()*9000));
+
+/* ====== state ====== */
+let ME=null;            // profil pengguna login
+let VIEW={tab:'beranda',orderId:null};
+let ORDERS=[];
+
+/* ====== AUTH ====== */
+let authMode='login';
+async function boot(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){renderAuth();return}
+  await loadMe();
+}
+async function loadMe(){
+  const {data:{user}}=await sb.auth.getUser();
+  if(!user){renderAuth();return}
+  let {data:prof}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+  if(!prof){ // profil belum ada (mis. daftar tapi gagal simpan) -> minta lengkapi
+    renderCompleteProfile(user);return;
+  }
+  ME=prof;
+  VIEW={tab: ME.role==='pemilik'?'beranda':'kerja', orderId:null};
+  await refresh();
+}
+function renderAuth(){
+  $('app').innerHTML=`<div class="auth">
+    <div class="logo-lg">🔧</div>
+    <h1>Tukangin</h1><p class="sub">Tukang tepercaya, dana aman lewat escrow.</p>
+    <div class="seg"><button id="seg-login" class="${authMode==='login'?'on':''}" onclick="setAuth('login')">Masuk</button>
+      <button id="seg-daftar" class="${authMode==='daftar'?'on':''}" onclick="setAuth('daftar')">Daftar</button></div>
+    <div id="autherr"></div>
+    <div id="authform"></div>
+  </div>`;
+  renderAuthForm();
+}
+function setAuth(m){authMode=m;renderAuth()}
+function renderAuthForm(){
+  if(authMode==='daftar'){
+    $('authform').innerHTML=`
+      <div class="field"><label>Saya seorang</label>
+        <div class="seg" id="roleseg"><button class="on" data-r="pemilik" onclick="pickRole(this)">👤 Pemilik (cari tukang)</button>
+        <button data-r="tukang" onclick="pickRole(this)">🛠️ Tukang</button></div></div>
+      <div class="field"><label>Nama lengkap</label><input class="input" id="a_nama" placeholder="Nama Anda"></div>
+      <div class="field"><label>No. WhatsApp</label><input class="input" id="a_telp" inputmode="tel" placeholder="08…"></div>
+      <div class="field"><label>Email</label><input class="input" id="a_email" inputmode="email" placeholder="email@contoh.com"></div>
+      <div class="field"><label>Password</label><input class="input" id="a_pass" type="password" placeholder="Min. 6 karakter"></div>
+      <button class="btn btn-primary" id="a_btn" onclick="doDaftar()">Buat Akun</button>`;
+  }else{
+    $('authform').innerHTML=`
+      <div class="field"><label>Email</label><input class="input" id="a_email" inputmode="email" placeholder="email@contoh.com"></div>
+      <div class="field"><label>Password</label><input class="input" id="a_pass" type="password" placeholder="Password"></div>
+      <button class="btn btn-primary" id="a_btn" onclick="doLogin()">Masuk</button>`;
+  }
+}
+let pickedRole='pemilik';
+function pickRole(b){pickedRole=b.dataset.r;document.querySelectorAll('#roleseg button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}
+function authErr(m){$('autherr').innerHTML=m?`<div class="errbox">${esc(m)}</div>`:''}
+function busy(on,label){const b=$('a_btn');if(b){b.disabled=on;b.textContent=on?'Mohon tunggu…':label}}
+
+async function doDaftar(){
+  authErr('');
+  const nama=$('a_nama').value.trim(),telp=$('a_telp').value.trim(),email=$('a_email').value.trim(),pass=$('a_pass').value;
+  if(!nama||!email||pass.length<6){authErr('Lengkapi nama, email, dan password (min. 6 karakter).');return}
+  busy(true,'Buat Akun');
+  const {data,error}=await sb.auth.signUp({email,password:pass});
+  if(error){authErr(error.message);busy(false,'Buat Akun');return}
+  if(!data.session){ // email confirm masih aktif
+    authErr('Akun dibuat, tapi verifikasi email masih aktif. Matikan "Confirm email" di Supabase → Authentication → Providers → Email, lalu coba Masuk.');
+    busy(false,'Buat Akun');return;
+  }
+  const uid=data.user.id;
+  const {error:pe}=await sb.from('profiles').insert({id:uid,nama,telp,role:pickedRole,inisial:initial(nama),kyc:pickedRole==='tukang'});
+  if(pe){authErr('Akun dibuat tapi gagal simpan profil: '+pe.message);busy(false,'Buat Akun');return}
+  await loadMe();
+}
+async function doLogin(){
+  authErr('');
+  const email=$('a_email').value.trim(),pass=$('a_pass').value;
+  if(!email||!pass){authErr('Isi email dan password.');return}
+  busy(true,'Masuk');
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){authErr(error.message);busy(false,'Masuk');return}
+  await loadMe();
+}
+function renderCompleteProfile(user){
+  $('app').innerHTML=`<div class="auth"><div class="logo-lg">🔧</div>
+    <h1>Lengkapi Profil</h1><p class="sub">Sedikit lagi sebelum mulai.</p>
+    <div id="autherr"></div>
+    <div class="field"><label>Saya seorang</label><div class="seg" id="roleseg">
+      <button class="on" data-r="pemilik" onclick="pickRole(this)">👤 Pemilik</button>
+      <button data-r="tukang" onclick="pickRole(this)">🛠️ Tukang</button></div></div>
+    <div class="field"><label>Nama lengkap</label><input class="input" id="a_nama" placeholder="Nama Anda"></div>
+    <div class="field"><label>No. WhatsApp</label><input class="input" id="a_telp" inputmode="tel" placeholder="08…"></div>
+    <button class="btn btn-primary" id="a_btn" onclick="saveProfile('${user.id}')">Simpan</button></div>`;
+}
+async function saveProfile(uid){
+  const nama=$('a_nama').value.trim(),telp=$('a_telp').value.trim();
+  if(!nama){authErr('Isi nama dulu.');return}
+  busy(true,'Simpan');
+  const {error}=await sb.from('profiles').insert({id:uid,nama,telp,role:pickedRole,inisial:initial(nama),kyc:pickedRole==='tukang'});
+  if(error){authErr(error.message);busy(false,'Simpan');return}
+  await loadMe();
+}
+async function logout(){await sb.auth.signOut();ME=null;ORDERS=[];renderAuth()}
+
+/* ====== DATA ====== */
+async function refresh(){
+  let q=sb.from('orders').select('*').order('dibuat',{ascending:false});
+  const {data,error}=await q;
+  if(error){toast('Gagal muat: '+error.message);ORDERS=[]}
+  else ORDERS=data||[];
+  render();
+}
+function myOrders(){return ORDERS.filter(o=>o.pemilik_id===ME.id)}
+function tukangAvailable(){return ORDERS.filter(o=>!o.tukang_id&&o.status==='DANA_DITAHAN')}
+function tukangMine(){return ORDERS.filter(o=>o.tukang_id===ME.id)}
+
+async function addLog(orderId,judul,detail){await sb.from('activity_log').insert({order_id:orderId,judul,detail})}
+async function getLog(orderId){const {data}=await sb.from('activity_log').select('*').eq('order_id',orderId).order('dibuat',{ascending:false});return data||[]}
+async function getMsgs(orderId){const {data}=await sb.from('messages').select('*').eq('order_id',orderId).order('dibuat',{ascending:true});return data||[]}
+
+/* ====== RENDER SHELL ====== */
+function render(){
+  const top=ME.role==='pemilik'?topPemilik():topTukang();
+  let body='';
+  if(VIEW.orderId){body=`<div class="scroll" id="scroll"></div>`}
+  else if(ME.role==='pemilik')body=`<div class="scroll" id="scroll"></div>`;
+  else body=`<div class="scroll" id="scroll"></div>`;
+  const nav=VIEW.orderId?'':navBar();
+  $('app').innerHTML=top+body+nav;
+  if(VIEW.orderId)renderDetail();
+  else if(ME.role==='pemilik')renderPemilik();
+  else renderTukang();
+}
+function topPemilik(){
+  if(VIEW.orderId)return topDetail();
+  return `<div class="topbar"><div class="tb-row">
+    <div class="logo">🔧</div><div class="brand"><b>Tukangin</b><small>Halo, ${esc(ME.nama.split(' ')[0])}</small></div>
+    <span class="rolepill">👤 Pemilik</span></div></div>`;
+}
+function topTukang(){
+  if(VIEW.orderId)return topDetail();
+  return `<div class="topbar"><div class="tb-row">
+    <div class="logo">🔧</div><div class="brand"><b>Tukangin Mitra</b><small>Halo, ${esc(ME.nama.split(' ')[0])}</small></div>
+    <span class="rolepill">🛠️ Tukang</span></div></div>`;
+}
+function topDetail(){return `<div class="topbar" style="background:#fff;color:var(--ink);border-bottom:1px solid var(--line)">
+  <div class="tb-row"><button onclick="back()" style="font-size:24px;width:30px">‹</button>
+  <div class="brand"><b style="font-size:16px">Detail Pesanan</b><small style="color:var(--muted)">Status & keamanan dana</small></div></div></div>`}
+function navBar(){
+  const tabs=ME.role==='pemilik'
+    ?[['beranda','Beranda','🏠'],['pesanan','Pesanan','📋'],['akun','Akun','👤']]
+    :[['kerja','Cari Kerja','🔍'],['aktif','Aktif','🧰'],['profil','Profil','👤']];
+  return `<div class="botnav">${tabs.map(([id,nm,ic])=>`<button class="navb ${VIEW.tab===id?'on':''}" onclick="go('${id}')"><span style="font-size:21px">${ic}</span>${nm}</button>`).join('')}</div>`;
+}
+function go(t){VIEW={tab:t,orderId:null};render();const s=$('scroll');if(s)s.scrollTop=0}
+function back(){VIEW.orderId=null;render()}
+function openOrder(id){VIEW.orderId=id;render();const s=$('scroll');if(s)s.scrollTop=0}
+
+/* ====== PEMILIK ====== */
+function renderPemilik(){
+  const sc=$('scroll');
+  if(VIEW.tab==='beranda'){
+    sc.innerHTML=`<div class="hero"><h3>Butuh tukang hari ini?</h3>
+      <p>Posting pekerjaan, bayar aman lewat escrow.</p>
+      <button onclick="sheetBuat()">＋ Buat Pesanan</button></div>
+      <div class="infoline" style="margin-top:14px">🔒 <span>Uang Anda ditahan sistem, baru diteruskan ke tukang setelah Anda konfirmasi selesai.</span></div>
+      <div class="sec-title">Pilih Kategori</div>
+      <div class="catgrid">${KAT.map(k=>`<button class="cat" onclick="sheetBuat('${k.id}')"><span class="ic">${k.ic}</span><span class="nm">${k.nm}</span></button>`).join('')}</div>
+      <div class="sec-title">Pesanan Terbaru</div>
+      ${myOrders().slice(0,3).map(orderCard).join('')||emptyBox('📋','Belum ada pesanan')}`;
+  }else if(VIEW.tab==='pesanan'){
+    const l=myOrders();
+    sc.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><div class="sec-title" style="margin:2px">Pesanan Saya</div><button class="btn-sm btn-ghost" onclick="refresh()">⟳ Muat ulang</button></div>${l.map(orderCard).join('')||emptyBox('📋','Belum ada pesanan','Buat dari Beranda.')}`;
+  }else{
+    sc.innerHTML=akun();
+  }
+}
+function orderCard(o){
+  const k=katOf(o.kat),s=ST[o.status]||ST.MENUNGGU_DANA;
+  return `<div class="card ocard" onclick="openOrder('${o.id}')"><div class="top">
+    <div class="othumb">${k.ic}</div>
+    <div style="flex:1;min-width:0"><h4>${esc(o.judul)}</h4>
+      <div class="meta">📍 ${esc(o.lokasi||'-')}</div>
+      <div class="meta" style="margin-top:4px"><span class="badge ${s.c}">${s.l}</span>${o.tukang_nama?`<span class="dot"></span>${esc(o.tukang_nama)}`:''}</div></div>
+    <div class="price">${rp(o.harga)}<small>${k.nm}</small></div></div></div>`;
+}
+function akun(){
+  return `<div class="card" style="padding:16px"><div style="display:flex;align-items:center;gap:14px">
+    <div class="profav" style="background:linear-gradient(135deg,#127A71,#0D5953)">${esc(ME.inisial||initial(ME.nama))}</div>
+    <div><h4 style="font-size:18px;font-weight:800">${esc(ME.nama)}</h4><div class="kyc">✔ Akun aktif</div></div></div></div>
+    <div class="sec-title">Akun</div>
+    <div class="card" style="padding:14px">
+      <div class="infoline" style="border:none;padding:0;margin-bottom:12px">📱 <span>WhatsApp: <b>${esc(ME.telp||'-')}</b></span></div>
+      <button class="btn btn-ghost" onclick="logout()">Keluar</button></div>`;
+}
+
+/* ====== TUKANG ====== */
+function renderTukang(){
+  const sc=$('scroll');
+  if(VIEW.tab==='kerja'){
+    const a=tukangAvailable();
+    sc.innerHTML=`<div class="infoline">💰 <span>Hanya pekerjaan ber-escrow (dana sudah ditahan) yang tampil — pasti dibayar.</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><div class="sec-title" style="margin:14px 2px 6px">Pekerjaan Tersedia</div><button class="btn-sm btn-ghost" onclick="refresh()">⟳</button></div>
+      ${a.map(jobCard).join('')||emptyBox('🔍','Belum ada pekerjaan','Tarik ⟳ untuk menyegarkan.')}`;
+  }else if(VIEW.tab==='aktif'){
+    const m=tukangMine();
+    sc.innerHTML=`<div class="sec-title">Pekerjaan Saya</div>${m.map(orderCardT).join('')||emptyBox('🧰','Belum ada pekerjaan aktif','Ambil dari Cari Kerja.')}`;
+  }else{
+    sc.innerHTML=profilT();
+  }
+}
+function jobCard(o){
+  const k=katOf(o.kat),b=o.biaya||fee(o.harga);
+  return `<div class="card" style="padding:14px;margin-bottom:11px">
+    <div style="display:flex;gap:12px"><div class="othumb">${k.ic}</div>
+    <div style="flex:1;min-width:0"><h4 style="font-size:15px;font-weight:700">${esc(o.judul)}</h4>
+    <div class="meta">📍 ${esc(o.lokasi||'-')}</div></div></div>
+    <p style="font-size:12.5px;color:#46605c;margin-top:9px">${esc(o.desk||'')}</p>
+    <div class="divider"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div><div style="font-size:11px;color:var(--muted)">Diterima bersih</div><div style="font-size:18px;font-weight:800;color:var(--ok)">${rp(b.payout)}</div></div>
+      <button class="btn btn-primary btn-sm" onclick="ambil('${o.id}')">Ambil</button></div></div>`;
+}
+function orderCardT(o){
+  const k=katOf(o.kat),s=ST[o.status]||ST.DANA_DITAHAN,b=o.biaya||fee(o.harga);
+  return `<div class="card ocard" onclick="openOrder('${o.id}')"><div class="top">
+    <div class="othumb">${k.ic}</div><div style="flex:1;min-width:0"><h4>${esc(o.judul)}</h4>
+    <div class="meta">📍 ${esc(o.lokasi||'-')}</div>
+    <div class="meta" style="margin-top:4px"><span class="badge ${s.c}">${s.l}</span></div></div>
+    <div class="price" style="color:var(--ok)">${rp(b.payout)}<small>bersih</small></div></div></div>`;
+}
+function profilT(){
+  return `<div class="card" style="padding:16px"><div style="display:flex;align-items:center;gap:14px">
+    <div class="profav">${esc(ME.inisial||initial(ME.nama))}</div>
+    <div><h4 style="font-size:18px;font-weight:800">${esc(ME.nama)}</h4><div class="kyc">✔ Terverifikasi</div></div></div></div>
+    <div class="sec-title">Akun</div>
+    <div class="card" style="padding:14px"><div class="infoline" style="border:none;padding:0;margin-bottom:12px">📱 <span>WhatsApp: <b>${esc(ME.telp||'-')}</b> · ⭐ ${ME.rating||'5.0'}</span></div>
+    <button class="btn btn-ghost" onclick="logout()">Keluar</button></div>`;
+}
+
+/* ====== BUAT PESANAN ====== */
+let draft={};
+function sheetBuat(kat){
+  draft={kat:kat||'umum',judul:'',desk:'',lokasi:'Canggu',harga:''};
+  openSheet(`<div style="padding:16px 18px"><h3 style="font-size:18px;font-weight:800;margin-bottom:14px">Buat Pesanan</h3>
+    <div class="field"><label>Kategori</label><div class="chips" id="katchips">${KAT.map(c=>`<button class="chip ${c.id===draft.kat?'on':''}" onclick="pickKat('${c.id}',this)">${c.ic} ${c.nm}</button>`).join('')}</div></div>
+    <div class="field"><label>Judul singkat</label><input class="input" id="d_judul" placeholder="Cth: Stop kontak dapur mati" oninput="draft.judul=this.value"></div>
+    <div class="field"><label>Deskripsi</label><textarea class="input" id="d_desk" placeholder="Jelaskan masalahnya…" oninput="draft.desk=this.value"></textarea></div>
+    <div class="field"><label>Lokasi</label><input class="input" id="d_lok" value="Canggu" oninput="draft.lokasi=this.value"></div>
+    <div class="field"><label>Harga ditaksir AI</label>
+      <div class="estbox" id="estbox"><div class="lab">✨ Estimasi</div><div class="rng">Belum ditaksir</div><div class="note">Tekan tombol di bawah.</div></div>
+      <button class="btn btn-brass" id="aibtn" style="margin-top:10px" onclick="estimasiAI()">✨ Taksir Harga</button></div>
+    <div class="field"><label>Harga tawaran Anda</label><input class="input" id="d_harga" inputmode="numeric" placeholder="Rp" oninput="draft.harga=this.value.replace(/\\D/g,'');this.value=draft.harga?rp(+draft.harga):''"></div>
+    <button class="btn btn-primary" onclick="submitPesanan()">Posting Pesanan</button>
+    <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:9px">Belum ditagih. Bayar escrow setelah posting.</p>
+    </div>`);
+}
+function pickKat(id,el){draft.kat=id;document.querySelectorAll('#katchips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on')}
+async function estimasiAI(){
+  if((draft.desk||'').trim().length<6){toast('Isi deskripsi dulu');return}
+  const box=$('estbox'),btn=$('aibtn');btn.disabled=true;btn.textContent='Menaksir…';
+  const h=await taksir(draft.kat,draft.desk);
+  box.querySelector('.rng').textContent=`${rp(h.min)} – ${rp(h.max)}`;
+  box.querySelector('.note').textContent=h.alasan;
+  const f=$('d_harga');draft.harga=String(h.rekomendasi);if(f)f.value=rp(h.rekomendasi);
+  btn.disabled=false;btn.textContent='✨ Taksir Ulang';
+}
+async function taksir(kat,desk){
+  if(AI_ENDPOINT){
+    try{
+      const prompt=`Anda penaksir harga JASA tukang di Bali. Patokan: ganti bohlam/saklar Rp25.000-75.000; keran/pipa kecil Rp75.000-200.000; cuci AC Rp60.000-150.000; listrik kecil Rp150.000-400.000; las ringan Rp200.000-600.000; cat ruangan Rp300.000-800.000. Biaya panggil minimum Rp50.000. Kategori: ${katOf(kat).nm}. Deskripsi: "${desk}". Balas HANYA JSON: {"min":n,"max":n,"rekomendasi":n,"alasan":"maks 10 kata"}`;
+      const r=await fetch(AI_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+      const d=await r.json();const t=(d.content||[]).map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+      const j=JSON.parse(t);if(typeof j.min==='number')return{min:j.min,max:j.max,rekomendasi:j.rekomendasi||Math.round((j.min+j.max)/2),alasan:j.alasan||'Taksiran AI'};
+    }catch(e){}
+  }
+  return taksirLokal(kat,desk);
+}
+function taksirLokal(kat,desk){
+  const t=(desk||'').toLowerCase();
+  if(/bohlam|lampu|saklar|stop ?kontak|fitting/.test(t)&&/ganti|pasang|mati|rusak|baru/.test(t))return{min:25000,max:75000,rekomendasi:50000,alasan:'Pekerjaan ringan'};
+  const base={listrik:[100000,400000],pipa:[100000,400000],ac:[60000,200000],las:[200000,700000],cat:[300000,900000],bocor:[200000,600000],kunci:[80000,250000],umum:[75000,400000]};
+  let[lo,hi]=base[kat]||base.umum;let f=1;
+  if(/ganti|total|semua|banyak|besar|parah/.test(t))f+=0.4;if(/cek|kecil|ringan|mudah/.test(t))f-=0.25;
+  f=Math.max(0.6,Math.min(1.6,f));lo=Math.max(50000,Math.round(lo*f/5000)*5000);hi=Math.round(hi*f/5000)*5000;
+  return{min:lo,max:hi,rekomendasi:Math.round((lo+hi)/2/5000)*5000,alasan:'Estimasi kategori'};
+}
+async function submitPesanan(){
+  if(!draft.judul||!draft.harga){toast('Isi judul & harga');return}
+  const b=fee(+draft.harga);
+  const row={pemilik_id:ME.id,pemilik_nama:ME.nama,kat:draft.kat,judul:draft.judul,desk:draft.desk||'-',
+    lokasi:draft.lokasi,jarak_km:(Math.random()*3+0.5).toFixed(1),harga:+draft.harga,status:'MENUNGGU_DANA',
+    kode_selesai:otp(),biaya:b};
+  const {data,error}=await sb.from('orders').insert(row).select().single();
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(data.id,'Pesanan dibuat','Pemilik membuat pesanan '+katOf(draft.kat).nm);
+  closeSheet();await refresh();openOrder(data.id);toast('Pesanan dibuat — lanjut bayar escrow');
+}
+
+/* ====== DETAIL ====== */
+async function renderDetail(){
+  const o=ORDERS.find(x=>x.id===VIEW.orderId);if(!o){back();return}
+  const sc=$('scroll');sc.innerHTML=`<div class="loadwrap" style="min-height:200px"><div class="spinner"></div></div>`;
+  const [log,msgs]=await Promise.all([getLog(o.id),getMsgs(o.id)]);
+  const k=katOf(o.kat),b=o.biaya||fee(o.harga),s=ST[o.status]||ST.MENUNGGU_DANA;
+  const amPemilik=o.pemilik_id===ME.id;
+  let banner,actions='';
+  // banner
+  let bst='Dana ditahan sistem',bsub='Aman sampai pemilik konfirmasi.';
+  if(o.status==='MENUNGGU_DANA'){bst='Menunggu pembayaran';bsub='Bayar untuk mengaktifkan escrow.'}
+  if(o.status==='SELESAI'){bst='Dana telah dicairkan';bsub='Transaksi selesai.'}
+  banner=`<div class="escrow-banner"><div class="lk">🔒</div><div class="st">${bst}</div><div class="amt">${rp(b.escrow)}</div><div class="sub">${bsub}</div></div>`;
+
+  // actions per role & status
+  if(amPemilik){
+    if(o.status==='MENUNGGU_DANA')actions=`<button class="btn btn-primary" onclick="bayar('${o.id}')">🔒 Bayar ke Escrow ${rp(b.escrow)}</button><p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">Dana ditahan, baru cair setelah Anda setujui.</p>`;
+    else if(o.status==='MENUNGGU_KONFIRMASI')actions=`<div class="infoline" style="margin-bottom:12px">📷 <span>Tukang menyatakan selesai (foto sebelum & sesudah terkirim).</span></div><button class="btn btn-primary" onclick="konfirmasi('${o.id}')">✔ Konfirmasi & Cairkan Dana</button><button class="btn btn-danger" style="margin-top:9px" onclick="sengketa('${o.id}')">⚠ Ada Masalah</button>`;
+    else if(o.status==='SELESAI')actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:32px">🎉</div><h5 style="font-weight:800">Selesai</h5><p style="font-size:12.5px;color:var(--muted)">Dana ${rp(b.payout)} diteruskan ke ${esc(o.tukang_nama||'tukang')}.</p></div>`;
+    else actions=`<div class="infoline">⏱️ <span>Tukang sedang menuju / mengerjakan. Anda akan diminta konfirmasi saat selesai.</span></div>`;
+  }else{ // tukang
+    if(o.status==='DANA_DITAHAN'&&o.tukang_id===ME.id)actions=`<button class="btn btn-primary" onclick="checkin('${o.id}')">📍 Check-in di Lokasi (GPS)</button>`;
+    else if(o.status==='DIKERJAKAN'&&o.tukang_id===ME.id){
+      const ok=o.foto_sebelum&&o.foto_sesudah;
+      actions=`<div class="card" style="padding:14px;margin-bottom:12px"><h5 style="font-size:14px;font-weight:700;margin-bottom:10px">Bukti Pekerjaan</h5>
+        <div style="display:flex;gap:10px"><button class="btn btn-ghost btn-sm" style="flex:1" onclick="foto('${o.id}','sebelum')">${o.foto_sebelum?'✅ Sebelum':'📷 Sebelum'}</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="foto('${o.id}','sesudah')">${o.foto_sesudah?'✅ Sesudah':'📷 Sesudah'}</button></div></div>
+        <button class="btn ${ok?'btn-primary':'btn-ghost'}" ${ok?'':'disabled'} onclick="inputKode('${o.id}')">🔑 Selesaikan — Masukkan Kode</button>
+        <p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">${ok?'Minta kode 4 digit ke pelanggan.':'Unggah kedua foto dulu.'}</p>`;
+    }
+    else if(o.status==='MENUNGGU_KONFIRMASI')actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:30px">⏳</div><h5 style="font-weight:800">Menunggu konfirmasi pelanggan</h5><p style="font-size:12.5px;color:var(--muted)">Dana ${rp(b.payout)} cair setelah dikonfirmasi.</p></div>`;
+    else if(o.status==='SELESAI')actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:32px">💰</div><h5 style="font-weight:800">Dana Cair</h5><p style="font-size:12.5px;color:var(--muted)">${rp(b.payout)} masuk ke saldo Anda.</p></div>`;
+  }
+
+  const kodeCard=(amPemilik&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))
+    ?`<div class="sec-title">Kode Selesai Anda</div><div class="otpcard"><div class="lab">🔑 Berikan saat puas</div><div class="code">${o.kode_selesai}</div><p class="note">Sebutkan ke tukang hanya jika pekerjaan benar selesai. Mencegah klaim selesai palsu.</p></div>`:'';
+
+  const tukangInfo=o.tukang_nama?`<div class="card" style="padding:14px;margin-top:12px"><div style="display:flex;align-items:center;gap:12px"><div class="profav" style="width:42px;height:42px;font-size:15px">${esc(o.tukang_inisial||initial(o.tukang_nama))}</div><div><h4 style="font-size:14.5px;font-weight:700">${esc(o.tukang_nama)} <span style="color:var(--ok)">✔</span></h4><div class="meta">⭐ ${o.tukang_rating||'5.0'}</div></div></div></div>`:'';
+
+  const feeBlock=amPemilik
+    ?`<div class="fee"><div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Biaya layanan <span class="sub">(5%)</span></span><span>${rp(b.layanan)}</span></div><div class="feerow tot"><span>Total escrow</span><span>${rp(b.escrow)}</span></div></div>`
+    :`<div class="fee"><div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Komisi <span class="sub">(6%)</span></span><span style="color:var(--bad)">−${rp(b.komisi)}</span></div><div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div></div>`;
+
+  const showChat=o.tukang_id&&['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status);
+
+  sc.innerHTML=`${banner}
+    <div class="card ocard" style="margin-top:12px"><div class="top"><div class="othumb">${k.ic}</div>
+      <div style="flex:1"><h4>${esc(o.judul)}</h4><div class="meta">📍 ${esc(o.lokasi||'-')} <span class="dot"></span>${o.jarak_km||'-'} km</div></div>
+      <span class="badge ${s.c}">${s.l}</span></div>
+      <div class="divider"></div><p style="font-size:13.5px;color:#37514d">${esc(o.desk||'')}</p></div>
+    ${tukangInfo}
+    <div class="sec-title">Rincian ${amPemilik?'Pembayaran':'Bayaran Anda'}</div>${feeBlock}
+    ${kodeCard}
+    ${showChat?chatBox(o,msgs):''}
+    <div style="margin-top:18px">${actions}</div>
+    <div class="sec-title">Riwayat Aktivitas</div>
+    <div class="card" style="padding:8px 16px">${log.map(r=>`<div class="logitem"><div class="ldot"></div><div><h6>${esc(r.judul)}</h6><p>${esc(r.detail)} · ${timeAgo(r.dibuat)}</p></div></div>`).join('')||'<p style="color:var(--muted);font-size:12.5px;padding:8px 0">Belum ada aktivitas.</p>'}</div>`;
+  const m=$('msgs');if(m)m.scrollTop=m.scrollHeight;
+}
+function chatBox(o,msgs){
+  return `<div class="sec-title">Pesan</div><div class="chatbox"><div class="chat-warn">🛡️ Jaga transaksi di dalam aplikasi.</div>
+    <div class="msgs" id="msgs">${msgs.map(mm=>`<div class="msg ${mm.sender_id===ME.id?'me':'them'}">${esc(mm.isi)}</div>`).join('')||'<p style="color:var(--muted);font-size:12px;text-align:center">Mulai percakapan…</p>'}</div>
+    <div class="chat-in"><input id="chatin" placeholder="Tulis pesan…" onkeydown="if(event.key==='Enter')kirim('${o.id}')"><button onclick="kirim('${o.id}')">➤</button></div></div>`;
+}
+
+/* ====== AKSI ESCROW ====== */
+async function bayar(id){ // <== XENDIT: di sini buat invoice & tunggu webhook. Demo: langsung tahan.
+  const o=ORDERS.find(x=>x.id===id);
+  await sb.from('orders').update({status:'DANA_DITAHAN'}).eq('id',id);
+  await addLog(id,'Dana masuk escrow',rp((o.biaya||fee(o.harga)).escrow)+' ditahan sistem');
+  await refresh();openOrder(id);toast('✅ Dana aman di escrow');
+}
+async function ambil(id){
+  const {error}=await sb.from('orders').update({tukang_id:ME.id,tukang_nama:ME.nama,tukang_inisial:ME.inisial||initial(ME.nama),tukang_rating:ME.rating||5.0}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,'Tukang menerima',ME.nama+' menerima pekerjaan');
+  VIEW.tab='aktif';await refresh();openOrder(id);toast('Pekerjaan diambil');
+}
+async function checkin(id){
+  await sb.from('orders').update({status:'DIKERJAKAN',checkin:true}).eq('id',id);
+  await addLog(id,'Check-in GPS','Tukang terverifikasi di lokasi');
+  await refresh();openOrder(id);toast('📍 Check-in berhasil');
+}
+async function foto(id,jenis){
+  const upd=jenis==='sebelum'?{foto_sebelum:true}:{foto_sesudah:true};
+  await sb.from('orders').update(upd).eq('id',id);
+  await addLog(id,'Foto bukti','Foto '+jenis+' diunggah');
+  await refresh();openOrder(id);toast('Foto '+jenis+' tersimpan');
+}
+function inputKode(id){
+  openSheet(`<div style="padding:20px 18px;text-align:center"><div style="font-size:32px">🔑</div>
+    <h3 style="font-size:18px;font-weight:800;margin:6px 0">Kode Selesai</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Minta kode 4 digit ke pelanggan. Mereka beri kode hanya jika puas.</p>
+    <input class="input" id="kodein" inputmode="numeric" maxlength="4" style="text-align:center;font-size:26px;letter-spacing:.3em;font-weight:800" placeholder="••••">
+    <p id="kodeerr" style="color:var(--bad);font-size:12.5px;font-weight:600;height:18px;margin-top:6px"></p>
+    <button class="btn btn-primary" onclick="cekKode('${id}')">Selesaikan Pekerjaan</button></div>`);
+  setTimeout(()=>$('kodein')?.focus(),250);
+}
+async function cekKode(id){
+  const o=ORDERS.find(x=>x.id===id);const v=$('kodein').value.trim();
+  if(v!==o.kode_selesai){$('kodeerr').textContent='Kode salah.';return}
+  await sb.from('orders').update({status:'MENUNGGU_KONFIRMASI'}).eq('id',id);
+  await addLog(id,'Pekerjaan diselesaikan','Kode benar, menunggu konfirmasi pemilik');
+  closeSheet();await refresh();openOrder(id);toast('✅ Menunggu konfirmasi pelanggan');
+}
+async function konfirmasi(id){
+  await sb.from('orders').update({status:'SELESAI'}).eq('id',id);
+  await addLog(id,'Pemilik konfirmasi','Dana dicairkan ke tukang');
+  await refresh();openOrder(id);toast('Dana dicairkan 🎉');
+}
+async function sengketa(id){
+  await sb.from('orders').update({status:'SENGKETA'}).eq('id',id);
+  await addLog(id,'Sengketa diajukan','Dana dibekukan, ditinjau tim');
+  await refresh();openOrder(id);toast('Sengketa dikirim, dana dibekukan');
+}
+async function kirim(id){
+  const inp=$('chatin');if(!inp||!inp.value.trim())return;
+  const isi=inp.value.trim();inp.value='';
+  await sb.from('messages').insert({order_id:id,sender_id:ME.id,isi});
+  renderDetail();
+}
+
+/* ====== sheet ====== */
+function openSheet(html){
+  let ov=$('ov');
+  if(!ov){ov=document.createElement('div');ov.id='ov';ov.style.cssText='position:fixed;inset:0;background:rgba(8,30,28,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center';ov.onclick=e=>{if(e.target===ov)closeSheet()};document.body.appendChild(ov)}
+  ov.innerHTML=`<div style="background:var(--surface);width:100%;max-width:440px;max-height:92vh;border-radius:24px 24px 0 0;overflow-y:auto">${html}</div>`;
+  document.body.style.overflow='hidden';
+}
+function closeSheet(){const ov=$('ov');if(ov)ov.remove();document.body.style.overflow=''}
+function emptyBox(ic,t,p){return `<div class="empty"><div class="ic">${ic}</div><h4 style="font-size:15px;margin-top:8px">${t}</h4>${p?`<p>${p}</p>`:''}</div>`}
+function timeAgo(t){const d=(Date.now()-new Date(t).getTime())/1000;if(d<60)return'baru saja';if(d<3600)return Math.floor(d/60)+' mnt lalu';if(d<86400)return Math.floor(d/3600)+' jam lalu';return Math.floor(d/86400)+' hari lalu'}
+
+sb.auth.onAuthStateChange((e,session)=>{if(e==='SIGNED_OUT'){ME=null;renderAuth()}});
+boot();
+</script>
+</body>
+</html>
