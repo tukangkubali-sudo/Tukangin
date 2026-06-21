@@ -396,12 +396,14 @@ function profilT(){
 /* ====== BUAT PESANAN ====== */
 let draft={};
 function sheetBuat(kat){
-  draft={kat:kat||'umum',judul:'',desk:'',lokasi:'Canggu',harga:''};
+  draft={kat:kat||'umum',judul:'',desk:'',lokasi:'Canggu',harga:'',lat:null,lng:null};
   openSheet(`<div style="padding:16px 18px"><h3 style="font-size:18px;font-weight:800;margin-bottom:14px">Buat Pesanan</h3>
     <div class="field"><label>Kategori</label><div class="chips" id="katchips">${KAT.map(c=>`<button class="chip ${c.id===draft.kat?'on':''}" onclick="pickKat('${c.id}',this)">${c.ic} ${c.nm}</button>`).join('')}</div></div>
     <div class="field"><label>Judul singkat</label><input class="input" id="d_judul" placeholder="Cth: Stop kontak dapur mati" oninput="draft.judul=this.value"></div>
     <div class="field"><label>Deskripsi</label><textarea class="input" id="d_desk" placeholder="Jelaskan masalahnya…" oninput="draft.desk=this.value"></textarea></div>
     <div class="field"><label>Lokasi</label><input class="input" id="d_lok" value="Canggu" oninput="draft.lokasi=this.value"></div>
+    <div class="field"><label>Titik GPS pekerjaan <span class="hint">opsional — untuk verifikasi check-in tukang</span></label>
+      <button class="btn btn-ghost" id="gpsbtn" onclick="tandaiLokasi()">📍 Tandai Lokasi Saat Ini</button></div>
     <div class="field"><label>Harga ditaksir AI</label>
       <div class="estbox" id="estbox"><div class="lab">✨ Estimasi</div><div class="rng">Belum ditaksir</div><div class="note">Tekan tombol di bawah.</div></div>
       <button class="btn btn-brass" id="aibtn" style="margin-top:10px" onclick="estimasiAI()">✨ Taksir Harga</button></div>
@@ -444,7 +446,7 @@ async function submitPesanan(){
   if(!draft.judul||!draft.harga){toast('Isi judul & harga');return}
   const b=fee(+draft.harga);
   const row={pemilik_id:ME.id,pemilik_nama:ME.nama,kat:draft.kat,judul:draft.judul,desk:draft.desk||'-',
-    lokasi:draft.lokasi,jarak_km:(Math.random()*3+0.5).toFixed(1),harga:+draft.harga,status:'MENUNGGU_DANA',
+    lokasi:draft.lokasi,jarak_km:(Math.random()*3+0.5).toFixed(1),lat:draft.lat,lng:draft.lng,harga:+draft.harga,status:'MENUNGGU_DANA',
     kode_selesai:otp(),biaya:b};
   const {data,error}=await sb.from('orders').insert(row).select().single();
   if(error){toast('Gagal: '+error.message);return}
@@ -508,6 +510,7 @@ async function renderDetail(){
     ${kodeCard}
     ${showChat?chatBox(o,msgs):''}
     <div style="margin-top:18px">${actions}</div>
+    ${ratingBlock(o,amPemilik)}
     <div class="sec-title">Riwayat Aktivitas</div>
     <div class="card" style="padding:8px 16px">${log.map(r=>`<div class="logitem"><div class="ldot"></div><div><h6>${esc(r.judul)}</h6><p>${esc(r.detail)} · ${timeAgo(r.dibuat)}</p></div></div>`).join('')||'<p style="color:var(--muted);font-size:12.5px;padding:8px 0">Belum ada aktivitas.</p>'}</div>`;
   const m=$('msgs');if(m)m.scrollTop=m.scrollHeight;
@@ -531,9 +534,47 @@ async function ambil(id){
   VIEW.tab='aktif';await refresh();openOrder(id);toast('Pekerjaan diambil');
 }
 async function checkin(id){
-  await sb.from('orders').update({status:'DIKERJAKAN',checkin:true}).eq('id',id);
-  await addLog(id,'Check-in GPS','Tukang terverifikasi di lokasi');
+  const o=ORDERS.find(x=>x.id===id);
+  toast('Mengambil lokasi GPS…');
+  let pos=null; try{pos=await getGPS();}catch(e){}
+  const upd={status:'DIKERJAKAN',checkin:true}; let detail;
+  if(pos){
+    upd.checkin_lat=pos.lat; upd.checkin_lng=pos.lng;
+    if(o.lat&&o.lng){
+      const d=Math.round(haversine(pos.lat,pos.lng,o.lat,o.lng)); upd.checkin_jarak=d;
+      if(d>500){detail=`⚠ Check-in JAUH dari lokasi (~${(d/1000).toFixed(1)} km) — ditandai untuk peninjauan`;toast('⚠ Anda tampak jauh dari lokasi — tercatat');}
+      else detail=`Terverifikasi GPS di lokasi (±${d} m)`;
+    } else detail='Check-in GPS (titik lokasi belum ditandai pemilik)';
+  } else detail='Check-in tanpa GPS (izin lokasi tidak aktif)';
+  const {error}=await sb.from('orders').update(upd).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,'Check-in lokasi',detail);
   await refresh();openOrder(id);toast('📍 Check-in berhasil');
+}
+function getGPS(){return new Promise((res,rej)=>{if(!navigator.geolocation)return rej('no geo');navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy}),e=>rej(e),{enableHighAccuracy:true,timeout:10000,maximumAge:0});});}
+function haversine(a,b,c,d){const R=6371000,r=x=>x*Math.PI/180;const dLat=r(c-a),dLon=r(d-b);const h=Math.sin(dLat/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dLon/2)**2;return R*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));}
+async function tandaiLokasi(){
+  const b=$('gpsbtn');b.disabled=true;b.textContent='Mengambil lokasi…';
+  try{const p=await getGPS();draft.lat=p.lat;draft.lng=p.lng;b.textContent='✓ Lokasi ditandai';b.classList.remove('btn-ghost');b.classList.add('btn-brass');}
+  catch(e){b.disabled=false;b.textContent='📍 Coba lagi';toast('Tidak bisa ambil lokasi — pastikan izin lokasi aktif.');}
+}
+
+/* ====== RATING (dua arah) ====== */
+function ratingBlock(o,amPemilik){
+  if(o.status!=='SELESAI')return '';
+  const sudah=amPemilik?o.rating:o.rating_pemilik, target=amPemilik?(o.tukang_nama||'tukang'):(o.pemilik_nama||'pemilik');
+  if(sudah)return `<div class="card" style="padding:14px;text-align:center;margin-top:12px"><p style="font-size:12.5px;color:var(--muted)">Penilaian Anda untuk ${esc(target)}</p><div style="font-size:22px;color:var(--brass);margin-top:4px">${'★'.repeat(sudah)}${'☆'.repeat(5-sudah)}</div></div>`;
+  return `<div class="card" style="padding:16px;text-align:center;margin-top:12px"><p style="font-size:13.5px;font-weight:700">Beri rating untuk ${esc(target)}</p>
+    <div id="ratestars" style="font-size:34px;letter-spacing:6px;margin-top:8px">${[1,2,3,4,5].map(n=>`<span data-n="${n}" onclick="setStar(${n})" style="cursor:pointer;color:#ddd">★</span>`).join('')}</div>
+    <button class="btn btn-primary" id="ratebtn" disabled style="margin-top:14px" onclick="kirimRating('${o.id}')">Kirim Penilaian</button></div>`;
+}
+let _star=0;
+function setStar(n){_star=n;document.querySelectorAll('#ratestars span').forEach(s=>s.style.color=(+s.dataset.n<=n)?'#E89A2D':'#ddd');const b=$('ratebtn');if(b)b.disabled=false;}
+async function kirimRating(id){
+  if(!_star)return;
+  const {error}=await sb.rpc('nilai_pesanan',{p_order:id,p_bintang:_star});
+  if(error){toast('Gagal: '+error.message);return}
+  _star=0;await refresh();openOrder(id);toast('Terima kasih atas penilaian Anda');
 }
 async function foto(id,jenis){
   const upd=jenis==='sebelum'?{foto_sebelum:true}:{foto_sesudah:true};
