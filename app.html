@@ -504,6 +504,7 @@ async function renderDetail(){
       <div class="divider"></div><p style="font-size:13.5px;color:#37514d">${esc(o.desk||'')}</p></div>
     ${tukangInfo}
     <div class="sec-title">Rincian ${amPemilik?'Pembayaran':'Bayaran Anda'}</div>${feeBlock}
+    ${usulanSection(o,amPemilik)}
     ${kodeCard}
     ${showChat?chatBox(o,msgs):''}
     <div style="margin-top:18px">${actions}</div>
@@ -571,6 +572,87 @@ async function kirim(id){
   const isi=inp.value.trim();inp.value='';
   await sb.from('messages').insert({order_id:id,sender_id:ME.id,isi});
   renderDetail();
+}
+
+/* ====== PENYESUAIAN HARGA (dua pihak harus setuju) ====== */
+const ALASAN_TUKANG=['Ternyata lebih mudah','Ada pekerjaan tambahan','Butuh material lebih','Lebih rumit dari perkiraan'];
+const ALASAN_PEMILIK=['Lingkup saya tambah','Sebagian saya kerjakan sendiri','Sesuai kondisi lapangan'];
+let usul={};
+function usulanSection(o,amPemilik){
+  if(!o.tukang_id||!['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))return '';
+  const role=amPemilik?'pemilik':'tukang';
+  if(o.usulan)return usulanCard(o,role);
+  return `<button class="btn btn-ghost" style="margin-top:12px" onclick="sheetUsul('${o.id}','${role}')">✎ Usulkan Penyesuaian Harga</button>`;
+}
+function usulanCard(o,role){
+  const u=o.usulan,turun=u.harga_baru<o.harga,selisih=Math.abs(u.harga_baru-o.harga),b=fee(u.harga_baru),besar=selisih/o.harga>0.4,mine=u.oleh===role;
+  if(mine)return `<div class="card" style="padding:16px;margin-top:12px;border:1.5px solid var(--brass)">
+    <span class="badge b-wait">⏳ Menunggu persetujuan ${role==='tukang'?'pemilik':'tukang'}</span>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:15px;font-weight:700"><span style="color:var(--muted);text-decoration:line-through">${rp(o.harga)}</span> → <span>${rp(u.harga_baru)}</span><span class="badge ${turun?'b-done':'b-hold'}" style="margin-left:auto">${turun?'⬇':'⬆'} ${rp(selisih)}</span></div>
+    <p style="font-size:12px;color:var(--muted);margin-top:6px">Alasan: ${esc(u.alasan)}</p>
+    <button class="btn btn-danger" style="margin-top:12px" onclick="batalUsulan('${o.id}')">Batalkan Usulan</button></div>`;
+  return `<div class="card" style="padding:16px;margin-top:12px;border:1.5px solid var(--brass)">
+    <h5 style="font-size:14px;font-weight:800">${u.oleh==='tukang'?'Tukang':'Pemilik'} mengusulkan harga baru</h5>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:17px;font-weight:800"><span style="color:var(--muted);text-decoration:line-through;font-size:14px">${rp(o.harga)}</span> → <span style="color:${turun?'var(--ok)':'var(--hold)'}">${rp(u.harga_baru)}</span><span class="badge ${turun?'b-done':'b-hold'}" style="margin-left:auto">${turun?'⬇ turun':'⬆ naik'} ${rp(selisih)}</span></div>
+    <p style="font-size:12.5px;color:#46605c;margin-top:8px">"${esc(u.alasan)}"</p><div class="divider"></div>
+    <div class="feerow" style="font-size:13px"><span>${role==='tukang'?'Anda terima bersih':'Total escrow Anda'}</span><b>${role==='tukang'?rp(b.payout):rp(b.escrow)}</b></div>
+    <p style="font-size:11.5px;color:${turun?'var(--ok)':'var(--hold)'};margin-top:4px">${turun?'✓ Selisih '+rp(selisih)+' dikembalikan ke pemilik lewat sistem.':'Pemilik menambah '+rp(selisih)+' ke escrow saat menyetujui.'}</p>
+    ${besar?`<div class="infoline" style="margin-top:8px;background:#FBE9E7;border-color:#f3cdc9;color:#a8352a">⚠ <span>Perubahan cukup besar. Pastikan wajar & bukan paksaan — tercatat untuk peninjauan.</span></div>`:''}
+    <div class="infoline" style="margin-top:8px">🛡️ <span>Selesaikan di aplikasi. Jangan bayar selisih tunai di luar agar dana tetap terlindungi & tercatat.</span></div>
+    <div style="display:flex;gap:9px;margin-top:12px"><button class="btn btn-danger" style="flex:1" onclick="tolakUsulan('${o.id}')">Tolak</button><button class="btn btn-primary" style="flex:1" onclick="setujuUsulan('${o.id}')">Setuju</button></div></div>`;
+}
+function sheetUsul(id,role){
+  const o=ORDERS.find(x=>x.id===id),alasan=role==='tukang'?ALASAN_TUKANG:ALASAN_PEMILIK;
+  usul={harga:o.harga,alasan:alasan[0],role};
+  openSheet(`<div style="padding:16px 18px"><h3 style="font-size:18px;font-weight:800;margin-bottom:6px">Sesuaikan Harga</h3>
+    <div class="infoline" style="margin-bottom:14px">🤝 <span>Usulan ini <b>tidak berlaku otomatis</b>. Harga berubah hanya jika ${role==='tukang'?'pemilik':'tukang'} menyetujui.</span></div>
+    <div class="fee" style="margin-bottom:14px"><div class="feerow"><span>Harga sekarang</span><span>${rp(o.harga)}</span></div></div>
+    <div class="field"><label>Alasan penyesuaian</label><div class="chips" id="alasanchips" style="flex-direction:column;align-items:stretch">${alasan.map((a,i)=>`<button class="chip ${i===0?'on':''}" style="text-align:left" onclick="pickAlasan(this,'${esc(a)}')">${a}</button>`).join('')}</div></div>
+    <div class="field"><label>Harga baru yang diusulkan</label><input class="input" id="u_harga" inputmode="numeric" value="${rp(o.harga)}" oninput="usul.harga=+this.value.replace(/\\D/g,'')||0;this.value=usul.harga?rp(usul.harga):'';previewUsul('${id}')"></div>
+    <div class="estbox" id="u_prev" style="margin-bottom:14px"></div>
+    <button class="btn btn-primary" onclick="ajukanUsulan('${id}')">Kirim Usulan ke ${role==='tukang'?'Pemilik':'Tukang'}</button></div>`);
+  previewUsul(id);
+}
+function pickAlasan(el,a){document.querySelectorAll('#alasanchips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');usul.alasan=a}
+function previewUsul(id){
+  const o=ORDERS.find(x=>x.id===id),box=$('u_prev');if(!box)return;
+  const baru=usul.harga||0,b=fee(baru),selisih=baru-o.harga,turun=selisih<0,besar=Math.abs(selisih)/o.harga>0.4;
+  box.style.background=turun?'linear-gradient(135deg,#E7F5EC,#d7efe0)':'linear-gradient(135deg,#FDF4E3,#FBEAC8)';
+  box.style.borderColor=turun?'#bfe0ca':'#f0dca8';
+  box.innerHTML=`<div class="lab" style="color:${turun?'#15875a':'var(--brass-d)'}">${selisih===0?'Belum ada perubahan':(turun?'⬇ Turun ':'⬆ Naik ')+rp(Math.abs(selisih))}</div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:8px"><span>Tukang terima</span><b>${rp(b.payout)}</b></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:3px"><span>Total escrow pemilik</span><b>${rp(b.escrow)}</b></div>
+    <div class="note" style="margin-top:6px">${turun?'Selisih dikembalikan ke pemilik lewat sistem.':(selisih>0?'Pemilik menambah selisih ke escrow saat setuju.':'')}</div>
+    ${besar?'<div style="margin-top:6px;font-size:11.5px;color:#a8352a;font-weight:600">⚠ Perubahan cukup besar — pastikan wajar, akan tercatat untuk peninjauan.</div>':''}`;
+}
+async function ajukanUsulan(id){
+  const o=ORDERS.find(x=>x.id===id),baru=usul.harga||0;
+  if(baru<50000){toast('Masukkan harga yang wajar');return}
+  if(baru===o.harga){toast('Harga belum berubah');return}
+  const u={oleh:usul.role,harga_baru:baru,alasan:usul.alasan,dibuat:new Date().toISOString()};
+  const {error}=await sb.from('orders').update({usulan:u}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,'Usulan penyesuaian harga',`${usul.role==='tukang'?'Tukang':'Pemilik'} usul ${rp(o.harga)} → ${rp(baru)} (${usul.alasan})`);
+  closeSheet();await refresh();openOrder(id);toast(`Usulan dikirim — menunggu persetujuan ${usul.role==='tukang'?'pemilik':'tukang'}`);
+}
+async function setujuUsulan(id){ // <== XENDIT: jika naik buat invoice top-up; jika turun refund parsial
+  const o=ORDERS.find(x=>x.id===id),u=o.usulan,lama=o.harga,b=fee(u.harga_baru);
+  const naik=u.harga_baru>lama,selisih=Math.abs(u.harga_baru-lama);
+  const {error}=await sb.from('orders').update({harga:u.harga_baru,biaya:b,usulan:null}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,'Penyesuaian harga disetujui',`${rp(lama)} → ${rp(u.harga_baru)} disepakati kedua pihak`);
+  await addLog(id,naik?'Top-up escrow':'Refund selisih',`${rp(selisih)} ${naik?'ditambah pemilik ke escrow':'dikembalikan ke pemilik'}`);
+  await refresh();openOrder(id);toast(naik?'Disetujui — pemilik menambah selisih':'Disetujui — selisih dikembalikan ke pemilik');
+}
+async function tolakUsulan(id){
+  await sb.from('orders').update({usulan:null}).eq('id',id);
+  await addLog(id,'Usulan penyesuaian ditolak','Harga tetap');
+  await refresh();openOrder(id);toast('Usulan ditolak, harga tetap');
+}
+async function batalUsulan(id){
+  await sb.from('orders').update({usulan:null}).eq('id',id);
+  await addLog(id,'Usulan dibatalkan','Usulan ditarik');
+  await refresh();openOrder(id);toast('Usulan dibatalkan');
 }
 
 /* ====== sheet ====== */
