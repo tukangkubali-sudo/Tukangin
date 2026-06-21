@@ -150,7 +150,7 @@ const FEE={layanan:0.05,komisi:0.06};
 function fee(h){h=+h||0;const layanan=Math.round(h*FEE.layanan),komisi=Math.round(h*FEE.komisi);return{harga:h,layanan,komisi,escrow:h+layanan,payout:h-komisi}}
 const KAT=[{id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa',ic:'🔧'},{id:'ac',nm:'AC',ic:'❄️'},{id:'las',nm:'Las/Pagar',ic:'🔥'},{id:'cat',nm:'Cat',ic:'🎨'},{id:'bocor',nm:'Atap Bocor',ic:'🏠'},{id:'kunci',nm:'Kunci',ic:'🔑'},{id:'umum',nm:'Lainnya',ic:'🛠️'}];
 const katOf=id=>KAT.find(k=>k.id===id)||KAT[7];
-const ST={MENUNGGU_DANA:{l:'Menunggu Pembayaran',c:'b-wait'},DANA_DITAHAN:{l:'Dana Ditahan',c:'b-hold'},DIKERJAKAN:{l:'Dikerjakan',c:'b-work'},MENUNGGU_KONFIRMASI:{l:'Menunggu Konfirmasi',c:'b-confirm'},SELESAI:{l:'Selesai',c:'b-done'},SENGKETA:{l:'Sengketa',c:'b-dispute'}};
+const ST={MENUNGGU_DANA:{l:'Menunggu Pembayaran',c:'b-wait'},DANA_DITAHAN:{l:'Dana Ditahan',c:'b-hold'},DIKERJAKAN:{l:'Dikerjakan',c:'b-work'},MENUNGGU_KONFIRMASI:{l:'Menunggu Konfirmasi',c:'b-confirm'},SELESAI:{l:'Selesai',c:'b-done'},SENGKETA:{l:'Sengketa',c:'b-dispute'},DIBATALKAN:{l:'Dibatalkan',c:'b-dispute'}};
 /* Identitas usaha — EDIT di sini bila perlu */
 const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6281338773717',waTampil:'0813-3877-3717'};
 const otp=()=>String(Math.floor(1000+Math.random()*9000));
@@ -591,9 +591,20 @@ function pageBantuan(){
 /* ====== BUAT PESANAN ====== */
 let draft={};
 function sheetBuat(kat){
-  draft={kat:kat||'umum',judul:'',desk:'',lokasi:'Canggu',harga:'',lat:null,lng:null};
+  draft={kat:kat||'umum',judul:'',desk:'',lokasi:'Canggu',harga:'',lat:null,lng:null,panjang:'',tinggi:'',material:false};
   openSheet(`<div style="padding:16px 18px"><h3 style="font-size:18px;font-weight:800;margin-bottom:14px">Buat Pesanan</h3>
     <div class="field"><label>Kategori</label><div class="chips" id="katchips">${KAT.map(c=>`<button class="chip ${c.id===draft.kat?'on':''}" onclick="pickKat('${c.id}',this)">${c.ic} ${c.nm}</button>`).join('')}</div></div>
+    <div class="field" id="lasextra" style="display:${draft.kat==='las'?'block':'none'}">
+      <label>Ukuran pagar/pintu <span class="hint">untuk taksir per m²</span></label>
+      <div style="display:flex;gap:10px">
+        <input class="input" id="d_panjang" inputmode="decimal" placeholder="Panjang (m)" value="${draft.panjang||''}" oninput="draft.panjang=this.value">
+        <input class="input" id="d_tinggi" inputmode="decimal" placeholder="Tinggi (m)" value="${draft.tinggi||''}" oninput="draft.tinggi=this.value">
+      </div>
+      <div class="seg" id="matseg" style="margin-top:10px;margin-bottom:0">
+        <button class="${draft.material?'':'on'}" onclick="pickMat(false,this)">🔧 Jasa saja</button>
+        <button class="${draft.material?'on':''}" onclick="pickMat(true,this)">📦 Termasuk material</button>
+      </div>
+    </div>
     <div class="field"><label>Judul singkat</label><input class="input" id="d_judul" placeholder="Cth: Stop kontak dapur mati" oninput="draft.judul=this.value"></div>
     <div class="field"><label>Deskripsi</label><textarea class="input" id="d_desk" placeholder="Jelaskan masalahnya…" oninput="draft.desk=this.value"></textarea></div>
     <div class="field"><label>Lokasi</label><input class="input" id="d_lok" value="Canggu" oninput="draft.lokasi=this.value"></div>
@@ -607,29 +618,48 @@ function sheetBuat(kat){
     <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:9px">Belum ditagih. Bayar escrow setelah posting.</p>
     </div>`);
 }
-function pickKat(id,el){draft.kat=id;document.querySelectorAll('#katchips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on')}
+function pickKat(id,el){draft.kat=id;document.querySelectorAll('#katchips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');const le=$('lasextra');if(le)le.style.display=id==='las'?'block':'none';}
+function pickMat(v,el){draft.material=v;document.querySelectorAll('#matseg button').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
 async function estimasiAI(){
-  if((draft.desk||'').trim().length<6){toast('Isi deskripsi dulu');return}
+  if(draft.kat==='las'){ if(!(draft.panjang&&draft.tinggi)&&(draft.desk||'').trim().length<6){toast('Isi ukuran atau deskripsi dulu');return} }
+  else if((draft.desk||'').trim().length<6){toast('Isi deskripsi dulu');return}
   const box=$('estbox'),btn=$('aibtn');btn.disabled=true;btn.textContent='Menaksir…';
-  const h=await taksir(draft.kat,draft.desk);
+  const h=await taksir(draft);
   box.querySelector('.rng').textContent=`${rp(h.min)} – ${rp(h.max)}`;
   box.querySelector('.note').textContent=h.alasan;
   const f=$('d_harga');draft.harga=String(h.rekomendasi);if(f)f.value=rp(h.rekomendasi);
   btn.disabled=false;btn.textContent='✨ Taksir Ulang';
 }
-async function taksir(kat,desk){
+async function taksir(d){
+  const kat=d.kat,desk=d.desk||'';
+  const luas=(parseFloat(d.panjang)||0)*(parseFloat(d.tinggi)||0);
   if(AI_ENDPOINT){
     try{
-      const prompt=`Anda penaksir harga JASA tukang di Bali. Patokan: ganti bohlam/saklar Rp25.000-75.000; keran/pipa kecil Rp75.000-200.000; cuci AC Rp60.000-150.000; listrik kecil Rp150.000-400.000; las ringan Rp200.000-600.000; cat ruangan Rp300.000-800.000. Biaya panggil minimum Rp50.000. Kategori: ${katOf(kat).nm}. Deskripsi: "${desk}". Balas HANYA JSON: {"min":n,"max":n,"rekomendasi":n,"alasan":"maks 10 kata"}`;
+      let prompt;
+      if(kat==='las'&&luas>0){
+        const isPintu=/dorong|sliding|geser|pintu|gerbang/i.test(desk);
+        prompt=`Anda penaksir harga jasa las/pagar besi di ${d.lokasi||'Bali'}, Bali, memakai harga pasar lokal terkini. Pekerjaan pagar/pintu besi ukuran ${d.panjang}m x ${d.tinggi}m = ${luas.toFixed(1)} m².${isPintu?' Ini PINTU DORONG (sliding) — tambahkan biaya rel, roda, dan rangka penguat.':''} Lingkup: ${d.material?'TERMASUK material (besi hollow, spandek, rel, roda, cat).':'JASA saja (las + pasang, material disediakan pemilik).'} Deskripsi: "${desk}". Hitung per m² lalu total. Balas HANYA JSON {"min":n,"max":n,"rekomendasi":n,"alasan":"maks 12 kata"}`;
+      }else{
+        prompt=`Anda penaksir harga JASA tukang di ${d.lokasi||'Bali'}, Bali, memakai harga pasar lokal terkini. Patokan kasar: ganti bohlam/saklar Rp25.000-75.000; keran/pipa kecil Rp75.000-200.000; cuci AC Rp60.000-150.000; listrik kecil Rp150.000-400.000; cat ruangan Rp300.000-800.000. Minimum panggil Rp50.000. Kategori: ${katOf(kat).nm}. Deskripsi: "${desk}". Balas HANYA JSON {"min":n,"max":n,"rekomendasi":n,"alasan":"maks 10 kata"}`;
+      }
       const r=await fetch(AI_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
-      const d=await r.json();const t=(d.content||[]).map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+      const dd=await r.json();const t=(dd.content||[]).map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
       const j=JSON.parse(t);if(typeof j.min==='number')return{min:j.min,max:j.max,rekomendasi:j.rekomendasi||Math.round((j.min+j.max)/2),alasan:j.alasan||'Taksiran AI'};
     }catch(e){}
   }
-  return taksirLokal(kat,desk);
+  return taksirLokal(d);
 }
-function taksirLokal(kat,desk){
-  const t=(desk||'').toLowerCase();
+function taksirLokal(d){
+  const kat=d.kat,t=(d.desk||'').toLowerCase();
+  const luas=(parseFloat(d.panjang)||0)*(parseFloat(d.tinggi)||0);
+  if(kat==='las'&&luas>0){
+    const isPintu=/dorong|sliding|geser|pintu|gerbang/.test(t);
+    let lo,hi; if(d.material){lo=400000;hi=650000}else{lo=100000;hi=250000}
+    let min=luas*lo,max=luas*hi;
+    if(isPintu){if(d.material){min+=600000;max+=1500000}else{min+=200000;max+=500000}}
+    min=Math.round(min/10000)*10000;max=Math.round(max/10000)*10000;
+    return{min,max,rekomendasi:Math.round((min+max)/2/10000)*10000,alasan:`Per m² (${d.material?'+material':'jasa'})${isPintu?' · pintu dorong':''}`};
+  }
   if(/bohlam|lampu|saklar|stop ?kontak|fitting/.test(t)&&/ganti|pasang|mati|rusak|baru/.test(t))return{min:25000,max:75000,rekomendasi:50000,alasan:'Pekerjaan ringan'};
   const base={listrik:[100000,400000],pipa:[100000,400000],ac:[60000,200000],las:[200000,700000],cat:[300000,900000],bocor:[200000,600000],kunci:[80000,250000],umum:[75000,400000]};
   let[lo,hi]=base[kat]||base.umum;let f=1;
@@ -661,13 +691,16 @@ async function renderDetail(){
   let bst='Dana ditahan Tukangin',bsub='Aman sampai pemilik konfirmasi.';
   if(o.status==='MENUNGGU_DANA'){bst='Menunggu pembayaran';bsub='Bayar untuk mengaktifkan escrow.'}
   if(o.status==='SELESAI'){bst='Dana telah dicairkan';bsub='Transaksi selesai.'}
+  if(o.status==='DIBATALKAN'){bst='Pesanan dibatalkan';bsub='Dana dikembalikan ke pemilik.'}
   banner=`<div class="escrow-banner"><div class="lk">🔒</div><div class="st">${bst}</div><div class="amt">${rp(b.escrow)}</div><div class="sub">${bsub}</div></div>`;
 
   // actions per role & status
   if(amPemilik){
-    if(o.status==='MENUNGGU_DANA')actions=`<button class="btn btn-primary" onclick="bayar('${o.id}')">🔒 Bayar ke Escrow ${rp(b.escrow)}</button><p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">Dana ditahan, baru cair setelah Anda setujui.</p>`;
+    if(o.status==='MENUNGGU_DANA')actions=`<button class="btn btn-primary" onclick="bayar('${o.id}')">🔒 Bayar ke Escrow ${rp(b.escrow)}</button><p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">Dana ditahan, baru cair setelah Anda setujui.</p><button class="btn btn-ghost" style="margin-top:9px" onclick="batal('${o.id}')">Batalkan Pesanan</button>`;
     else if(o.status==='MENUNGGU_KONFIRMASI')actions=`<div class="infoline" style="margin-bottom:12px">📷 <span>Tukang menyatakan selesai (foto sebelum & sesudah terkirim).</span></div><button class="btn btn-primary" onclick="konfirmasi('${o.id}')">✔ Konfirmasi & Cairkan Dana</button><button class="btn btn-danger" style="margin-top:9px" onclick="sengketa('${o.id}')">⚠ Ada Masalah</button>`;
     else if(o.status==='SELESAI')actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:32px">🎉</div><h5 style="font-weight:800">Selesai</h5><p style="font-size:12.5px;color:var(--muted)">Dana ${rp(b.payout)} diteruskan ke ${esc(o.tukang_nama||'tukang')}.</p></div>`;
+    else if(o.status==='DANA_DITAHAN'&&!o.tukang_id)actions=`<div class="infoline">🔍 <span>Menunggu tukang mengambil pekerjaan ini.</span></div><button class="btn btn-danger" style="margin-top:11px" onclick="batal('${o.id}')">Batalkan & Kembalikan Dana</button>`;
+    else if(o.status==='DIBATALKAN')actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:30px">🚫</div><h5 style="font-weight:800">Pesanan dibatalkan</h5><p style="font-size:12.5px;color:var(--muted)">Dana dikembalikan ke pemilik.</p></div>`;
     else actions=`<div class="infoline">⏱️ <span>Tukang sedang menuju / mengerjakan. Anda akan diminta konfirmasi saat selesai.</span></div>`;
   }else{ // tukang
     if(o.status==='DANA_DITAHAN'&&o.tukang_id===ME.id)actions=`<button class="btn btn-primary" onclick="checkin('${o.id}')">📍 Check-in di Lokasi (GPS)</button>`;
@@ -837,6 +870,15 @@ async function sengketa(id){
   await sb.from('orders').update({status:'SENGKETA'}).eq('id',id);
   await addLog(id,'Sengketa diajukan','Dana dibekukan, ditinjau tim');
   await refresh();openOrder(id);toast('Sengketa dikirim, dana dibekukan');
+}
+async function batal(id){
+  const o=ORDERS.find(x=>x.id===id);
+  if(o&&o.tukang_id){toast('Tukang sudah mengambil — hubungi Bantuan untuk membatalkan');return}
+  if(!confirm('Batalkan pesanan ini? Jika sudah dibayar, dana akan dikembalikan.'))return;
+  const {error}=await sb.from('orders').update({status:'DIBATALKAN'}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,'Pesanan dibatalkan','Dibatalkan pemilik sebelum tukang mengambil');
+  await refresh();openOrder(id);toast('Pesanan dibatalkan');
 }
 async function kirim(id){
   const inp=$('chatin');if(!inp||!inp.value.trim())return;
