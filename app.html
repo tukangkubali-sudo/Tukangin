@@ -1,4 +1,40 @@
-<!DOCTYPE html>
+<!DOCTYPE html>-- Profil: hanya bisa baca profil sendiri (sembunyikan no HP orang lain)
+drop policy if exists "baca profil" on profiles;
+create policy "baca profil sendiri" on profiles for select to authenticated using (auth.uid() = id);
+
+-- Pesanan: hanya boleh dibaca oleh pemilik, tukang terkait, atau jika tersedia (untuk dilamar)
+drop policy if exists "baca pesanan" on orders;
+create policy "baca pesanan" on orders for select to authenticated using (
+  pemilik_id = auth.uid() or tukang_id = auth.uid() or (tukang_id is null and status = 'DANA_DITAHAN')
+);
+
+-- Pesanan: hanya pemilik atau tukang yang ditugaskan yang boleh mengubah
+drop policy if exists "ubah pesanan" on orders;
+create policy "ubah pesanan" on orders for update to authenticated using (
+  auth.uid() = pemilik_id or auth.uid() = tukang_id
+);
+
+-- Kolom untuk fitur penyesuaian harga (dipakai langkah berikutnya)
+alter table orders add column if not exists usulan jsonb;
+
+-- Ambil pekerjaan lewat fungsi aman (mencegah mengubah pesanan orang lain)
+create or replace function ambil_pesanan(p_order uuid)
+returns void language plpgsql security definer as $$
+declare me uuid := auth.uid(); nm text; ini text; rt numeric;
+begin
+  select nama, inisial, rating into nm, ini, rt from profiles where id = me;
+  update orders set tukang_id = me, tukang_nama = nm, tukang_inisial = ini, tukang_rating = rt
+    where id = p_order and tukang_id is null and status = 'DANA_DITAHAN';
+  if not found then raise exception 'Pekerjaan sudah diambil atau tidak tersedia'; end if;
+  insert into activity_log(order_id, judul, detail) values (p_order, 'Tukang menerima', nm || ' menerima pekerjaan');
+end; $$;
+grant execute on function ambil_pesanan(uuid) to authenticated;
+
+-- Catatan aktivitas: hanya pihak terkait pesanan yang boleh menulis
+drop policy if exists "tulis log" on activity_log;
+create policy "tulis log" on activity_log for insert to authenticated with check (
+  exists (select 1 from orders o where o.id = order_id and (o.pemilik_id = auth.uid() or o.tukang_id = auth.uid()))
+);
 <html lang="id">
 <head>
 <meta charset="UTF-8">
