@@ -151,6 +151,8 @@ function fee(h){h=+h||0;const layanan=Math.round(h*FEE.layanan),komisi=Math.roun
 const KAT=[{id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa',ic:'🔧'},{id:'ac',nm:'AC',ic:'❄️'},{id:'las',nm:'Las/Pagar',ic:'🔥'},{id:'cat',nm:'Cat',ic:'🎨'},{id:'bocor',nm:'Atap Bocor',ic:'🏠'},{id:'kunci',nm:'Kunci',ic:'🔑'},{id:'umum',nm:'Lainnya',ic:'🛠️'}];
 const katOf=id=>KAT.find(k=>k.id===id)||KAT[7];
 const ST={MENUNGGU_DANA:{l:'Menunggu Pembayaran',c:'b-wait'},DANA_DITAHAN:{l:'Dana Ditahan',c:'b-hold'},DIKERJAKAN:{l:'Dikerjakan',c:'b-work'},MENUNGGU_KONFIRMASI:{l:'Menunggu Konfirmasi',c:'b-confirm'},SELESAI:{l:'Selesai',c:'b-done'},SENGKETA:{l:'Sengketa',c:'b-dispute'}};
+/* Identitas usaha — EDIT di sini bila perlu */
+const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6281338773717',waTampil:'0813-3877-3717'};
 const otp=()=>String(Math.floor(1000+Math.random()*9000));
 
 /* ====== state ====== */
@@ -283,6 +285,7 @@ function render(){
   const nav=VIEW.orderId?'':navBar();
   $('app').innerHTML=top+body+nav;
   if(VIEW.orderId)renderDetail();
+  else if(VIEW.page)renderPage();
   else if(VIEW.tab==='admin'&&ME.is_admin)renderAdmin();
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
@@ -320,7 +323,7 @@ function renderPemilik(){
     sc.innerHTML=`<div class="hero"><h3>Butuh tukang hari ini?</h3>
       <p>Posting pekerjaan, bayar aman lewat escrow.</p>
       <button onclick="sheetBuat()">＋ Buat Pesanan</button></div>
-      <div class="infoline" style="margin-top:14px">🔒 <span>Uang Anda ditahan sistem, baru diteruskan ke tukang setelah Anda konfirmasi selesai.</span></div>
+      <div class="infoline" style="margin-top:14px">🔒 <span>Pembayaran Anda ditahan Tukangin, baru diteruskan ke tukang setelah Anda konfirmasi pekerjaan selesai.</span></div>
       <div class="sec-title">Pilih Kategori</div>
       <div class="catgrid">${KAT.map(k=>`<button class="cat" onclick="sheetBuat('${k.id}')"><span class="ic">${k.ic}</span><span class="nm">${k.nm}</span></button>`).join('')}</div>
       <div class="sec-title">Pesanan Terbaru</div>
@@ -345,6 +348,9 @@ function akun(){
   return `<div class="card" style="padding:16px"><div style="display:flex;align-items:center;gap:14px">
     <div class="profav" style="background:linear-gradient(135deg,#127A71,#0D5953)">${esc(ME.inisial||initial(ME.nama))}</div>
     <div><h4 style="font-size:18px;font-weight:800">${esc(ME.nama)}</h4><div class="kyc">✔ Akun aktif</div></div></div></div>
+    <div class="sec-title">Informasi</div>
+    ${menuItem('🏢','Tentang Tukangin','Identitas usaha & cara kerja',"openPage('tentang')")}
+    ${menuItem('🛟','Bantuan & Sengketa','Hubungi tim & pertanyaan umum',"openPage('bantuan')")}
     <div class="sec-title">Akun</div>
     <div class="card" style="padding:14px">
       <div class="infoline" style="border:none;padding:0;margin-bottom:12px">📱 <span>WhatsApp: <b>${esc(ME.telp||'-')}</b></span></div>
@@ -395,9 +401,12 @@ function profilT(){
   return `<div class="card" style="padding:16px"><div style="display:flex;align-items:center;gap:14px">
     <div class="profav">${esc(ME.inisial||initial(ME.nama))}</div>
     <div><h4 style="font-size:18px;font-weight:800">${esc(ME.nama)}</h4>${badge}</div></div></div>
-    ${vs!=='terverifikasi'?verifSection():''}
+    ${vs==='terverifikasi'?kartuPenghasilan():verifSection()}
+    <div class="sec-title">Informasi</div>
+    ${menuItem('🏢','Tentang Tukangin','Identitas usaha & cara kerja',"openPage('tentang')")}
+    ${menuItem('🛟','Bantuan & Sengketa','Hubungi tim & pertanyaan umum',"openPage('bantuan')")}
     <div class="sec-title">Akun</div>
-    <div class="card" style="padding:14px"><div class="infoline" style="border:none;padding:0;margin-bottom:12px">📱 <span>WhatsApp: <b>${esc(ME.telp||'-')}</b> · ⭐ ${ME.rating||'5.0'}</span></div>
+    <div class="card" style="padding:14px"><div class="infoline" style="border:none;padding:0;margin-bottom:12px">📱 <span>WhatsApp: <b>${esc(ME.telp||'-')}</b></span></div>
     <button class="btn btn-ghost" onclick="logout()">Keluar</button></div>`;
 }
 function verifBanner(){
@@ -472,6 +481,85 @@ async function tinjau(uid,ok){
   toast(ok?'✅ Tukang diverifikasi':'Ditolak');renderAdmin();
 }
 
+/* ====== PENGHASILAN TUKANG ====== */
+function statTukang(){
+  const mine=ORDERS.filter(o=>o.tukang_id===ME.id);
+  const selesai=mine.filter(o=>o.status==='SELESAI');
+  const aktif=mine.filter(o=>['DANA_DITAHAN','DIKERJAKAN'].includes(o.status));
+  const nunggu=mine.filter(o=>o.status==='MENUNGGU_KONFIRMASI');
+  const sum=arr=>arr.reduce((s,o)=>s+((o.biaya||fee(o.harga)).payout||0),0);
+  return {selesai:selesai.length,aktif:aktif.length,total:sum(selesai),pending:sum(nunggu)};
+}
+function kartuPenghasilan(){
+  const s=statTukang();
+  return `<div class="card" style="padding:0;overflow:hidden;margin:4px 0 4px">
+    <div style="background:linear-gradient(135deg,#093E3A,#0D5953);color:#fff;padding:18px">
+      <div style="font-size:11px;font-weight:700;opacity:.85;text-transform:uppercase">Total Penghasilan</div>
+      <div style="font-size:27px;font-weight:800;margin-top:2px">${rp(s.total)}</div>
+      ${s.pending?`<div style="font-size:12px;opacity:.9;margin-top:5px">⏳ ${rp(s.pending)} menunggu pencairan</div>`:'<div style="font-size:12px;opacity:.85;margin-top:5px">Cair otomatis setelah pelanggan konfirmasi.</div>'}
+    </div>
+    <div style="display:flex;text-align:center">
+      <div style="flex:1;padding:13px 6px"><div style="font-size:19px;font-weight:800">${s.selesai}</div><div style="font-size:11px;color:var(--muted)">Selesai</div></div>
+      <div style="flex:1;padding:13px 6px;border-left:1px solid var(--line);border-right:1px solid var(--line)"><div style="font-size:19px;font-weight:800">${s.aktif}</div><div style="font-size:11px;color:var(--muted)">Dikerjakan</div></div>
+      <div style="flex:1;padding:13px 6px"><div style="font-size:19px;font-weight:800">⭐ ${ME.rating||'5.0'}</div><div style="font-size:11px;color:var(--muted)">Rating</div></div>
+    </div></div>`;
+}
+
+/* ====== HALAMAN TENTANG & BANTUAN ====== */
+function openPage(p){VIEW.page=p;render();const s=$('scroll');if(s)s.scrollTop=0}
+function closePage(){VIEW.page=null;render()}
+function waLink(pesan){return `https://wa.me/${BIZ.wa}?text=${encodeURIComponent(pesan||'')}`}
+function menuItem(ic,judul,sub,onclick){
+  return `<button class="card" style="width:100%;padding:14px;display:flex;align-items:center;gap:13px;text-align:left;margin-bottom:10px;background:#fff;border:1px solid var(--line)" onclick="${onclick}">
+    <div style="font-size:20px">${ic}</div><div style="flex:1"><div style="font-size:14.5px;font-weight:700">${judul}</div><div style="font-size:12px;color:var(--muted)">${sub}</div></div>
+    <div style="color:var(--muted);font-size:20px">›</div></button>`;
+}
+function renderPage(){
+  const sc=$('scroll');
+  if(VIEW.page==='tentang')sc.innerHTML=pageTentang();
+  else if(VIEW.page==='bantuan')sc.innerHTML=pageBantuan();
+  else sc.innerHTML='';
+}
+function pageTentang(){
+  return `<button class="btn btn-ghost" style="margin-bottom:14px" onclick="closePage()">‹ Kembali</button>
+    <div class="card" style="padding:20px;text-align:center">
+      <div style="width:62px;height:62px;border-radius:16px;background:var(--brass);display:grid;place-items:center;font-size:30px;margin:0 auto 10px">🔧</div>
+      <h3 style="font-size:20px;font-weight:800">${BIZ.nama}</h3>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:4px">Tukang tepercaya untuk perbaikan rumah & villa di Bali.</p>
+    </div>
+    <div class="sec-title">Dikelola oleh</div>
+    <div class="card" style="padding:16px">
+      <div style="font-size:14.5px;font-weight:700">${BIZ.badan}</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-top:4px">📍 ${BIZ.alamat}, ${BIZ.kota}</div>
+      <a href="${waLink('Halo '+BIZ.nama+', saya mau bertanya.')}" target="_blank" class="btn btn-primary" style="margin-top:14px;display:block;text-align:center;text-decoration:none">💬 Hubungi via WhatsApp</a>
+    </div>
+    <div class="sec-title">Bagaimana pembayaran dilindungi</div>
+    <div class="card" style="padding:16px">
+      <p style="font-size:13px;color:#314b47;line-height:1.6">Saat Anda memesan, pembayaran <b>ditahan dulu oleh ${BIZ.nama}</b> — belum diteruskan ke tukang. Dana baru kami teruskan ke tukang <b>setelah Anda menekan "Konfirmasi Selesai"</b>. Jika hasil tidak sesuai, ajukan <b>"Ada Masalah"</b> dan dana tetap ditahan sampai diselesaikan bersama.</p>
+      <div class="infoline" style="margin-top:12px">ℹ️ <span>Saat ini ${BIZ.nama} masih tahap awal — penjaminan dana dikelola langsung oleh tim kami (belum otomatis). Kami selalu terbuka soal ini.</span></div>
+    </div>
+    <div class="sec-title">Tukang terverifikasi</div>
+    <div class="card" style="padding:16px"><p style="font-size:13px;color:#314b47;line-height:1.6">Setiap tukang wajib mengunggah <b>KTP & foto wajah</b> yang kami tinjau manual sebelum boleh menerima pekerjaan — demi keamanan & kualitas.</p></div>
+    <p style="text-align:center;font-size:11px;color:var(--muted);margin:16px 0">${BIZ.nama} · ${BIZ.badan} · ${BIZ.kota}</p>`;
+}
+function pageBantuan(){
+  const faq=[['Bagaimana cara membayar?','Setelah memesan, ikuti instruksi pembayaran. Dana ditahan '+BIZ.nama+' dan diteruskan ke tukang hanya setelah Anda konfirmasi selesai.'],
+    ['Pekerjaan tidak sesuai, bagaimana?','Jangan tekan "Konfirmasi & Cairkan". Tekan "Ada Masalah" pada pesanan — dana dibekukan dan tim kami menghubungi Anda.'],
+    ['Kapan tukang dibayar?','Tukang menerima dana (setelah komisi) begitu Anda mengonfirmasi pekerjaan selesai.'],
+    ['Bisa batalkan pesanan?','Selama tukang belum mulai, hubungi kami via WhatsApp untuk pembatalan & pengembalian dana.']];
+  return `<button class="btn btn-ghost" style="margin-bottom:14px" onclick="closePage()">‹ Kembali</button>
+    <div class="card" style="padding:18px;text-align:center">
+      <div style="font-size:30px">🛟</div>
+      <h3 style="font-size:18px;font-weight:800;margin-top:4px">Butuh bantuan?</h3>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:3px">Tim ${BIZ.nama} siap membantu lewat WhatsApp.</p>
+      <a href="${waLink('Halo '+BIZ.nama+', saya butuh bantuan dengan pesanan saya.')}" target="_blank" class="btn btn-primary" style="margin-top:14px;display:block;text-align:center;text-decoration:none">💬 Chat Bantuan (${BIZ.waTampil})</a>
+    </div>
+    <div class="sec-title">Cara kerja sengketa</div>
+    <div class="card" style="padding:16px"><p style="font-size:13px;color:#314b47;line-height:1.6">Jika hasil tidak sesuai, tekan <b>"Ada Masalah"</b> di halaman pesanan. Status berubah jadi <b>Sengketa</b>, dana <b>tetap ditahan</b> ${BIZ.nama}, dan tim menghubungi pemilik & tukang untuk solusi adil (perbaikan, sebagian, atau pengembalian).</p></div>
+    <div class="sec-title">Pertanyaan umum</div>
+    ${faq.map(([q,a])=>`<div class="card" style="padding:14px;margin-bottom:10px"><div style="font-size:13.5px;font-weight:700">${q}</div><p style="font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.55">${a}</p></div>`).join('')}`;
+}
+
 /* ====== BUAT PESANAN ====== */
 let draft={};
 function sheetBuat(kat){
@@ -542,7 +630,7 @@ async function renderDetail(){
   const amPemilik=o.pemilik_id===ME.id;
   let banner,actions='';
   // banner
-  let bst='Dana ditahan sistem',bsub='Aman sampai pemilik konfirmasi.';
+  let bst='Dana ditahan Tukangin',bsub='Aman sampai pemilik konfirmasi.';
   if(o.status==='MENUNGGU_DANA'){bst='Menunggu pembayaran';bsub='Bayar untuk mengaktifkan escrow.'}
   if(o.status==='SELESAI'){bst='Dana telah dicairkan';bsub='Transaksi selesai.'}
   banner=`<div class="escrow-banner"><div class="lk">🔒</div><div class="st">${bst}</div><div class="amt">${rp(b.escrow)}</div><div class="sub">${bsub}</div></div>`;
@@ -604,7 +692,7 @@ function chatBox(o,msgs){
 async function bayar(id){ // <== XENDIT: di sini buat invoice & tunggu webhook. Demo: langsung tahan.
   const o=ORDERS.find(x=>x.id===id);
   await sb.from('orders').update({status:'DANA_DITAHAN'}).eq('id',id);
-  await addLog(id,'Dana masuk escrow',rp((o.biaya||fee(o.harga)).escrow)+' ditahan sistem');
+  await addLog(id,'Dana masuk penjaminan',rp((o.biaya||fee(o.harga)).escrow)+' ditahan Tukangin');
   await refresh();openOrder(id);toast('✅ Dana aman di escrow');
 }
 async function ambil(id){
