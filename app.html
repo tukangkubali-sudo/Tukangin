@@ -287,6 +287,7 @@ function render(){
   if(VIEW.orderId)renderDetail();
   else if(VIEW.page)renderPage();
   else if(VIEW.tab==='admin'&&ME.is_admin)renderAdmin();
+  else if(VIEW.tab==='bantuan')renderBantuan();
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
@@ -307,8 +308,8 @@ function topDetail(){return `<div class="topbar" style="background:#fff;color:va
   <div class="brand"><b style="font-size:16px">Detail Pesanan</b><small style="color:var(--muted)">Status & keamanan dana</small></div></div></div>`}
 function navBar(){
   let tabs=ME.role==='pemilik'
-    ?[['beranda','Beranda','🏠'],['pesanan','Pesanan','📋'],['akun','Akun','👤']]
-    :[['kerja','Cari Kerja','🔍'],['aktif','Aktif','🧰'],['profil','Profil','👤']];
+    ?[['beranda','Beranda','🏠'],['pesanan','Pesanan','📋'],['bantuan','Bantuan','🛟'],['akun','Akun','👤']]
+    :[['kerja','Cari Kerja','🔍'],['aktif','Aktif','🧰'],['bantuan','Bantuan','🛟'],['profil','Profil','👤']];
   if(ME.is_admin)tabs.push(['admin','Admin','🛡️']);
   return `<div class="botnav">${tabs.map(([id,nm,ic])=>`<button class="navb ${VIEW.tab===id?'on':''}" onclick="go('${id}')"><span style="font-size:21px">${ic}</span>${nm}</button>`).join('')}</div>`;
 }
@@ -348,9 +349,6 @@ function akun(){
   return `<div class="card" style="padding:16px"><div style="display:flex;align-items:center;gap:14px">
     <div class="profav" style="background:linear-gradient(135deg,#127A71,#0D5953)">${esc(ME.inisial||initial(ME.nama))}</div>
     <div><h4 style="font-size:18px;font-weight:800">${esc(ME.nama)}</h4><div class="kyc">✔ Akun aktif</div></div></div></div>
-    <div class="sec-title">Informasi</div>
-    ${menuItem('🏢','Tentang Tukangin','Identitas usaha & cara kerja',"openPage('tentang')")}
-    ${menuItem('🛟','Bantuan & Sengketa','Hubungi tim & pertanyaan umum',"openPage('bantuan')")}
     <div class="sec-title">Akun</div>
     <div class="card" style="padding:14px">
       <div class="infoline" style="border:none;padding:0;margin-bottom:12px">📱 <span>WhatsApp: <b>${esc(ME.telp||'-')}</b></span></div>
@@ -402,9 +400,6 @@ function profilT(){
     <div class="profav">${esc(ME.inisial||initial(ME.nama))}</div>
     <div><h4 style="font-size:18px;font-weight:800">${esc(ME.nama)}</h4>${badge}</div></div></div>
     ${vs==='terverifikasi'?kartuPenghasilan():verifSection()}
-    <div class="sec-title">Informasi</div>
-    ${menuItem('🏢','Tentang Tukangin','Identitas usaha & cara kerja',"openPage('tentang')")}
-    ${menuItem('🛟','Bantuan & Sengketa','Hubungi tim & pertanyaan umum',"openPage('bantuan')")}
     <div class="sec-title">Akun</div>
     <div class="card" style="padding:14px"><div class="infoline" style="border:none;padding:0;margin-bottom:12px">📱 <span>WhatsApp: <b>${esc(ME.telp||'-')}</b></span></div>
     <button class="btn btn-ghost" onclick="logout()">Keluar</button></div>`;
@@ -519,6 +514,39 @@ function renderPage(){
   if(VIEW.page==='tentang')sc.innerHTML=pageTentang();
   else if(VIEW.page==='bantuan')sc.innerHTML=pageBantuan();
   else sc.innerHTML='';
+}
+function renderBantuan(){
+  const sc=$('scroll');
+  const faq=[['Bagaimana cara membayar?','Setelah memesan, ikuti instruksi pembayaran. Dana ditahan '+BIZ.nama+' dan diteruskan ke tukang hanya setelah Anda menekan Konfirmasi Selesai.'],
+    ['Pekerjaan tidak sesuai?','Jangan tekan Konfirmasi. Tekan tombol "Ada Masalah" pada pesanan — dana dibekukan dan tim kami menghubungi Anda.'],
+    ['Kapan tukang dibayar?','Tukang menerima uangnya tepat setelah Anda mengonfirmasi pekerjaan selesai.'],
+    ['Bisa batalkan pesanan?','Selama tukang belum mulai, hubungi kami lewat WhatsApp untuk dibatalkan dan dana dikembalikan.']];
+  sc.innerHTML=`
+    <div class="card" style="padding:22px;text-align:center">
+      <div style="font-size:38px">🛟</div>
+      <h3 style="font-size:21px;font-weight:800;margin-top:8px">Butuh bantuan?</h3>
+      <p style="font-size:15px;color:#46605c;margin-top:6px;line-height:1.55">Tim ${BIZ.nama} siap membantu Anda lewat WhatsApp.</p>
+      <a href="${waLink('Halo '+BIZ.nama+', saya butuh bantuan.')}" target="_blank" class="btn btn-primary" style="margin-top:18px;display:block;text-decoration:none;font-size:17px;padding:16px;font-weight:800">💬 Chat WhatsApp</a>
+      <p style="font-size:14px;color:var(--muted);margin-top:10px">${BIZ.waTampil}</p>
+    </div>
+
+    <div class="sec-title" style="font-size:15px">Tentang ${BIZ.nama}</div>
+    <div class="card" style="padding:20px">
+      <div style="font-size:16px;font-weight:800">${BIZ.badan}</div>
+      <div style="font-size:14.5px;color:#46605c;margin-top:6px">📍 ${BIZ.alamat}, ${BIZ.kota}</div>
+      <p style="font-size:15px;color:#314b47;line-height:1.65;margin-top:14px">${BIZ.nama} menghubungkan Anda dengan tukang tepercaya untuk perbaikan rumah & villa di Bali. Setiap tukang sudah kami verifikasi (KTP & foto).</p>
+    </div>
+
+    <div class="sec-title" style="font-size:15px">Pembayaran aman</div>
+    <div class="card" style="padding:20px">
+      <p style="font-size:15px;color:#314b47;line-height:1.7">💰 Uang Anda <b>ditahan dulu oleh ${BIZ.nama}</b>.<br>✅ Baru diteruskan ke tukang <b>setelah Anda menekan "Konfirmasi Selesai"</b>.<br>⚠️ Kalau ada masalah, tekan <b>"Ada Masalah"</b> — dana <b>dibekukan</b> dan kami bantu selesaikan dengan adil.</p>
+    </div>
+
+    <div class="sec-title" style="font-size:15px">Pertanyaan umum</div>
+    ${faq.map(([q,a])=>`<div class="card" style="padding:18px;margin-bottom:11px"><div style="font-size:15.5px;font-weight:800">${q}</div><p style="font-size:14.5px;color:#46605c;margin-top:7px;line-height:1.6">${a}</p></div>`).join('')}
+
+    <a href="${waLink('Halo '+BIZ.nama+', saya butuh bantuan.')}" target="_blank" class="btn btn-primary" style="display:block;text-decoration:none;font-size:16px;padding:15px;font-weight:800;margin-top:4px">💬 Masih bingung? Chat kami</a>
+    <p style="text-align:center;font-size:12.5px;color:var(--muted);margin:16px 0">${BIZ.nama} · ${BIZ.badan} · ${BIZ.kota}</p>`;
 }
 function pageTentang(){
   return `<button class="btn btn-ghost" style="margin-bottom:14px" onclick="closePage()">‹ Kembali</button>
