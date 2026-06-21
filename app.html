@@ -478,9 +478,8 @@ async function renderDetail(){
     if(o.status==='DANA_DITAHAN'&&o.tukang_id===ME.id)actions=`<button class="btn btn-primary" onclick="checkin('${o.id}')">📍 Check-in di Lokasi (GPS)</button>`;
     else if(o.status==='DIKERJAKAN'&&o.tukang_id===ME.id){
       const ok=o.foto_sebelum&&o.foto_sesudah;
-      actions=`<div class="card" style="padding:14px;margin-bottom:12px"><h5 style="font-size:14px;font-weight:700;margin-bottom:10px">Bukti Pekerjaan</h5>
-        <div style="display:flex;gap:10px"><button class="btn btn-ghost btn-sm" style="flex:1" onclick="foto('${o.id}','sebelum')">${o.foto_sebelum?'✅ Sebelum':'📷 Sebelum'}</button>
-        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="foto('${o.id}','sesudah')">${o.foto_sesudah?'✅ Sesudah':'📷 Sesudah'}</button></div></div>
+      actions=`<div class="card" style="padding:14px;margin-bottom:12px"><h5 style="font-size:14px;font-weight:700;margin-bottom:10px">Bukti Pekerjaan (foto asli)</h5>
+        <div style="display:flex;gap:10px">${fotoBtn(o,'sebelum')}${fotoBtn(o,'sesudah')}</div></div>
         <button class="btn ${ok?'btn-primary':'btn-ghost'}" ${ok?'':'disabled'} onclick="inputKode('${o.id}')">🔑 Selesaikan — Masukkan Kode</button>
         <p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">${ok?'Minta kode 4 digit ke pelanggan.':'Unggah kedua foto dulu.'}</p>`;
     }
@@ -505,6 +504,7 @@ async function renderDetail(){
       <span class="badge ${s.c}">${s.l}</span></div>
       <div class="divider"></div><p style="font-size:13.5px;color:#37514d">${esc(o.desk||'')}</p></div>
     ${tukangInfo}
+    ${fotoView(o)}
     <div class="sec-title">Rincian ${amPemilik?'Pembayaran':'Bayaran Anda'}</div>${feeBlock}
     ${usulanSection(o,amPemilik)}
     ${kodeCard}
@@ -576,11 +576,49 @@ async function kirimRating(id){
   if(error){toast('Gagal: '+error.message);return}
   _star=0;await refresh();openOrder(id);toast('Terima kasih atas penilaian Anda');
 }
-async function foto(id,jenis){
-  const upd=jenis==='sebelum'?{foto_sebelum:true}:{foto_sesudah:true};
-  await sb.from('orders').update(upd).eq('id',id);
-  await addLog(id,'Foto bukti','Foto '+jenis+' diunggah');
-  await refresh();openOrder(id);toast('Foto '+jenis+' tersimpan');
+function fotoBtn(o,jenis){
+  const url=jenis==='sebelum'?o.foto_sebelum_url:o.foto_sesudah_url;
+  if(url)return `<div style="flex:1"><img src="${url}" onclick="window.open('${url}')" style="width:100%;height:92px;object-fit:cover;border-radius:11px;border:1px solid var(--line)"><div style="font-size:10.5px;color:var(--ok);text-align:center;margin-top:3px;font-weight:600">✓ ${jenis} · ketuk ganti</div><button onclick="pilihFoto('${o.id}','${jenis}')" style="display:none"></button></div>`;
+  return `<button class="uploadbox" style="flex:1;border:1.5px dashed var(--line);border-radius:13px;padding:18px;background:#fff" onclick="pilihFoto('${o.id}','${jenis}')"><div style="font-size:22px">📷</div><div style="font-size:11.5px;font-weight:600;margin-top:3px">Foto ${jenis}</div></button>`;
+}
+function fotoView(o){
+  if(!o.foto_sebelum_url&&!o.foto_sesudah_url)return '';
+  const cell=(url,lbl)=>`<div style="flex:1;text-align:center">${url?`<img src="${url}" onclick="window.open('${url}')" style="width:100%;height:110px;object-fit:cover;border-radius:12px;border:1px solid var(--line)">`:`<div style="height:110px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;color:var(--muted)">—</div>`}<div style="font-size:11px;color:var(--muted);margin-top:3px">${lbl}</div></div>`;
+  return `<div class="sec-title">Bukti Pekerjaan</div><div class="card" style="padding:12px"><div style="display:flex;gap:10px">${cell(o.foto_sebelum_url,'Sebelum')}${cell(o.foto_sesudah_url,'Sesudah')}</div></div>`;
+}
+function pilihFoto(id,jenis){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';inp.capture='environment';
+  inp.onchange=()=>{if(inp.files&&inp.files[0])uploadFoto(id,jenis,inp.files[0])};
+  inp.click();
+}
+async function uploadFoto(id,jenis,file){
+  toast('Mengunggah foto…');
+  try{
+    const blob=await kompresFoto(file);
+    const path=`${id}/${jenis}-${Date.now()}.jpg`;
+    const {error:ue}=await sb.storage.from('bukti').upload(path,blob,{contentType:'image/jpeg',upsert:true});
+    if(ue)throw ue;
+    const {data:{publicUrl}}=sb.storage.from('bukti').getPublicUrl(path);
+    const upd=jenis==='sebelum'?{foto_sebelum:true,foto_sebelum_url:publicUrl}:{foto_sesudah:true,foto_sesudah_url:publicUrl};
+    const {error}=await sb.from('orders').update(upd).eq('id',id);
+    if(error)throw error;
+    await addLog(id,'Foto bukti diunggah',`Foto ${jenis} ditambahkan`);
+    await refresh();openOrder(id);toast('✅ Foto '+jenis+' terunggah');
+  }catch(e){toast('Gagal unggah: '+(e.message||e))}
+}
+function kompresFoto(file){
+  return new Promise((res,rej)=>{
+    const img=new Image(),url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const max=1280;let w=img.width,h=img.height;
+      if(w>h&&w>max){h=Math.round(h*max/w);w=max}else if(h>max){w=Math.round(w*max/h);h=max}
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);URL.revokeObjectURL(url);
+      c.toBlob(b=>b?res(b):rej('gagal proses gambar'),'image/jpeg',0.7);
+    };
+    img.onerror=()=>rej('gambar gagal dimuat');img.src=url;
+  });
 }
 function inputKode(id){
   openSheet(`<div style="padding:20px 18px;text-align:center"><div style="font-size:32px">🔑</div>
