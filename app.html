@@ -593,29 +593,25 @@ function pilihFoto(id,jenis){
   inp.click();
 }
 async function uploadFoto(id,jenis,file){
-  toast('Mengunggah foto…');
+  toast('Memproses foto…');
   try{
-    const blob=await kompresFoto(file);
-    const path=`${id}/${jenis}-${Date.now()}.jpg`;
-    const {error:ue}=await sb.storage.from('bukti').upload(path,blob,{contentType:'image/jpeg',upsert:true});
-    if(ue)throw ue;
-    const {data:{publicUrl}}=sb.storage.from('bukti').getPublicUrl(path);
-    const upd=jenis==='sebelum'?{foto_sebelum:true,foto_sebelum_url:publicUrl}:{foto_sesudah:true,foto_sesudah_url:publicUrl};
+    const dataUrl=await kompresFoto(file);
+    const upd=jenis==='sebelum'?{foto_sebelum:true,foto_sebelum_url:dataUrl}:{foto_sesudah:true,foto_sesudah_url:dataUrl};
     const {error}=await sb.from('orders').update(upd).eq('id',id);
     if(error)throw error;
     await addLog(id,'Foto bukti diunggah',`Foto ${jenis} ditambahkan`);
-    await refresh();openOrder(id);toast('✅ Foto '+jenis+' terunggah');
-  }catch(e){toast('Gagal unggah: '+(e.message||e))}
+    await refresh();openOrder(id);toast('✅ Foto '+jenis+' tersimpan');
+  }catch(e){toast('Gagal: '+(e.message||e))}
 }
 function kompresFoto(file){
   return new Promise((res,rej)=>{
     const img=new Image(),url=URL.createObjectURL(file);
     img.onload=()=>{
-      const max=1280;let w=img.width,h=img.height;
+      const max=1000;let w=img.width,h=img.height;
       if(w>h&&w>max){h=Math.round(h*max/w);w=max}else if(h>max){w=Math.round(w*max/h);h=max}
       const c=document.createElement('canvas');c.width=w;c.height=h;
       c.getContext('2d').drawImage(img,0,0,w,h);URL.revokeObjectURL(url);
-      c.toBlob(b=>b?res(b):rej('gagal proses gambar'),'image/jpeg',0.7);
+      res(c.toDataURL('image/jpeg',0.6));
     };
     img.onerror=()=>rej('gambar gagal dimuat');img.src=url;
   });
