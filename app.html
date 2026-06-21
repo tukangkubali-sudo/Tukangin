@@ -283,6 +283,7 @@ function render(){
   const nav=VIEW.orderId?'':navBar();
   $('app').innerHTML=top+body+nav;
   if(VIEW.orderId)renderDetail();
+  else if(VIEW.tab==='admin'&&ME.is_admin)renderAdmin();
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
@@ -302,9 +303,10 @@ function topDetail(){return `<div class="topbar" style="background:#fff;color:va
   <div class="tb-row"><button onclick="back()" style="font-size:24px;width:30px">‹</button>
   <div class="brand"><b style="font-size:16px">Detail Pesanan</b><small style="color:var(--muted)">Status & keamanan dana</small></div></div></div>`}
 function navBar(){
-  const tabs=ME.role==='pemilik'
+  let tabs=ME.role==='pemilik'
     ?[['beranda','Beranda','🏠'],['pesanan','Pesanan','📋'],['akun','Akun','👤']]
     :[['kerja','Cari Kerja','🔍'],['aktif','Aktif','🧰'],['profil','Profil','👤']];
+  if(ME.is_admin)tabs.push(['admin','Admin','🛡️']);
   return `<div class="botnav">${tabs.map(([id,nm,ic])=>`<button class="navb ${VIEW.tab===id?'on':''}" onclick="go('${id}')"><span style="font-size:21px">${ic}</span>${nm}</button>`).join('')}</div>`;
 }
 function go(t){VIEW={tab:t,orderId:null};render();const s=$('scroll');if(s)s.scrollTop=0}
@@ -354,7 +356,7 @@ function renderTukang(){
   const sc=$('scroll');
   if(VIEW.tab==='kerja'){
     const a=tukangAvailable();
-    sc.innerHTML=`<div class="infoline">💰 <span>Hanya pekerjaan ber-escrow (dana sudah ditahan) yang tampil — pasti dibayar.</span></div>
+    sc.innerHTML=`${verifBanner()}<div class="infoline">💰 <span>Hanya pekerjaan ber-escrow (dana sudah ditahan) yang tampil — pasti dibayar.</span></div>
       <div style="display:flex;justify-content:space-between;align-items:center"><div class="sec-title" style="margin:14px 2px 6px">Pekerjaan Tersedia</div><button class="btn-sm btn-ghost" onclick="refresh()">⟳</button></div>
       ${a.map(jobCard).join('')||emptyBox('🔍','Belum ada pekerjaan','Tarik ⟳ untuk menyegarkan.')}`;
   }else if(VIEW.tab==='aktif'){
@@ -374,7 +376,7 @@ function jobCard(o){
     <div class="divider"></div>
     <div style="display:flex;align-items:center;justify-content:space-between">
       <div><div style="font-size:11px;color:var(--muted)">Diterima bersih</div><div style="font-size:18px;font-weight:800;color:var(--ok)">${rp(b.payout)}</div></div>
-      <button class="btn btn-primary btn-sm" onclick="ambil('${o.id}')">Ambil</button></div></div>`;
+      ${ME.verif_status==='terverifikasi'?`<button class="btn btn-primary btn-sm" onclick="ambil('${o.id}')">Ambil</button>`:`<button class="btn btn-ghost btn-sm" onclick="go('profil')">🔒 Verifikasi dulu</button>`}</div></div>`;
 }
 function orderCardT(o){
   const k=katOf(o.kat),s=ST[o.status]||ST.DANA_DITAHAN,b=o.biaya||fee(o.harga);
@@ -385,12 +387,89 @@ function orderCardT(o){
     <div class="price" style="color:var(--ok)">${rp(b.payout)}<small>bersih</small></div></div></div>`;
 }
 function profilT(){
+  const vs=ME.verif_status||'belum';
+  const badge={terverifikasi:'<div class="kyc">✔ Terverifikasi</div>',
+    menunggu:'<div class="kyc" style="background:#FEF3E0;color:var(--hold)">⏳ Menunggu verifikasi</div>',
+    ditolak:'<div class="kyc" style="background:#FBE9E7;color:var(--bad)">❌ Verifikasi ditolak</div>',
+    belum:'<div class="kyc" style="background:#FBE9E7;color:var(--bad)">⚠️ Belum terverifikasi</div>'}[vs]||'';
   return `<div class="card" style="padding:16px"><div style="display:flex;align-items:center;gap:14px">
     <div class="profav">${esc(ME.inisial||initial(ME.nama))}</div>
-    <div><h4 style="font-size:18px;font-weight:800">${esc(ME.nama)}</h4><div class="kyc">✔ Terverifikasi</div></div></div></div>
+    <div><h4 style="font-size:18px;font-weight:800">${esc(ME.nama)}</h4>${badge}</div></div></div>
+    ${vs!=='terverifikasi'?verifSection():''}
     <div class="sec-title">Akun</div>
     <div class="card" style="padding:14px"><div class="infoline" style="border:none;padding:0;margin-bottom:12px">📱 <span>WhatsApp: <b>${esc(ME.telp||'-')}</b> · ⭐ ${ME.rating||'5.0'}</span></div>
     <button class="btn btn-ghost" onclick="logout()">Keluar</button></div>`;
+}
+function verifBanner(){
+  if(ME.verif_status==='terverifikasi')return '';
+  const map={belum:['⚠️','Akun belum terverifikasi','Unggah KTP & selfie agar bisa ambil pekerjaan.','Verifikasi Sekarang'],
+    menunggu:['⏳','Menunggu verifikasi','Identitas Anda sedang ditinjau admin.',''],
+    ditolak:['❌','Verifikasi ditolak','Unggah ulang KTP & selfie yang jelas.','Unggah Ulang']};
+  const [ic,t,d,btn]=map[ME.verif_status||'belum']||map.belum;
+  return `<div class="card" style="padding:16px;border:1.5px solid var(--brass);background:var(--hold-bg);margin-bottom:4px">
+    <div style="font-size:22px">${ic}</div><h4 style="font-size:15px;font-weight:800;margin-top:4px">${t}</h4>
+    <p style="font-size:12.5px;color:#8a6a2a;margin-top:3px">${d}</p>
+    ${btn?`<button class="btn btn-brass" style="margin-top:12px" onclick="go('profil')">${btn}</button>`:''}</div>`;
+}
+function verifSection(){
+  if(ME.verif_status==='menunggu')return `<div class="card" style="padding:16px;text-align:center;margin-top:12px"><div style="font-size:28px">⏳</div><h5 style="font-weight:800;margin-top:4px">Menunggu peninjauan</h5><p style="font-size:12.5px;color:var(--muted)">Admin akan memverifikasi identitas Anda. Anda bisa ambil kerja setelah disetujui.</p></div>`;
+  const cell=(url,jenis,lbl,ic)=>url
+    ?`<div style="flex:1"><img src="${url}" style="width:100%;height:90px;object-fit:cover;border-radius:11px;border:1px solid var(--line)"><div onclick="pilihKyc('${jenis}')" style="font-size:10.5px;color:var(--ok);text-align:center;margin-top:3px;font-weight:600">✓ ${lbl} · ketuk ganti</div></div>`
+    :`<button class="uploadbox" style="flex:1;border:1.5px dashed var(--line);border-radius:13px;padding:16px;background:#fff" onclick="pilihKyc('${jenis}')"><div style="font-size:22px">${ic}</div><div style="font-size:11px;font-weight:600;margin-top:3px">${lbl}</div></button>`;
+  const ok=ME.ktp_url&&ME.wajah_url;
+  return `<div class="sec-title">Verifikasi Identitas</div>
+    <div class="card" style="padding:16px">
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px">Demi keamanan pelanggan, unggah <b>foto KTP</b> dan <b>selfie wajah</b>. Data ini <b>hanya dilihat admin</b> Tukangin, tidak ditampilkan ke publik.</p>
+      <div style="display:flex;gap:10px">${cell(ME.ktp_url,'ktp','Foto KTP','🪪')}${cell(ME.wajah_url,'wajah','Selfie','🤳')}</div>
+      <button class="btn ${ok?'btn-primary':'btn-ghost'}" ${ok?'':'disabled'} style="margin-top:14px" onclick="kirimVerifikasi()">${ok?'Kirim untuk Verifikasi':'Unggah kedua foto dulu'}</button>
+    </div>`;
+}
+function pilihKyc(jenis){
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.capture=jenis==='wajah'?'user':'environment';
+  inp.onchange=()=>{if(inp.files&&inp.files[0])uploadKyc(jenis,inp.files[0])};inp.click();
+}
+async function uploadKyc(jenis,file){
+  toast('Memproses…');
+  try{
+    const dataUrl=await kompresFoto(file);
+    const col=jenis==='ktp'?'ktp_url':'wajah_url';
+    const {error}=await sb.from('profiles').update({[col]:dataUrl}).eq('id',ME.id);
+    if(error)throw error;
+    ME[col]=dataUrl;render();toast('✅ Foto tersimpan');
+  }catch(e){toast('Gagal: '+(e.message||e))}
+}
+async function kirimVerifikasi(){
+  if(!ME.ktp_url||!ME.wajah_url){toast('Unggah KTP & selfie dulu');return}
+  const {error}=await sb.from('profiles').update({verif_status:'menunggu'}).eq('id',ME.id);
+  if(error){toast('Gagal: '+error.message);return}
+  ME.verif_status='menunggu';render();toast('Terkirim — menunggu peninjauan admin');
+}
+
+/* ====== ADMIN: verifikasi tukang ====== */
+async function renderAdmin(){
+  const sc=$('scroll');sc.innerHTML=`<div class="loadwrap" style="min-height:150px"><div class="spinner"></div></div>`;
+  const {data,error}=await sb.from('profiles').select('*').eq('role','tukang').order('dibuat',{ascending:false});
+  if(error){sc.innerHTML=`<div class="empty"><p>Gagal memuat: ${esc(error.message)}</p></div>`;return}
+  const list=data||[], pending=list.filter(p=>p.verif_status==='menunggu'), done=list.filter(p=>p.verif_status==='terverifikasi'||p.verif_status==='ditolak');
+  sc.innerHTML=`<div class="sec-title">Menunggu Verifikasi${pending.length?` · ${pending.length}`:''}</div>
+    ${pending.length?pending.map(adminCard).join(''):emptyBox('✅','Tidak ada antrean','Semua tukang sudah ditinjau.')}
+    <div class="sec-title">Sudah Ditinjau</div>
+    ${done.length?done.map(p=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><div class="tukav" style="width:34px;height:34px;font-size:13px">${esc(p.inisial||initial(p.nama))}</div><div style="flex:1"><b style="font-size:13.5px">${esc(p.nama)}</b></div><span class="badge ${p.verif_status==='terverifikasi'?'b-done':'b-dispute'}">${p.verif_status}</span></div>`).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:4px 2px">Belum ada.</p>'}`;
+}
+function adminCard(p){
+  const img=(url)=>url?`<img src="${url}" onclick="window.open('${url}')" style="width:100%;height:100px;object-fit:cover;border-radius:10px;border:1px solid var(--line)">`:'<div style="height:100px;background:var(--surface);border-radius:10px;display:grid;place-items:center;color:var(--muted)">—</div>';
+  return `<div class="card" style="padding:16px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:12px"><div class="tukav" style="width:42px;height:42px;font-size:15px">${esc(p.inisial||initial(p.nama))}</div>
+      <div><h4 style="font-size:15px;font-weight:700">${esc(p.nama)}</h4><div class="meta">📱 ${esc(p.telp||'-')}</div></div></div>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <div style="flex:1"><div style="font-size:10.5px;color:var(--muted);margin-bottom:3px">KTP</div>${img(p.ktp_url)}</div>
+      <div style="flex:1"><div style="font-size:10.5px;color:var(--muted);margin-bottom:3px">Selfie</div>${img(p.wajah_url)}</div></div>
+    <div style="display:flex;gap:9px;margin-top:12px"><button class="btn btn-danger" style="flex:1" onclick="tinjau('${p.id}',false)">Tolak</button><button class="btn btn-primary" style="flex:1" onclick="tinjau('${p.id}',true)">Setujui</button></div></div>`;
+}
+async function tinjau(uid,ok){
+  const {error}=await sb.from('profiles').update({verif_status:ok?'terverifikasi':'ditolak',kyc:ok}).eq('id',uid);
+  if(error){toast('Gagal: '+error.message);return}
+  toast(ok?'✅ Tukang diverifikasi':'Ditolak');renderAdmin();
 }
 
 /* ====== BUAT PESANAN ====== */
@@ -529,6 +608,7 @@ async function bayar(id){ // <== XENDIT: di sini buat invoice & tunggu webhook. 
   await refresh();openOrder(id);toast('✅ Dana aman di escrow');
 }
 async function ambil(id){
+  if(ME.verif_status!=='terverifikasi'){toast('Selesaikan verifikasi identitas dulu');VIEW.tab='profil';render();return}
   const {error}=await sb.rpc('ambil_pesanan',{p_order:id});
   if(error){toast('Gagal: '+error.message);return}
   VIEW.tab='aktif';await refresh();openOrder(id);toast('Pekerjaan diambil');
