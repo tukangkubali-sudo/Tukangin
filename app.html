@@ -466,7 +466,7 @@ function verifSection(){
 function pilihKyc(jenis){
   const inp=document.createElement('input');
   inp.type='file';inp.accept='image/*';inp.setAttribute('capture',jenis==='wajah'?'user':'environment');
-  inp.style.cssText='position:fixed;left:-9999px';
+  inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
   inp.onchange=()=>{if(inp.files&&inp.files[0])uploadKyc(jenis,inp.files[0]);inp.remove();};
   document.body.appendChild(inp);inp.click();
 }
@@ -987,7 +987,7 @@ function fotoView(o){
 function pilihBukti(id){
   const inp=document.createElement('input');
   inp.type='file';inp.accept='image/*';
-  inp.style.cssText='position:fixed;left:-9999px';
+  inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
   inp.onchange=()=>{if(inp.files&&inp.files[0])uploadBukti(id,inp.files[0]);inp.remove();};
   document.body.appendChild(inp);inp.click();
 }
@@ -1004,7 +1004,7 @@ async function uploadBukti(id,file){
 function pilihFoto(id,jenis){
   const inp=document.createElement('input');
   inp.type='file';inp.accept='image/*';inp.setAttribute('capture','environment');
-  inp.style.cssText='position:fixed;left:-9999px';
+  inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
   inp.onchange=()=>{if(inp.files&&inp.files[0])uploadFoto(id,jenis,inp.files[0]);inp.remove();};
   document.body.appendChild(inp);inp.click();
 }
