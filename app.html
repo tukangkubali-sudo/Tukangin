@@ -152,7 +152,7 @@ const KAT=[{id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa',ic:'🔧'},
 const katOf=id=>KAT.find(k=>k.id===id)||KAT[7];
 const ST={MENUNGGU_DANA:{l:'Menunggu Pembayaran',c:'b-wait'},DANA_DITAHAN:{l:'Dana Ditahan',c:'b-hold'},DIKERJAKAN:{l:'Dikerjakan',c:'b-work'},MENUNGGU_KONFIRMASI:{l:'Menunggu Konfirmasi',c:'b-confirm'},SELESAI:{l:'Selesai',c:'b-done'},SENGKETA:{l:'Sengketa',c:'b-dispute'},DIBATALKAN:{l:'Dibatalkan',c:'b-dispute'}};
 /* Identitas usaha — EDIT di sini bila perlu */
-const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6281338773717',waTampil:'0813-3877-3717',bank:'[BANK]',rek:'[NOMOR REKENING]',rekNama:'Guna Merta Home Service'};
+const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6281338773717',waTampil:'0813-3877-3717',bank:'[BANK]',rek:'[NOMOR REKENING]',rekNama:'Guna Merta Home Service',garansiHari:7};
 const otp=()=>String(Math.floor(1000+Math.random()*9000));
 
 /* ====== state ====== */
@@ -324,7 +324,19 @@ function renderPemilik(){
     sc.innerHTML=`<div class="hero"><h3>Butuh tukang hari ini?</h3>
       <p>Posting pekerjaan, bayar aman lewat escrow.</p>
       <button onclick="sheetBuat()">＋ Buat Pesanan</button></div>
-      <div class="infoline" style="margin-top:14px">🔒 <span>Pembayaran Anda ditahan Tukangin, baru diteruskan ke tukang setelah Anda konfirmasi pekerjaan selesai.</span></div>
+      <div class="card" style="padding:15px;margin-top:13px">
+        <div style="display:flex;gap:6px;text-align:center">
+          <div style="flex:1"><div style="font-size:21px">📝</div><div style="font-size:11.5px;font-weight:800;margin-top:2px">1. Pesan</div><div style="font-size:10px;color:var(--muted)">pilih kategori</div></div>
+          <div style="flex:1"><div style="font-size:21px">🔒</div><div style="font-size:11.5px;font-weight:800;margin-top:2px">2. Bayar</div><div style="font-size:10px;color:var(--muted)">dana ditahan</div></div>
+          <div style="flex:1"><div style="font-size:21px">✅</div><div style="font-size:11.5px;font-weight:800;margin-top:2px">3. Selesai</div><div style="font-size:10px;color:var(--muted)">dana cair</div></div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;border-top:1px solid var(--line);margin-top:12px;padding-top:12px">
+          <span style="font-size:10.5px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:#1b4d47;padding:5px 10px;border-radius:999px">✔ Tukang terverifikasi</span>
+          <span style="font-size:10.5px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:#1b4d47;padding:5px 10px;border-radius:999px">🔒 Dana aman</span>
+          <span style="font-size:10.5px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:#1b4d47;padding:5px 10px;border-radius:999px">🛡️ Garansi ${BIZ.garansiHari} hari</span>
+        </div>
+        <p style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:10px">Pembayaran ditahan ${BIZ.nama} sampai Anda konfirmasi pekerjaan selesai.</p>
+      </div>
       <div class="sec-title">Pilih Kategori</div>
       <div class="catgrid">${KAT.map(k=>`<button class="cat" onclick="sheetBuat('${k.id}')"><span class="ic">${k.ic}</span><span class="nm">${k.nm}</span></button>`).join('')}</div>
       <div class="sec-title">Pesanan Terbaru</div>
@@ -562,6 +574,11 @@ function renderBantuan(){
       <p style="font-size:15px;color:#314b47;line-height:1.7">💰 Uang Anda <b>ditahan dulu oleh ${BIZ.nama}</b>.<br>✅ Baru diteruskan ke tukang <b>setelah Anda menekan "Konfirmasi Selesai"</b>.<br>⚠️ Kalau ada masalah, tekan <b>"Ada Masalah"</b> — dana <b>dibekukan</b> dan kami bantu selesaikan dengan adil.</p>
     </div>
 
+    <div class="sec-title" style="font-size:15px">Garansi Pengerjaan</div>
+    <div class="card" style="padding:20px">
+      <p style="font-size:15px;color:#314b47;line-height:1.7">🛡️ Setiap pekerjaan bergaransi <b>${BIZ.garansiHari} hari</b>. Kalau dalam ${BIZ.garansiHari} hari ada masalah dari hasil kerja tukang, hubungi kami — <b>diperbaiki tanpa biaya tambahan</b>.</p>
+    </div>
+
     <div class="sec-title" style="font-size:15px">Pertanyaan umum</div>
     ${faq.map(([q,a])=>`<div class="card" style="padding:18px;margin-bottom:11px"><div style="font-size:15.5px;font-weight:800">${q}</div><p style="font-size:14.5px;color:#46605c;margin-top:7px;line-height:1.6">${a}</p></div>`).join('')}
 
@@ -750,7 +767,7 @@ async function renderDetail(){
   const kodeCard=(amPemilik&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))
     ?`<div class="sec-title">Kode Selesai Anda</div><div class="otpcard"><div class="lab">🔑 Berikan saat puas</div><div class="code">${o.kode_selesai}</div><p class="note">Sebutkan ke tukang hanya jika pekerjaan benar selesai. Mencegah klaim selesai palsu.</p></div>`:'';
 
-  const tukangInfo=o.tukang_nama?`<div class="card" style="padding:14px;margin-top:12px"><div style="display:flex;align-items:center;gap:12px"><div class="profav" style="width:42px;height:42px;font-size:15px">${esc(o.tukang_inisial||initial(o.tukang_nama))}</div><div><h4 style="font-size:14.5px;font-weight:700">${esc(o.tukang_nama)} <span style="color:var(--ok)">✔</span></h4><div class="meta">⭐ ${o.tukang_rating||'5.0'}</div></div></div></div>`:'';
+  const tukangInfo=o.tukang_nama?`<div class="card" style="padding:14px;margin-top:12px;cursor:pointer" onclick="openTukangProfil('${o.tukang_id}')"><div style="display:flex;align-items:center;gap:12px"><div class="profav" style="width:42px;height:42px;font-size:15px">${esc(o.tukang_inisial||initial(o.tukang_nama))}</div><div style="flex:1"><h4 style="font-size:14.5px;font-weight:700">${esc(o.tukang_nama)} <span style="color:var(--ok)">✔</span></h4><div class="meta">⭐ ${o.tukang_rating||'5.0'}</div></div><span style="color:#0D5953;font-size:12px;font-weight:700;white-space:nowrap">Lihat profil ›</span></div></div>`:'';
 
   const feeBlock=amPemilik
     ?`<div class="fee"><div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Biaya layanan <span class="sub">(5%)</span></span><span>${rp(b.layanan)}</span></div><div class="feerow tot"><span>Total escrow</span><span>${rp(b.escrow)}</span></div></div>`
@@ -1001,6 +1018,30 @@ async function batalUsulan(id){
 }
 
 /* ====== sheet ====== */
+async function openTukangProfil(id){
+  if(!id)return;
+  openSheet(`<div style="padding:32px;text-align:center"><div class="spinner"></div></div>`);
+  const {data,error}=await sb.rpc('tukang_publik',{p_id:id});
+  if(error||!data){closeSheet();toast('Profil belum bisa dimuat');return}
+  const t=data;
+  const keah=(t.keahlian||[]).map(k=>`<span style="font-size:11.5px;background:var(--surface);border:1px solid var(--line);padding:4px 10px;border-radius:999px">${esc(k)}</span>`).join(' ');
+  const foto=(t.foto||[]);
+  const gal=foto.length?`<div class="sec-title">Hasil Kerja</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">${foto.map(u=>`<img src="${u}" onclick="window.open('${u}')" style="width:100%;height:82px;object-fit:cover;border-radius:9px;border:1px solid var(--line)">`).join('')}</div>`:'';
+  openSheet(`<div style="padding:20px 20px 28px">
+    <div style="display:flex;justify-content:flex-end"><button onclick="closeSheet()" style="font-size:22px;background:none;border:none;color:var(--muted)">✕</button></div>
+    <div style="text-align:center">
+      <div class="profav" style="width:64px;height:64px;font-size:24px;margin:0 auto">${esc(t.inisial||initial(t.nama||'T'))}</div>
+      <h3 style="font-size:19px;font-weight:800;margin-top:8px">${esc(t.nama||'Tukang')}</h3>
+      ${t.verif==='terverifikasi'?'<div class="kyc" style="display:inline-block;margin-top:5px">✔ Terverifikasi</div>':''}
+    </div>
+    <div style="display:flex;text-align:center;margin:18px 0">
+      <div style="flex:1"><div style="font-size:20px;font-weight:800">⭐ ${t.rating||'5.0'}</div><div style="font-size:11px;color:var(--muted)">Rating</div></div>
+      <div style="flex:1;border-left:1px solid var(--line)"><div style="font-size:20px;font-weight:800">${t.selesai||0}</div><div style="font-size:11px;color:var(--muted)">Pekerjaan selesai</div></div>
+    </div>
+    ${keah?`<div class="sec-title">Keahlian</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${keah}</div>`:''}
+    ${gal}
+  </div>`);
+}
 function openSheet(html){
   let ov=$('ov');
   if(!ov){ov=document.createElement('div');ov.id='ov';ov.style.cssText='position:fixed;inset:0;background:rgba(8,30,28,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center';ov.onclick=e=>{if(e.target===ov)closeSheet()};document.body.appendChild(ov)}
