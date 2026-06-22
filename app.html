@@ -803,7 +803,8 @@ async function renderDetail(){
         <p style="font-size:11.5px;color:#8a6a2a;margin-top:9px">Dana ditahan Tukangin sampai pekerjaan selesai. Jika batal, dana dikembalikan.</p>
       </div>
       <button class="btn btn-primary" style="margin-top:12px" onclick="bayar('${o.id}')">✅ Saya sudah transfer</button>
-      <a href="${waLink('Halo '+BIZ.nama+', ini bukti transfer untuk pesanan: '+(o.judul||''))}" target="_blank" class="btn btn-ghost" style="margin-top:9px;display:block;text-decoration:none;text-align:center">📷 Kirim bukti via WhatsApp</a>
+      ${o.bukti_transfer_url?`<div style="margin-top:10px;text-align:center"><img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:130px;border-radius:11px;border:1px solid var(--line)"><div style="font-size:11px;color:var(--ok);font-weight:600;margin-top:4px">✓ Bukti transfer terunggah</div></div>`:''}
+      <button class="btn btn-ghost" style="margin-top:9px" onclick="pilihBukti('${o.id}')">📷 ${o.bukti_transfer_url?'Ganti':'Unggah'} Bukti Transfer</button>
       <button class="btn btn-ghost" style="margin-top:9px" onclick="batal('${o.id}')">Batalkan Pesanan</button>`;
     else if(o.status==='MENUNGGU_KONFIRMASI')actions=`<div class="infoline" style="margin-bottom:12px">📷 <span>Tukang menyatakan selesai (foto sebelum & sesudah terkirim).</span></div><button class="btn btn-primary" onclick="konfirmasi('${o.id}')">✔ Konfirmasi & Cairkan Dana</button><button class="btn btn-danger" style="margin-top:9px" onclick="sengketa('${o.id}')">⚠ Ada Masalah</button>`;
     else if(o.status==='SELESAI'){const g=garansiInfo(o);
@@ -982,6 +983,23 @@ function fotoView(o){
   if(!o.foto_sebelum_url&&!o.foto_sesudah_url)return '';
   const cell=(url,lbl)=>`<div style="flex:1;text-align:center">${url?`<img src="${url}" onclick="window.open('${url}')" style="width:100%;height:110px;object-fit:cover;border-radius:12px;border:1px solid var(--line)">`:`<div style="height:110px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;color:var(--muted)">—</div>`}<div style="font-size:11px;color:var(--muted);margin-top:3px">${lbl}</div></div>`;
   return `<div class="sec-title">Bukti Pekerjaan</div><div class="card" style="padding:12px"><div style="display:flex;gap:10px">${cell(o.foto_sebelum_url,'Sebelum')}${cell(o.foto_sesudah_url,'Sesudah')}</div></div>`;
+}
+function pilihBukti(id){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';
+  inp.style.cssText='position:fixed;left:-9999px';
+  inp.onchange=()=>{if(inp.files&&inp.files[0])uploadBukti(id,inp.files[0]);inp.remove();};
+  document.body.appendChild(inp);inp.click();
+}
+async function uploadBukti(id,file){
+  toast('Memproses foto…');
+  try{
+    const dataUrl=await kompresFoto(file);
+    const {error}=await sb.from('orders').update({bukti_transfer_url:dataUrl}).eq('id',id);
+    if(error)throw error;
+    await addLog(id,'Bukti transfer diunggah','Pemilik mengunggah bukti pembayaran');
+    await refresh();openOrder(id);toast('✅ Bukti transfer tersimpan');
+  }catch(e){toast('Gagal: '+(e.message||e))}
 }
 function pilihFoto(id,jenis){
   const inp=document.createElement('input');
