@@ -691,7 +691,7 @@ function sheetBuat(kat){
     <div id="harian" style="display:none">
       <div class="field"><label>Tarif tukang per hari</label><input class="input" id="d_tarif" inputmode="numeric" placeholder="Rp / hari" oninput="draft.tarif=this.value.replace(/\\D/g,'');this.value=draft.tarif?rp(+draft.tarif):'';hitungHarian()"></div>
       <div class="field"><label>Perkiraan jumlah hari</label><input class="input" id="d_hari" inputmode="numeric" placeholder="Cth: 3" oninput="draft.hari=this.value.replace(/\\D/g,'');hitungHarian()"></div>
-      <div class="estbox" id="harianringkas"><div class="lab">Ringkasan</div><div class="rng">Isi tarif & hari</div><div class="note">Profit Anda dari markup.</div></div>
+      <div class="estbox" id="harianringkas"><div class="lab">Ringkasan</div><div class="rng">Isi tarif & jumlah hari</div><div class="note">Sudah termasuk biaya layanan.</div></div>
     </div>
     <button class="btn btn-primary" onclick="submitPesanan()">Posting Pesanan</button>
     <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:9px">Belum ditagih. Bayar escrow setelah posting.</p>
@@ -702,10 +702,10 @@ function pickMat(v,el){draft.material=v;document.querySelectorAll('#matseg butto
 function pickSistem(s,el){draft.sistem=s;document.querySelectorAll('#sysseg button').forEach(b=>b.classList.remove('on'));el.classList.add('on');const bo=$('borongan'),ha=$('harian');if(bo)bo.style.display=s==='borongan'?'block':'none';if(ha)ha.style.display=s==='harian'?'block':'none';}
 function hitungHarian(){
   const t=+draft.tarif||0,h=+draft.hari||0,box=$('harianringkas');if(!box)return;
-  if(!t||!h){box.querySelector('.rng').textContent='Isi tarif & hari';box.querySelector('.note').textContent='Profit Anda dari markup.';return}
+  if(!t||!h){box.querySelector('.rng').textContent='Isi tarif & jumlah hari';box.querySelector('.note').textContent='Sudah termasuk biaya layanan.';return}
   const base=t*h,markup=Math.round(base*(BIZ.markupHarian||0)),total=base+markup;
-  box.querySelector('.rng').textContent=`Pemilik bayar ${rp(total)}`;
-  box.querySelector('.note').textContent=`Tukang terima ${rp(base)} · profit Anda ${rp(markup)}`;
+  box.querySelector('.rng').textContent=`Total: ${rp(total)}`;
+  box.querySelector('.note').textContent=ME.is_admin?`Tukang terima ${rp(base)} · Anda dapat ${rp(markup)}`:'Sudah termasuk biaya layanan Tukangin.';
 }
 async function estimasiAI(){
   if(draft.kat==='las'){ if(!(draft.panjang&&draft.tinggi)&&(draft.desk||'').trim().length<6){toast('Isi ukuran atau deskripsi dulu');return} }
