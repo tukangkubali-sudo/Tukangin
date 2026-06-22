@@ -152,7 +152,10 @@ const KAT=[{id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa',ic:'🔧'},
 const katOf=id=>KAT.find(k=>k.id===id)||KAT[7];
 const ST={MENUNGGU_DANA:{l:'Menunggu Pembayaran',c:'b-wait'},DANA_DITAHAN:{l:'Dana Ditahan',c:'b-hold'},DIKERJAKAN:{l:'Dikerjakan',c:'b-work'},MENUNGGU_KONFIRMASI:{l:'Menunggu Konfirmasi',c:'b-confirm'},SELESAI:{l:'Selesai',c:'b-done'},SENGKETA:{l:'Sengketa',c:'b-dispute'},DIBATALKAN:{l:'Dibatalkan',c:'b-dispute'}};
 /* Identitas usaha — EDIT di sini bila perlu */
-const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6281338773717',waTampil:'0813-3877-3717',bank:'[BANK]',rek:'[NOMOR REKENING]',rekNama:'Guna Merta Home Service',garansiHari:7};
+const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6281338773717',waTampil:'0813-3877-3717',bank:'[BANK]',rek:'[NOMOR REKENING]',rekNama:'Guna Merta Home Service',garansiHari:7,retensiPersen:10,markupHarian:0.15};
+/* Garansi pengerjaan per kategori (hari) — sesuai umumnya di Bali, bisa diubah */
+const GARANSI={listrik:7,pipa:14,ac:14,las:30,cat:14,bocor:30,kunci:7,umum:7};
+function garansiHariKat(kat){return GARANSI[kat]||7}
 const otp=()=>String(Math.floor(1000+Math.random()*9000));
 
 /* ====== state ====== */
@@ -333,7 +336,7 @@ function renderPemilik(){
         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;border-top:1px solid var(--line);margin-top:12px;padding-top:12px">
           <span style="font-size:10.5px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:#1b4d47;padding:5px 10px;border-radius:999px">✔ Tukang terverifikasi</span>
           <span style="font-size:10.5px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:#1b4d47;padding:5px 10px;border-radius:999px">🔒 Dana aman</span>
-          <span style="font-size:10.5px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:#1b4d47;padding:5px 10px;border-radius:999px">🛡️ Garansi ${BIZ.garansiHari} hari</span>
+          <span style="font-size:10.5px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:#1b4d47;padding:5px 10px;border-radius:999px">🛡️ Bergaransi</span>
         </div>
         <p style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:10px">Pembayaran ditahan ${BIZ.nama} sampai Anda konfirmasi pekerjaan selesai.</p>
       </div>
@@ -354,7 +357,7 @@ function orderCard(o){
     <div class="othumb">${k.ic}</div>
     <div style="flex:1;min-width:0"><h4>${esc(o.judul)}</h4>
       <div class="meta">📍 ${esc(o.lokasi||'-')}</div>
-      <div class="meta" style="margin-top:4px"><span class="badge ${s.c}">${s.l}</span>${o.tukang_nama?`<span class="dot"></span>${esc(o.tukang_nama)}`:''}</div></div>
+      <div class="meta" style="margin-top:4px"><span class="badge ${s.c}">${s.l}</span>${o.sistem==='harian'?' <span class="badge b-hold">📅 Harian</span>':''}${o.tukang_nama?`<span class="dot"></span>${esc(o.tukang_nama)}`:''}</div></div>
     <div class="price">${rp(o.harga)}<small>${k.nm}</small></div></div></div>`;
 }
 function akun(){
@@ -386,7 +389,7 @@ function jobCard(o){
   const k=katOf(o.kat),b=o.biaya||fee(o.harga);
   return `<div class="card" style="padding:14px;margin-bottom:11px">
     <div style="display:flex;gap:12px"><div class="othumb">${k.ic}</div>
-    <div style="flex:1;min-width:0"><h4 style="font-size:15px;font-weight:700">${esc(o.judul)}</h4>
+    <div style="flex:1;min-width:0"><h4 style="font-size:15px;font-weight:700">${esc(o.judul)} ${o.sistem==='harian'?'<span class="badge b-hold" style="font-size:9px;vertical-align:middle">📅 Harian</span>':''}</h4>
     <div class="meta">📍 ${esc(o.lokasi||'-')}</div></div></div>
     <p style="font-size:12.5px;color:#46605c;margin-top:9px">${esc(o.desk||'')}</p>
     <div class="divider"></div>
@@ -461,8 +464,11 @@ function verifSection(){
     </div>`;
 }
 function pilihKyc(jenis){
-  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.capture=jenis==='wajah'?'user':'environment';
-  inp.onchange=()=>{if(inp.files&&inp.files[0])uploadKyc(jenis,inp.files[0])};inp.click();
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';inp.setAttribute('capture',jenis==='wajah'?'user':'environment');
+  inp.style.cssText='position:fixed;left:-9999px';
+  inp.onchange=()=>{if(inp.files&&inp.files[0])uploadKyc(jenis,inp.files[0]);inp.remove();};
+  document.body.appendChild(inp);inp.click();
 }
 async function uploadKyc(jenis,file){
   toast('Memproses…');
@@ -484,19 +490,25 @@ async function kirimVerifikasi(){
 /* ====== ADMIN: verifikasi tukang ====== */
 async function renderAdmin(){
   const sc=$('scroll');sc.innerHTML=`<div class="loadwrap" style="min-height:150px"><div class="spinner"></div></div>`;
-  const {data,error}=await sb.from('profiles').select('*').eq('role','tukang').order('dibuat',{ascending:false});
-  if(error){sc.innerHTML=`<div class="empty"><p>Gagal memuat: ${esc(error.message)}</p></div>`;return}
-  const list=data||[], pending=list.filter(p=>p.verif_status==='menunggu'), done=list.filter(p=>p.verif_status==='terverifikasi'||p.verif_status==='ditolak');
-  sc.innerHTML=`<div class="sec-title">Menunggu Verifikasi${pending.length?` · ${pending.length}`:''}</div>
+  const [r1,r2]=await Promise.all([
+    sb.from('profiles').select('*').eq('role','tukang').order('dibuat',{ascending:false}),
+    sb.from('orders').select('id,judul,tukang_id,tukang_nama,pemilik_nama').eq('garansi_klaim',true)
+  ]);
+  if(r1.error){sc.innerHTML=`<div class="empty"><p>Gagal memuat: ${esc(r1.error.message)}</p></div>`;return}
+  const list=r1.data||[], pending=list.filter(p=>p.verif_status==='menunggu'), done=list.filter(p=>p.verif_status==='terverifikasi'||p.verif_status==='ditolak');
+  const kl=r2.data||[];
+  sc.innerHTML=`
+    ${kl.length?`<div class="sec-title">🛠️ Klaim Garansi · ${kl.length}</div>${kl.map(o=>`<div class="card" style="padding:14px;margin-bottom:10px;border:1.5px solid var(--brass)"><div style="font-size:13.5px;font-weight:800">${esc(o.judul||'Pesanan')}</div><div class="meta">Tukang: ${esc(o.tukang_nama||'-')} · Pemilik: ${esc(o.pemilik_nama||'-')}</div><div style="display:flex;gap:8px;margin-top:11px"><button class="btn btn-danger btn-sm" style="flex:1" onclick="strikeTukang('${o.tukang_id}','${o.id}')">Tukang menolak (Strike)</button><button class="btn btn-primary btn-sm" style="flex:1" onclick="beresGaransi('${o.id}')">Sudah diperbaiki</button></div></div>`).join('')}`:''}
+    <div class="sec-title">Menunggu Verifikasi${pending.length?` · ${pending.length}`:''}</div>
     ${pending.length?pending.map(adminCard).join(''):emptyBox('✅','Tidak ada antrean','Semua tukang sudah ditinjau.')}
     <div class="sec-title">Sudah Ditinjau</div>
-    ${done.length?done.map(p=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><div class="tukav" style="width:34px;height:34px;font-size:13px">${esc(p.inisial||initial(p.nama))}</div><div style="flex:1"><b style="font-size:13.5px">${esc(p.nama)}</b><div class="meta" style="font-size:11px">💰 ${p.bayar_metode?esc(p.bayar_metode+(p.bayar_detail?' · '+p.bayar_detail:'')):'—'}</div></div><span class="badge ${p.verif_status==='terverifikasi'?'b-done':'b-dispute'}">${p.verif_status}</span></div>`).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:4px 2px">Belum ada.</p>'}`;
+    ${done.length?done.map(p=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><div class="tukav" style="width:34px;height:34px;font-size:13px">${esc(p.inisial||initial(p.nama))}</div><div style="flex:1"><b style="font-size:13.5px">${esc(p.nama)}</b><div class="meta" style="font-size:11px">💰 ${p.bayar_metode?esc(p.bayar_metode+(p.bayar_detail?' · '+p.bayar_detail:'')):'—'}${p.strike?` · ⚠️ ${p.strike} strike`:''}</div></div><span class="badge ${p.verif_status==='terverifikasi'?'b-done':'b-dispute'}">${p.verif_status}</span></div>`).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:4px 2px">Belum ada.</p>'}`;
 }
 function adminCard(p){
   const img=(url)=>url?`<img src="${url}" onclick="window.open('${url}')" style="width:100%;height:100px;object-fit:cover;border-radius:10px;border:1px solid var(--line)">`:'<div style="height:100px;background:var(--surface);border-radius:10px;display:grid;place-items:center;color:var(--muted)">—</div>';
   return `<div class="card" style="padding:16px;margin-bottom:12px">
     <div style="display:flex;align-items:center;gap:12px"><div class="tukav" style="width:42px;height:42px;font-size:15px">${esc(p.inisial||initial(p.nama))}</div>
-      <div><h4 style="font-size:15px;font-weight:700">${esc(p.nama)}</h4><div class="meta">📱 ${esc(p.telp||'-')}</div><div class="meta">💰 ${p.bayar_metode?esc(p.bayar_metode+(p.bayar_detail?' · '+p.bayar_detail:'')):'belum diisi'}</div></div></div>
+      <div><h4 style="font-size:15px;font-weight:700">${esc(p.nama)}</h4><div class="meta">📱 ${esc(p.telp||'-')}</div><div class="meta">💰 ${p.bayar_metode?esc(p.bayar_metode+(p.bayar_detail?' · '+p.bayar_detail:'')):'belum diisi'}</div>${p.strike?`<div class="meta">⚠️ ${p.strike} strike</div>`:''}</div></div>
     <div style="display:flex;gap:10px;margin-top:12px">
       <div style="flex:1"><div style="font-size:10.5px;color:var(--muted);margin-bottom:3px">KTP</div>${img(p.ktp_url)}</div>
       <div style="flex:1"><div style="font-size:10.5px;color:var(--muted);margin-bottom:3px">Selfie</div>${img(p.wajah_url)}</div></div>
@@ -507,6 +519,21 @@ async function tinjau(uid,ok){
   if(error){toast('Gagal: '+error.message);return}
   toast(ok?'✅ Tukang diverifikasi':'Ditolak');renderAdmin();
 }
+async function strikeTukang(tukangId,orderId){
+  if(!tukangId){toast('Tukang tidak ditemukan');return}
+  if(!confirm('Beri STRIKE ke tukang ini karena menolak/abai memperbaiki garansi?'))return;
+  const {data:p}=await sb.from('profiles').select('strike').eq('id',tukangId).maybeSingle();
+  const ns=((p&&p.strike)||0)+1; const upd={strike:ns}; if(ns>=3)upd.verif_status='ditolak';
+  const {error}=await sb.from('profiles').update(upd).eq('id',tukangId);
+  if(error){toast('Gagal: '+error.message);return}
+  await sb.from('orders').update({garansi_klaim:false}).eq('id',orderId);
+  toast('Strike diberikan'+(ns>=3?' · tukang di-suspend (3 strike)':` (${ns})`));renderAdmin();
+}
+async function beresGaransi(orderId){
+  const {error}=await sb.from('orders').update({garansi_klaim:false}).eq('id',orderId);
+  if(error){toast('Gagal: '+error.message);return}
+  toast('Ditandai sudah diperbaiki');renderAdmin();
+}
 
 /* ====== PENGHASILAN TUKANG ====== */
 function statTukang(){
@@ -515,7 +542,8 @@ function statTukang(){
   const aktif=mine.filter(o=>['DANA_DITAHAN','DIKERJAKAN'].includes(o.status));
   const nunggu=mine.filter(o=>o.status==='MENUNGGU_KONFIRMASI');
   const sum=arr=>arr.reduce((s,o)=>s+((o.biaya||fee(o.harga)).payout||0),0);
-  return {selesai:selesai.length,aktif:aktif.length,total:sum(selesai),pending:sum(nunggu)};
+  const retensi=selesai.filter(o=>{const g=garansiInfo(o);return g&&g.aktif;}).reduce((s,o)=>s+Math.round(((o.biaya||fee(o.harga)).payout||0)*(BIZ.retensiPersen||0)/100),0);
+  return {selesai:selesai.length,aktif:aktif.length,total:sum(selesai),pending:sum(nunggu),retensi};
 }
 function kartuPenghasilan(){
   const s=statTukang();
@@ -524,6 +552,7 @@ function kartuPenghasilan(){
       <div style="font-size:11px;font-weight:700;opacity:.85;text-transform:uppercase">Total Penghasilan</div>
       <div style="font-size:27px;font-weight:800;margin-top:2px">${rp(s.total)}</div>
       ${s.pending?`<div style="font-size:12px;opacity:.9;margin-top:5px">⏳ ${rp(s.pending)} menunggu pencairan</div>`:'<div style="font-size:12px;opacity:.85;margin-top:5px">Dibayarkan setelah pelanggan konfirmasi.</div>'}
+      ${s.retensi?`<div style="font-size:12px;opacity:.9;margin-top:3px">🛡️ ${rp(s.retensi)} ditahan untuk garansi</div>`:''}
     </div>
     <div style="display:flex;text-align:center">
       <div style="flex:1;padding:13px 6px"><div style="font-size:19px;font-weight:800">${s.selesai}</div><div style="font-size:11px;color:var(--muted)">Selesai</div></div>
@@ -576,7 +605,8 @@ function renderBantuan(){
 
     <div class="sec-title" style="font-size:15px">Garansi Pengerjaan</div>
     <div class="card" style="padding:20px">
-      <p style="font-size:15px;color:#314b47;line-height:1.7">🛡️ Setiap pekerjaan bergaransi <b>${BIZ.garansiHari} hari</b>. Kalau dalam ${BIZ.garansiHari} hari ada masalah dari hasil kerja tukang, hubungi kami — <b>diperbaiki tanpa biaya tambahan</b>.</p>
+      <p style="font-size:15px;color:#314b47;line-height:1.7">🛡️ Setiap pekerjaan <b>bergaransi</b>. Kalau ada masalah dari hasil kerja tukang dalam masa garansi, hubungi kami — <b>diperbaiki tanpa biaya tambahan</b>.</p>
+      <p style="font-size:13.5px;color:var(--muted);line-height:1.8;margin-top:10px">Lama garansi menyesuaikan jenis pekerjaan:<br>• Listrik & Kunci: <b>7 hari</b><br>• Pipa, AC & Cat: <b>14 hari</b><br>• Las/Pagar & Atap Bocor: <b>30 hari</b></p>
     </div>
 
     <div class="sec-title" style="font-size:15px">Pertanyaan umum</div>
@@ -628,7 +658,7 @@ function pageBantuan(){
 /* ====== BUAT PESANAN ====== */
 let draft={};
 function sheetBuat(kat){
-  draft={kat:kat||'umum',judul:'',desk:'',lokasi:'Canggu',harga:'',lat:null,lng:null,panjang:'',tinggi:'',material:false};
+  draft={kat:kat||'umum',judul:'',desk:'',lokasi:'Canggu',harga:'',lat:null,lng:null,panjang:'',tinggi:'',material:false,sistem:'borongan',tarif:'',hari:''};
   openSheet(`<div style="padding:16px 18px"><h3 style="font-size:18px;font-weight:800;margin-bottom:14px">Buat Pesanan</h3>
     <div class="field"><label>Kategori</label><div class="chips" id="katchips">${KAT.map(c=>`<button class="chip ${c.id===draft.kat?'on':''}" onclick="pickKat('${c.id}',this)">${c.ic} ${c.nm}</button>`).join('')}</div></div>
     <div class="field" id="lasextra" style="display:${draft.kat==='las'?'block':'none'}">
@@ -642,21 +672,41 @@ function sheetBuat(kat){
         <button class="${draft.material?'on':''}" onclick="pickMat(true,this)">📦 Termasuk material</button>
       </div>
     </div>
+    <div class="field"><label>Sistem kerja</label>
+      <div class="seg" id="sysseg" style="margin-bottom:0">
+        <button class="on" onclick="pickSistem('borongan',this)">📦 Borongan</button>
+        <button onclick="pickSistem('harian',this)">📅 Harian</button>
+      </div></div>
     <div class="field"><label>Judul singkat</label><input class="input" id="d_judul" placeholder="Cth: Stop kontak dapur mati" oninput="draft.judul=this.value"></div>
     <div class="field"><label>Deskripsi</label><textarea class="input" id="d_desk" placeholder="Jelaskan masalahnya…" oninput="draft.desk=this.value"></textarea></div>
     <div class="field"><label>Lokasi</label><input class="input" id="d_lok" value="Canggu" oninput="draft.lokasi=this.value"></div>
     <div class="field"><label>Titik GPS pekerjaan <span class="hint">opsional — untuk verifikasi check-in tukang</span></label>
       <button class="btn btn-ghost" id="gpsbtn" onclick="tandaiLokasi()">📍 Tandai Lokasi Saat Ini</button></div>
+    <div id="borongan">
     <div class="field"><label>Harga ditaksir AI</label>
       <div class="estbox" id="estbox"><div class="lab">✨ Estimasi</div><div class="rng">Belum ditaksir</div><div class="note">Tekan tombol di bawah.</div></div>
       <button class="btn btn-brass" id="aibtn" style="margin-top:10px" onclick="estimasiAI()">✨ Taksir Harga</button></div>
     <div class="field"><label>Harga tawaran Anda</label><input class="input" id="d_harga" inputmode="numeric" placeholder="Rp" oninput="draft.harga=this.value.replace(/\\D/g,'');this.value=draft.harga?rp(+draft.harga):''"></div>
+    </div>
+    <div id="harian" style="display:none">
+      <div class="field"><label>Tarif tukang per hari</label><input class="input" id="d_tarif" inputmode="numeric" placeholder="Rp / hari" oninput="draft.tarif=this.value.replace(/\\D/g,'');this.value=draft.tarif?rp(+draft.tarif):'';hitungHarian()"></div>
+      <div class="field"><label>Perkiraan jumlah hari</label><input class="input" id="d_hari" inputmode="numeric" placeholder="Cth: 3" oninput="draft.hari=this.value.replace(/\\D/g,'');hitungHarian()"></div>
+      <div class="estbox" id="harianringkas"><div class="lab">Ringkasan</div><div class="rng">Isi tarif & hari</div><div class="note">Profit Anda dari markup.</div></div>
+    </div>
     <button class="btn btn-primary" onclick="submitPesanan()">Posting Pesanan</button>
     <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:9px">Belum ditagih. Bayar escrow setelah posting.</p>
     </div>`);
 }
 function pickKat(id,el){draft.kat=id;document.querySelectorAll('#katchips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');const le=$('lasextra');if(le)le.style.display=id==='las'?'block':'none';}
 function pickMat(v,el){draft.material=v;document.querySelectorAll('#matseg button').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+function pickSistem(s,el){draft.sistem=s;document.querySelectorAll('#sysseg button').forEach(b=>b.classList.remove('on'));el.classList.add('on');const bo=$('borongan'),ha=$('harian');if(bo)bo.style.display=s==='borongan'?'block':'none';if(ha)ha.style.display=s==='harian'?'block':'none';}
+function hitungHarian(){
+  const t=+draft.tarif||0,h=+draft.hari||0,box=$('harianringkas');if(!box)return;
+  if(!t||!h){box.querySelector('.rng').textContent='Isi tarif & hari';box.querySelector('.note').textContent='Profit Anda dari markup.';return}
+  const base=t*h,markup=Math.round(base*(BIZ.markupHarian||0)),total=base+markup;
+  box.querySelector('.rng').textContent=`Pemilik bayar ${rp(total)}`;
+  box.querySelector('.note').textContent=`Tukang terima ${rp(base)} · profit Anda ${rp(markup)}`;
+}
 async function estimasiAI(){
   if(draft.kat==='las'){ if(!(draft.panjang&&draft.tinggi)&&(draft.desk||'').trim().length<6){toast('Isi ukuran atau deskripsi dulu');return} }
   else if((draft.desk||'').trim().length<6){toast('Isi deskripsi dulu');return}
@@ -705,14 +755,22 @@ function taksirLokal(d){
   return{min:lo,max:hi,rekomendasi:Math.round((lo+hi)/2/5000)*5000,alasan:'Estimasi kategori'};
 }
 async function submitPesanan(){
-  if(!draft.judul||!draft.harga){toast('Isi judul & harga');return}
-  const b=fee(+draft.harga);
-  const row={pemilik_id:ME.id,pemilik_nama:ME.nama,kat:draft.kat,judul:draft.judul,desk:draft.desk||'-',
-    lokasi:draft.lokasi,jarak_km:(Math.random()*3+0.5).toFixed(1),lat:draft.lat,lng:draft.lng,harga:+draft.harga,status:'MENUNGGU_DANA',
-    kode_selesai:otp(),biaya:b};
+  if(!draft.judul){toast('Isi judul dulu');return}
+  const dasar={pemilik_id:ME.id,pemilik_nama:ME.nama,kat:draft.kat,judul:draft.judul,desk:draft.desk||'-',
+    lokasi:draft.lokasi,jarak_km:(Math.random()*3+0.5).toFixed(1),lat:draft.lat,lng:draft.lng,status:'MENUNGGU_DANA',kode_selesai:otp()};
+  let row;
+  if(draft.sistem==='harian'){
+    const t=+draft.tarif||0,h=+draft.hari||0;
+    if(!t||!h){toast('Isi tarif & jumlah hari');return}
+    const base=t*h,markup=Math.round(base*(BIZ.markupHarian||0)),total=base+markup;
+    row={...dasar,harga:base,biaya:{harga:base,layanan:markup,komisi:0,escrow:total,payout:base},sistem:'harian',tarif_harian:t,hari:h};
+  }else{
+    if(!draft.harga){toast('Isi harga');return}
+    row={...dasar,harga:+draft.harga,biaya:fee(+draft.harga),sistem:'borongan'};
+  }
   const {data,error}=await sb.from('orders').insert(row).select().single();
   if(error){toast('Gagal: '+error.message);return}
-  await addLog(data.id,'Pesanan dibuat','Pemilik membuat pesanan '+katOf(draft.kat).nm);
+  await addLog(data.id,'Pesanan dibuat','Pemilik membuat pesanan '+katOf(draft.kat).nm+(draft.sistem==='harian'?' (harian)':''));
   closeSheet();await refresh();openOrder(data.id);toast('Pesanan dibuat — lanjut bayar escrow');
 }
 
@@ -722,6 +780,7 @@ async function renderDetail(){
   const sc=$('scroll');sc.innerHTML=`<div class="loadwrap" style="min-height:200px"><div class="spinner"></div></div>`;
   const [log,msgs]=await Promise.all([getLog(o.id),getMsgs(o.id)]);
   const k=katOf(o.kat),b=o.biaya||fee(o.harga),s=ST[o.status]||ST.MENUNGGU_DANA;
+  const harian=o.sistem==='harian';
   const amPemilik=o.pemilik_id===ME.id;
   let banner,actions='';
   // banner
@@ -747,12 +806,24 @@ async function renderDetail(){
       <a href="${waLink('Halo '+BIZ.nama+', ini bukti transfer untuk pesanan: '+(o.judul||''))}" target="_blank" class="btn btn-ghost" style="margin-top:9px;display:block;text-decoration:none;text-align:center">📷 Kirim bukti via WhatsApp</a>
       <button class="btn btn-ghost" style="margin-top:9px" onclick="batal('${o.id}')">Batalkan Pesanan</button>`;
     else if(o.status==='MENUNGGU_KONFIRMASI')actions=`<div class="infoline" style="margin-bottom:12px">📷 <span>Tukang menyatakan selesai (foto sebelum & sesudah terkirim).</span></div><button class="btn btn-primary" onclick="konfirmasi('${o.id}')">✔ Konfirmasi & Cairkan Dana</button><button class="btn btn-danger" style="margin-top:9px" onclick="sengketa('${o.id}')">⚠ Ada Masalah</button>`;
-    else if(o.status==='SELESAI')actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:32px">🎉</div><h5 style="font-weight:800">Selesai</h5><p style="font-size:12.5px;color:var(--muted)">Dana ${rp(b.payout)} diteruskan ke ${esc(o.tukang_nama||'tukang')}.</p></div>`;
+    else if(o.status==='SELESAI'){const g=garansiInfo(o);
+      actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:32px">🎉</div><h5 style="font-weight:800">Selesai</h5><p style="font-size:12.5px;color:var(--muted)">Dana ${rp(b.payout)} diteruskan ke ${esc(o.tukang_nama||'tukang')}.</p></div>`
+        +(g&&g.aktif?(g.klaim
+          ?`<div class="card" style="padding:14px;margin-top:10px;border:1px solid var(--brass);background:var(--hold-bg)"><div style="font-size:13px;font-weight:800">🛠️ Masalah garansi dilaporkan</div><p style="font-size:12px;color:#8a6a2a;margin-top:4px">Tim ${BIZ.nama} menindaklanjuti — tukang wajib memperbaiki.</p></div>`
+          :`<div class="card" style="padding:14px;margin-top:10px"><div style="font-size:13px;font-weight:800">🛡️ Dalam garansi sampai ${tglID(g.end)}</div><p style="font-size:12px;color:var(--muted);margin-top:4px">Ada masalah dari hasil kerja? Laporkan, diperbaiki tanpa biaya.</p><button class="btn btn-ghost" style="margin-top:10px" onclick="klaimGaransi('${o.id}')">🛠️ Lapor Masalah Garansi</button></div>`)
+        :(g?`<p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:8px">Masa garansi berakhir ${tglID(g.end)}.</p>`:''));}
     else if(o.status==='DANA_DITAHAN'&&!o.tukang_id)actions=`<div class="infoline">🔍 <span>Menunggu tukang mengambil pekerjaan ini.</span></div><button class="btn btn-danger" style="margin-top:11px" onclick="batal('${o.id}')">Batalkan & Kembalikan Dana</button>`;
     else if(o.status==='DIBATALKAN')actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:30px">🚫</div><h5 style="font-weight:800">Pesanan dibatalkan</h5><p style="font-size:12.5px;color:var(--muted)">Dana dikembalikan ke pemilik.</p></div>`;
+    else if(harian&&(o.status==='DIKERJAKAN'||(o.status==='DANA_DITAHAN'&&o.tukang_id)))actions=`<div class="infoline">📅 <span>Pekerjaan harian berjalan — cek absensi di atas. Bayar hanya hari yang dihadiri.</span></div><button class="btn btn-danger" style="margin-top:11px" onclick="hentikanHarian('${o.id}')">⏹ Hentikan & Bayar Hari Terpakai</button>`;
     else actions=`<div class="infoline">⏱️ <span>Tukang sedang menuju / mengerjakan. Anda akan diminta konfirmasi saat selesai.</span></div>`;
   }else{ // tukang
-    if(o.status==='DANA_DITAHAN'&&o.tukang_id===ME.id)actions=`<button class="btn btn-primary" onclick="checkin('${o.id}')">📍 Check-in di Lokasi (GPS)</button>`;
+    if(harian&&o.tukang_id===ME.id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status)){
+      const open=(o.absensi||[]).find(a=>a.masuk&&!a.keluar),hp=hariPenuh(o);
+      actions=`${open?`<button class="btn btn-primary" onclick="absenKeluar('${o.id}')">🏁 Absen Keluar (selesai hari ini)</button>`:`<button class="btn btn-primary" onclick="absenMasuk('${o.id}')">📍 Absen Masuk (GPS)</button>`}
+        <button class="btn btn-ghost" ${hp>=1&&!open?'':'disabled'} style="margin-top:9px" onclick="inputKode('${o.id}')">🔑 Selesaikan Semua — Masukkan Kode</button>
+        <p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">${open?'Jangan lupa Absen Keluar saat pulang.':hp>=1?'Sudah '+hp+' hari hadir. Selesaikan jika pekerjaan rampung.':'Absen masuk untuk mulai hari kerja.'}</p>`;
+    }
+    else if(o.status==='DANA_DITAHAN'&&o.tukang_id===ME.id)actions=`<button class="btn btn-primary" onclick="checkin('${o.id}')">📍 Check-in di Lokasi (GPS)</button>`;
     else if(o.status==='DIKERJAKAN'&&o.tukang_id===ME.id){
       const ok=o.foto_sebelum&&o.foto_sesudah;
       actions=`<div class="card" style="padding:14px;margin-bottom:12px"><h5 style="font-size:14px;font-weight:700;margin-bottom:10px">Bukti Pekerjaan (foto asli)</h5>
@@ -770,8 +841,8 @@ async function renderDetail(){
   const tukangInfo=o.tukang_nama?`<div class="card" style="padding:14px;margin-top:12px;cursor:pointer" onclick="openTukangProfil('${o.tukang_id}')"><div style="display:flex;align-items:center;gap:12px"><div class="profav" style="width:42px;height:42px;font-size:15px">${esc(o.tukang_inisial||initial(o.tukang_nama))}</div><div style="flex:1"><h4 style="font-size:14.5px;font-weight:700">${esc(o.tukang_nama)} <span style="color:var(--ok)">✔</span></h4><div class="meta">⭐ ${o.tukang_rating||'5.0'}</div></div><span style="color:#0D5953;font-size:12px;font-weight:700;white-space:nowrap">Lihat profil ›</span></div></div>`:'';
 
   const feeBlock=amPemilik
-    ?`<div class="fee"><div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Biaya layanan <span class="sub">(5%)</span></span><span>${rp(b.layanan)}</span></div><div class="feerow tot"><span>Total escrow</span><span>${rp(b.escrow)}</span></div></div>`
-    :`<div class="fee"><div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Komisi <span class="sub">(6%)</span></span><span style="color:var(--bad)">−${rp(b.komisi)}</span></div><div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div></div>`;
+    ?`<div class="fee">${harian?`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow"><span>Biaya layanan</span><span>${rp(b.layanan)}</span></div>`:`<div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Biaya layanan <span class="sub">(5%)</span></span><span>${rp(b.layanan)}</span></div>`}<div class="feerow tot"><span>Total escrow</span><span>${rp(b.escrow)}</span></div></div>`
+    :`<div class="fee">${harian?`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div>`:`<div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Komisi <span class="sub">(6%)</span></span><span style="color:var(--bad)">−${rp(b.komisi)}</span></div><div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div>`}</div>`;
 
   const showChat=o.tukang_id&&['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status);
 
@@ -783,6 +854,7 @@ async function renderDetail(){
     ${tukangInfo}
     ${fotoView(o)}
     <div class="sec-title">Rincian ${amPemilik?'Pembayaran':'Bayaran Anda'}</div>${feeBlock}
+    ${absensiSection(o)}
     ${usulanSection(o,amPemilik)}
     ${kodeCard}
     ${showChat?chatBox(o,msgs):''}
@@ -810,6 +882,53 @@ async function ambil(id){
   const {error}=await sb.rpc('ambil_pesanan',{p_order:id});
   if(error){toast('Gagal: '+error.message);return}
   VIEW.tab='aktif';await refresh();openOrder(id);toast('Pekerjaan diambil');
+}
+function hariPenuh(o){return (o.absensi||[]).filter(a=>a.masuk&&a.keluar).length}
+function jamID(t){return t?new Date(t).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'—'}
+function tgljamID(t){return new Date(t).toLocaleDateString('id-ID',{day:'numeric',month:'short'})}
+function absensiSection(o){
+  if(o.sistem!=='harian')return '';
+  const list=o.absensi||[];
+  if(!list.length&&!['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))return '';
+  const hp=hariPenuh(o);
+  const rows=list.map(a=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)">
+    <div style="font-size:12px;font-weight:800;width:50px">Hari ${a.hari}</div>
+    <div style="flex:1;font-size:12px;color:#37514d">${tgljamID(a.masuk)} · 🟢 ${jamID(a.masuk)}${a.keluar?' → 🔴 '+jamID(a.keluar):' <span style="color:var(--hold)">· belum keluar</span>'}</div>
+    ${a.jarak!=null?(a.jarak>500?'<span style="font-size:10px;color:var(--bad);font-weight:700">⚠ jauh</span>':'<span style="font-size:10px;color:var(--ok);font-weight:700">✓ GPS</span>'):''}
+  </div>`).join('')||'<p style="font-size:12px;color:var(--muted);padding:6px 0">Belum ada absensi.</p>';
+  return `<div class="sec-title">Absensi Harian · ${hp} hari hadir</div>
+    <div class="card" style="padding:10px 16px">${rows}
+    <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:13.5px;font-weight:800"><span>Bayaran ${hp} hari hadir</span><span style="color:var(--ok)">${rp((o.tarif_harian||0)*hp)}</span></div></div>`;
+}
+async function absenMasuk(id){
+  const o=ORDERS.find(x=>x.id===id);const list=o.absensi||[];
+  if(list.find(a=>a.masuk&&!a.keluar)){toast('Sudah absen masuk — Absen Keluar dulu');return}
+  toast('Mengambil lokasi GPS…');let pos=null;try{pos=await getGPS();}catch(e){}
+  let jarak=null,detail='tanpa GPS';
+  if(pos&&o.lat&&o.lng){jarak=Math.round(haversine(pos.lat,pos.lng,o.lat,o.lng));detail=jarak>500?`⚠ jauh dari lokasi (~${(jarak/1000).toFixed(1)} km)`:`✓ di lokasi (±${jarak} m)`;}
+  else if(pos)detail='GPS aktif (titik lokasi belum ditandai)';
+  const hari=list.length+1;
+  const baru=[...list,{hari,masuk:new Date().toISOString(),lat:pos?pos.lat:null,lng:pos?pos.lng:null,jarak}];
+  const {error}=await sb.from('orders').update({absensi:baru,status:'DIKERJAKAN'}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,`Absen masuk hari ${hari}`,detail);
+  if(jarak!=null&&jarak>500)toast('⚠ Anda tampak jauh dari lokasi — tercatat');
+  await refresh();openOrder(id);toast('🟢 Absen masuk tercatat');
+}
+async function absenKeluar(id){
+  const o=ORDERS.find(x=>x.id===id);const list=(o.absensi||[]).slice();
+  const idx=list.findIndex(a=>a.masuk&&!a.keluar);
+  if(idx<0){toast('Belum absen masuk hari ini');return}
+  list[idx]={...list[idx],keluar:new Date().toISOString()};
+  const {error}=await sb.from('orders').update({absensi:list}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,`Absen keluar hari ${list[idx].hari}`,'Hari kerja selesai');
+  await refresh();openOrder(id);toast('🔴 Absen keluar tercatat');
+}
+async function hentikanHarian(id){
+  const o=ORDERS.find(x=>x.id===id);const hp=hariPenuh(o);
+  if(!confirm(`Hentikan & bayar ${hp} hari yang sudah dihadiri? Sisa dana dikembalikan ke Anda.`))return;
+  await konfirmasi(id);
 }
 async function checkin(id){
   const o=ORDERS.find(x=>x.id===id);
@@ -866,9 +985,10 @@ function fotoView(o){
 }
 function pilihFoto(id,jenis){
   const inp=document.createElement('input');
-  inp.type='file';inp.accept='image/*';inp.capture='environment';
-  inp.onchange=()=>{if(inp.files&&inp.files[0])uploadFoto(id,jenis,inp.files[0])};
-  inp.click();
+  inp.type='file';inp.accept='image/*';inp.setAttribute('capture','environment');
+  inp.style.cssText='position:fixed;left:-9999px';
+  inp.onchange=()=>{if(inp.files&&inp.files[0])uploadFoto(id,jenis,inp.files[0]);inp.remove();};
+  document.body.appendChild(inp);inp.click();
 }
 async function uploadFoto(id,jenis,file){
   toast('Memproses foto…');
@@ -910,10 +1030,34 @@ async function cekKode(id){
   await addLog(id,'Pekerjaan diselesaikan','Kode benar, menunggu konfirmasi pemilik');
   closeSheet();await refresh();openOrder(id);toast('✅ Menunggu konfirmasi pelanggan');
 }
+function garansiInfo(o){
+  if(o.status!=='SELESAI'||!o.selesai_tgl||o.sistem==='harian')return null;
+  const end=new Date(o.selesai_tgl).getTime()+garansiHariKat(o.kat)*86400000;
+  return {aktif:Date.now()<end,end:end,klaim:!!o.garansi_klaim};
+}
+function tglID(t){return new Date(t).toLocaleDateString('id-ID',{day:'numeric',month:'short'})}
 async function konfirmasi(id){
-  await sb.from('orders').update({status:'SELESAI'}).eq('id',id);
-  await addLog(id,'Pemilik konfirmasi','Dana dicairkan ke tukang');
-  await refresh();openOrder(id);toast('Dana dicairkan 🎉');
+  const o=ORDERS.find(x=>x.id===id);
+  const upd={status:'SELESAI',selesai_tgl:new Date().toISOString()};
+  let det='Dana dicairkan ke tukang';
+  if(o&&o.sistem==='harian'){
+    const hp=hariPenuh(o),base=(o.tarif_harian||0)*hp,markup=Math.round(base*(BIZ.markupHarian||0));
+    upd.biaya={harga:base,layanan:markup,komisi:0,escrow:base+markup,payout:base};
+    det=`Dibayar ${hp} hari hadir = ${rp(base)}`;
+  }
+  await sb.from('orders').update(upd).eq('id',id);
+  await addLog(id,'Pemilik konfirmasi',det);
+  await refresh();openOrder(id);toast('Selesai 🎉');
+}
+async function klaimGaransi(id){
+  const o=ORDERS.find(x=>x.id===id);
+  if(!confirm('Laporkan masalah garansi? Tim akan menindaklanjuti agar diperbaiki.'))return;
+  const {error}=await sb.from('orders').update({garansi_klaim:true}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,'Klaim garansi','Pemilik melaporkan masalah hasil kerja');
+  await refresh();openOrder(id);
+  window.open(waLink('Halo '+BIZ.nama+', saya klaim GARANSI untuk pesanan: '+(o?.judul||'')+'. Ada masalah pada hasil kerja.'),'_blank');
+  toast('Laporan garansi terkirim');
 }
 async function sengketa(id){
   await sb.from('orders').update({status:'SENGKETA'}).eq('id',id);
