@@ -152,7 +152,7 @@ const KAT=[{id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa',ic:'🔧'},
 const katOf=id=>KAT.find(k=>k.id===id)||KAT[7];
 const ST={MENUNGGU_DANA:{l:'Menunggu Pembayaran',c:'b-wait'},DANA_DITAHAN:{l:'Dana Ditahan',c:'b-hold'},DIKERJAKAN:{l:'Dikerjakan',c:'b-work'},MENUNGGU_KONFIRMASI:{l:'Menunggu Konfirmasi',c:'b-confirm'},SELESAI:{l:'Selesai',c:'b-done'},SENGKETA:{l:'Sengketa',c:'b-dispute'},DIBATALKAN:{l:'Dibatalkan',c:'b-dispute'}};
 /* Identitas usaha — EDIT di sini bila perlu */
-const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6281338773717',waTampil:'0813-3877-3717'};
+const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6281338773717',waTampil:'0813-3877-3717',bank:'[BANK]',rek:'[NOMOR REKENING]',rekNama:'Guna Merta Home Service'};
 const otp=()=>String(Math.floor(1000+Math.random()*9000));
 
 /* ====== state ====== */
@@ -400,9 +400,29 @@ function profilT(){
     <div class="profav">${esc(ME.inisial||initial(ME.nama))}</div>
     <div><h4 style="font-size:18px;font-weight:800">${esc(ME.nama)}</h4>${badge}</div></div></div>
     ${vs==='terverifikasi'?kartuPenghasilan():verifSection()}
+    <div class="sec-title">Cara Pembayaran</div>
+    <div class="card" style="padding:16px">
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Bagaimana Anda ingin menerima bayaran dari ${BIZ.nama}?</p>
+      <div class="seg" id="bayarseg" style="margin-bottom:0">
+        <button class="${(ME.bayar_metode||'Tunai')==='Tunai'?'on':''}" onclick="pickBayar('Tunai',this)">💵 Tunai</button>
+        <button class="${ME.bayar_metode==='E-wallet'?'on':''}" onclick="pickBayar('E-wallet',this)">📱 E-wallet</button>
+        <button class="${ME.bayar_metode==='Rekening'?'on':''}" onclick="pickBayar('Rekening',this)">🏦 Rekening</button>
+      </div>
+      <input class="input" id="bayardetail" style="margin-top:10px;display:${(ME.bayar_metode&&ME.bayar_metode!=='Tunai')?'block':'none'}" placeholder="Nomor e-wallet / rekening + nama" value="${esc(ME.bayar_detail||'')}" oninput="ME.bayar_detail=this.value">
+      <button class="btn btn-primary" style="margin-top:12px" onclick="simpanBayar()">Simpan</button>
+    </div>
     <div class="sec-title">Akun</div>
     <div class="card" style="padding:14px"><div class="infoline" style="border:none;padding:0;margin-bottom:12px">📱 <span>WhatsApp: <b>${esc(ME.telp||'-')}</b></span></div>
     <button class="btn btn-ghost" onclick="logout()">Keluar</button></div>`;
+}
+function pickBayar(m,el){ME.bayar_metode=m;document.querySelectorAll('#bayarseg button').forEach(b=>b.classList.remove('on'));el.classList.add('on');const d=$('bayardetail');if(d)d.style.display=m==='Tunai'?'none':'block';}
+async function simpanBayar(){
+  const det=$('bayardetail');if(det)ME.bayar_detail=det.value;
+  if(!ME.bayar_metode)ME.bayar_metode='Tunai';
+  if(ME.bayar_metode!=='Tunai'&&!(ME.bayar_detail||'').trim()){toast('Isi nomor e-wallet/rekening dulu');return}
+  const {error}=await sb.from('profiles').update({bayar_metode:ME.bayar_metode,bayar_detail:ME.bayar_detail||''}).eq('id',ME.id);
+  if(error){toast('Gagal: '+error.message);return}
+  toast('✅ Cara pembayaran tersimpan');
 }
 function verifBanner(){
   if(ME.verif_status==='terverifikasi')return '';
@@ -458,13 +478,13 @@ async function renderAdmin(){
   sc.innerHTML=`<div class="sec-title">Menunggu Verifikasi${pending.length?` · ${pending.length}`:''}</div>
     ${pending.length?pending.map(adminCard).join(''):emptyBox('✅','Tidak ada antrean','Semua tukang sudah ditinjau.')}
     <div class="sec-title">Sudah Ditinjau</div>
-    ${done.length?done.map(p=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><div class="tukav" style="width:34px;height:34px;font-size:13px">${esc(p.inisial||initial(p.nama))}</div><div style="flex:1"><b style="font-size:13.5px">${esc(p.nama)}</b></div><span class="badge ${p.verif_status==='terverifikasi'?'b-done':'b-dispute'}">${p.verif_status}</span></div>`).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:4px 2px">Belum ada.</p>'}`;
+    ${done.length?done.map(p=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><div class="tukav" style="width:34px;height:34px;font-size:13px">${esc(p.inisial||initial(p.nama))}</div><div style="flex:1"><b style="font-size:13.5px">${esc(p.nama)}</b><div class="meta" style="font-size:11px">💰 ${p.bayar_metode?esc(p.bayar_metode+(p.bayar_detail?' · '+p.bayar_detail:'')):'—'}</div></div><span class="badge ${p.verif_status==='terverifikasi'?'b-done':'b-dispute'}">${p.verif_status}</span></div>`).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:4px 2px">Belum ada.</p>'}`;
 }
 function adminCard(p){
   const img=(url)=>url?`<img src="${url}" onclick="window.open('${url}')" style="width:100%;height:100px;object-fit:cover;border-radius:10px;border:1px solid var(--line)">`:'<div style="height:100px;background:var(--surface);border-radius:10px;display:grid;place-items:center;color:var(--muted)">—</div>';
   return `<div class="card" style="padding:16px;margin-bottom:12px">
     <div style="display:flex;align-items:center;gap:12px"><div class="tukav" style="width:42px;height:42px;font-size:15px">${esc(p.inisial||initial(p.nama))}</div>
-      <div><h4 style="font-size:15px;font-weight:700">${esc(p.nama)}</h4><div class="meta">📱 ${esc(p.telp||'-')}</div></div></div>
+      <div><h4 style="font-size:15px;font-weight:700">${esc(p.nama)}</h4><div class="meta">📱 ${esc(p.telp||'-')}</div><div class="meta">💰 ${p.bayar_metode?esc(p.bayar_metode+(p.bayar_detail?' · '+p.bayar_detail:'')):'belum diisi'}</div></div></div>
     <div style="display:flex;gap:10px;margin-top:12px">
       <div style="flex:1"><div style="font-size:10.5px;color:var(--muted);margin-bottom:3px">KTP</div>${img(p.ktp_url)}</div>
       <div style="flex:1"><div style="font-size:10.5px;color:var(--muted);margin-bottom:3px">Selfie</div>${img(p.wajah_url)}</div></div>
@@ -491,7 +511,7 @@ function kartuPenghasilan(){
     <div style="background:linear-gradient(135deg,#093E3A,#0D5953);color:#fff;padding:18px">
       <div style="font-size:11px;font-weight:700;opacity:.85;text-transform:uppercase">Total Penghasilan</div>
       <div style="font-size:27px;font-weight:800;margin-top:2px">${rp(s.total)}</div>
-      ${s.pending?`<div style="font-size:12px;opacity:.9;margin-top:5px">⏳ ${rp(s.pending)} menunggu pencairan</div>`:'<div style="font-size:12px;opacity:.85;margin-top:5px">Cair otomatis setelah pelanggan konfirmasi.</div>'}
+      ${s.pending?`<div style="font-size:12px;opacity:.9;margin-top:5px">⏳ ${rp(s.pending)} menunggu pencairan</div>`:'<div style="font-size:12px;opacity:.85;margin-top:5px">Dibayarkan setelah pelanggan konfirmasi.</div>'}
     </div>
     <div style="display:flex;text-align:center">
       <div style="flex:1;padding:13px 6px"><div style="font-size:19px;font-weight:800">${s.selesai}</div><div style="font-size:11px;color:var(--muted)">Selesai</div></div>
@@ -696,7 +716,19 @@ async function renderDetail(){
 
   // actions per role & status
   if(amPemilik){
-    if(o.status==='MENUNGGU_DANA')actions=`<button class="btn btn-primary" onclick="bayar('${o.id}')">🔒 Bayar ke Escrow ${rp(b.escrow)}</button><p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">Dana ditahan, baru cair setelah Anda setujui.</p><button class="btn btn-ghost" style="margin-top:9px" onclick="batal('${o.id}')">Batalkan Pesanan</button>`;
+    if(o.status==='MENUNGGU_DANA')actions=`<div class="card" style="padding:16px;border:1.5px solid var(--brass);background:var(--hold-bg)">
+        <div style="font-size:11.5px;color:#8a6a2a;font-weight:800;letter-spacing:.5px">TRANSFER PEMBAYARAN</div>
+        <div style="font-size:24px;font-weight:800;margin:2px 0 8px">${rp(b.escrow)}</div>
+        <div style="font-size:12.5px;color:#314b47">ke rekening berikut:</div>
+        <div class="card" style="background:#fff;padding:13px;margin-top:7px;border:1px solid var(--line)">
+          <div style="font-weight:800;font-size:16px">${esc(BIZ.bank)} ${esc(BIZ.rek)}</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:2px">a.n. ${esc(BIZ.rekNama)}</div>
+        </div>
+        <p style="font-size:11.5px;color:#8a6a2a;margin-top:9px">Dana ditahan Tukangin sampai pekerjaan selesai. Jika batal, dana dikembalikan.</p>
+      </div>
+      <button class="btn btn-primary" style="margin-top:12px" onclick="bayar('${o.id}')">✅ Saya sudah transfer</button>
+      <a href="${waLink('Halo '+BIZ.nama+', ini bukti transfer untuk pesanan: '+(o.judul||''))}" target="_blank" class="btn btn-ghost" style="margin-top:9px;display:block;text-decoration:none;text-align:center">📷 Kirim bukti via WhatsApp</a>
+      <button class="btn btn-ghost" style="margin-top:9px" onclick="batal('${o.id}')">Batalkan Pesanan</button>`;
     else if(o.status==='MENUNGGU_KONFIRMASI')actions=`<div class="infoline" style="margin-bottom:12px">📷 <span>Tukang menyatakan selesai (foto sebelum & sesudah terkirim).</span></div><button class="btn btn-primary" onclick="konfirmasi('${o.id}')">✔ Konfirmasi & Cairkan Dana</button><button class="btn btn-danger" style="margin-top:9px" onclick="sengketa('${o.id}')">⚠ Ada Masalah</button>`;
     else if(o.status==='SELESAI')actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:32px">🎉</div><h5 style="font-weight:800">Selesai</h5><p style="font-size:12.5px;color:var(--muted)">Dana ${rp(b.payout)} diteruskan ke ${esc(o.tukang_nama||'tukang')}.</p></div>`;
     else if(o.status==='DANA_DITAHAN'&&!o.tukang_id)actions=`<div class="infoline">🔍 <span>Menunggu tukang mengambil pekerjaan ini.</span></div><button class="btn btn-danger" style="margin-top:11px" onclick="batal('${o.id}')">Batalkan & Kembalikan Dana</button>`;
