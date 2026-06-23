@@ -180,6 +180,7 @@ async function loadMe(){
   ME=prof;
   VIEW={tab: ME.role==='pemilik'?'beranda':'kerja', orderId:null};
   await refresh();
+  setupRealtime();
 }
 function renderAuth(){
   if(authMode==='welcome'){$('app').innerHTML=welcomeHTML();return;}
@@ -293,6 +294,44 @@ async function refresh(){
   render();
 }
 function myOrders(){return ORDERS.filter(o=>o.pemilik_id===ME.id)}
+let RT=null,_rtT=null;
+function setupRealtime(){
+  try{
+    if(RT){sb.removeChannel(RT);RT=null;}
+    RT=sb.channel('rt-tukangin')
+      .on('postgres_changes',{event:'*',schema:'public',table:'orders'},rtEvent)
+      .on('postgres_changes',{event:'*',schema:'public',table:'messages'},rtEvent)
+      .subscribe();
+    if(ME&&ME.is_admin&&'Notification'in window&&Notification.permission==='default'){try{Notification.requestPermission();}catch(e){}}
+  }catch(e){}
+}
+function rtEvent(payload){
+  rtNotify(payload);
+  clearTimeout(_rtT);
+  _rtT=setTimeout(()=>{refresh();},600);
+}
+function rtNotify(payload){
+  if(!ME)return;
+  const o=payload.new||{};let msg=null;
+  if(payload.table==='messages'){ if(o.sender_id&&o.sender_id!==ME.id)msg='💬 Pesan baru masuk'; }
+  else if(payload.table==='orders'&&ME.is_admin){
+    if(o.status==='MENUNGGU_VERIFIKASI')msg='💵 Pembayaran baru — perlu dicek';
+    else if(o.status==='MENUNGGU_KONFIRMASI')msg='✅ Pekerjaan menunggu konfirmasi';
+    else if(o.status==='SENGKETA')msg='⚠️ Ada sengketa baru';
+  }
+  if(msg){toast(msg);notifBrowser(msg);}
+}
+function notifBrowser(text){
+  try{
+    if(!('Notification'in window))return;
+    if(Notification.permission==='granted')new Notification('Tukangin',{body:text});
+    else if(Notification.permission==='default')Notification.requestPermission();
+  }catch(e){}
+}
+function adminPending(){
+  if(!ME||!ME.is_admin||!Array.isArray(ORDERS))return 0;
+  return ORDERS.filter(o=>o.status==='MENUNGGU_VERIFIKASI'||(o.status==='DANA_DITAHAN'&&!o.tukang_id)||o.garansi_klaim).length;
+}
 function tukangAvailable(){return ORDERS.filter(o=>!o.tukang_id&&o.status==='DANA_DITAHAN')}
 function tukangMine(){return ORDERS.filter(o=>o.tukang_id===ME.id)}
 
@@ -336,7 +375,7 @@ function navBar(){
     ?[['beranda','Beranda','🏠'],['pesanan','Pesanan','📋'],['bantuan','Bantuan','🛟'],['akun','Akun','👤']]
     :[['kerja','Cari Kerja','🔍'],['aktif','Aktif','🧰'],['bantuan','Bantuan','🛟'],['profil','Profil','👤']];
   if(ME.is_admin)tabs.push(['admin','Admin','🛡️']);
-  return `<div class="botnav">${tabs.map(([id,nm,ic])=>`<button class="navb ${VIEW.tab===id?'on':''}" onclick="go('${id}')"><span style="font-size:21px">${ic}</span>${nm}</button>`).join('')}</div>`;
+  return `<div class="botnav">${tabs.map(([id,nm,ic])=>{const bdg=(id==='admin'&&ME.is_admin)?adminPending():0;return `<button class="navb ${VIEW.tab===id?'on':''}" onclick="go('${id}')" style="position:relative"><span style="font-size:21px">${ic}</span>${nm}${bdg?`<span style="position:absolute;top:3px;right:calc(50% - 22px);min-width:16px;height:16px;background:var(--bad);color:#fff;font-size:10px;font-weight:800;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px">${bdg}</span>`:''}</button>`;}).join('')}</div>`;
 }
 function go(t){VIEW={tab:t,orderId:null};render();const s=$('scroll');if(s)s.scrollTop=0}
 function back(){VIEW.orderId=null;render()}
