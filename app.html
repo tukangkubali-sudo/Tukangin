@@ -345,10 +345,19 @@ function renderPemilik(){
         </div>
         <p style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:10px">Pembayaran ditahan ${BIZ.nama} sampai Anda konfirmasi pekerjaan selesai.</p>
       </div>
+      <div id="statsbox" class="card" style="padding:14px;margin-top:13px;display:none"></div>
+      <div style="display:flex;gap:8px;margin-top:11px">
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openTentang()">ℹ️ Tentang</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openKebijakan()">📜 Kebijakan</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openAturanPelanggan()">📋 Hak Anda</button>
+      </div>
       <div class="sec-title">Pilih Kategori</div>
       <div class="catgrid">${KAT.map(k=>`<button class="cat" onclick="sheetBuat('${k.id}')"><span class="ic">${k.ic}</span><span class="nm">${k.nm}</span></button>`).join('')}</div>
       <div class="sec-title">Pesanan Terbaru</div>
-      ${myOrders().slice(0,3).map(orderCard).join('')||emptyBox('📋','Belum ada pesanan')}`;
+      ${myOrders().slice(0,3).map(orderCard).join('')||emptyBox('📋','Belum ada pesanan')}
+      <div class="sec-title">Apa Kata Pelanggan</div>
+      <div id="testibox"><div class="card" style="padding:18px;text-align:center"><div class="spinner" style="margin:0 auto"></div></div></div>`;
+    muatTrust();
   }else if(VIEW.tab==='pesanan'){
     const l=myOrders();
     sc.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><div class="sec-title" style="margin:2px">Pesanan Saya</div><button class="btn-sm btn-ghost" onclick="refresh()">⟳ Muat ulang</button></div>${l.map(orderCard).join('')||emptyBox('📋','Belum ada pesanan','Buat dari Beranda.')}`;
@@ -430,6 +439,14 @@ function profilT(){
       </div>
       <input class="input" id="bayardetail" style="margin-top:10px;display:${(ME.bayar_metode&&ME.bayar_metode!=='Tunai')?'block':'none'}" placeholder="Nomor e-wallet / rekening + nama" value="${esc(ME.bayar_detail||'')}" oninput="ME.bayar_detail=this.value">
       <button class="btn btn-primary" style="margin-top:12px" onclick="simpanBayar()">Simpan</button>
+    </div>
+    <div class="sec-title">Keahlian Anda</div>
+    <div class="card" style="padding:16px">
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:11px">Pilih keahlian Anda — ditampilkan di profil agar pelanggan lebih percaya.</p>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        ${KAT.map(k=>{const on=(ME.keahlian||[]).includes(k.nm);return `<button onclick="toggleKeahlian('${k.nm}',this)" style="font-size:12px;font-weight:600;padding:7px 12px;border-radius:999px;border:1px solid ${on?'var(--brand)':'var(--line)'};background:${on?'var(--brand)':'#fff'};color:${on?'#fff':'#1b4d47'}">${k.ic} ${k.nm}</button>`;}).join('')}
+      </div>
+      <button class="btn btn-primary" style="margin-top:13px" onclick="simpanKeahlian()">Simpan Keahlian</button>
     </div>
     <div class="sec-title">Aturan & Komitmen</div>
     <div class="card" style="padding:14px;cursor:pointer" onclick="openAturanTukang()">
@@ -1030,6 +1047,7 @@ function ratingBlock(o,amPemilik){
   if(sudah)return `<div class="card" style="padding:14px;text-align:center;margin-top:12px"><p style="font-size:12.5px;color:var(--muted)">Penilaian Anda untuk ${esc(target)}</p><div style="font-size:22px;color:var(--brass);margin-top:4px">${'★'.repeat(sudah)}${'☆'.repeat(5-sudah)}</div></div>`;
   return `<div class="card" style="padding:16px;text-align:center;margin-top:12px"><p style="font-size:13.5px;font-weight:700">Beri rating untuk ${esc(target)}</p>
     <div id="ratestars" style="font-size:34px;letter-spacing:6px;margin-top:8px">${[1,2,3,4,5].map(n=>`<span data-n="${n}" onclick="setStar(${n})" style="cursor:pointer;color:#ddd">★</span>`).join('')}</div>
+    ${amPemilik?`<textarea id="ulasanteks" placeholder="Tulis ulasan singkat (opsional) — bisa tampil di Beranda" style="width:100%;margin-top:11px;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;min-height:54px;font-family:inherit"></textarea>`:''}
     <button class="btn btn-primary" id="ratebtn" disabled style="margin-top:14px" onclick="kirimRating('${o.id}')">Kirim Penilaian</button></div>`;
 }
 let _star=0;
@@ -1038,6 +1056,8 @@ async function kirimRating(id){
   if(!_star)return;
   const {error}=await sb.rpc('nilai_pesanan',{p_order:id,p_bintang:_star});
   if(error){toast('Gagal: '+error.message);return}
+  const ul=$('ulasanteks');
+  if(ul&&ul.value.trim()){try{await sb.rpc('ulas_pesanan',{p_order:id,p_teks:ul.value.trim()});}catch(e){}}
   _star=0;await refresh();openOrder(id);toast('Terima kasih atas penilaian Anda');
 }
 function fotoBtn(o,jenis){
@@ -1299,6 +1319,16 @@ function aturanTukangHTML(){
     ].map(([h,b])=>`<div style="margin-bottom:13px"><div style="font-weight:800;color:var(--brand);margin-bottom:2px">${h}</div><div>${b}</div></div>`).join('')}
   </div>
   <div style="padding:0 20px 24px">${footer}</div>`;}
+function toggleKeahlian(nm,el){
+  ME.keahlian=ME.keahlian||[];const i=ME.keahlian.indexOf(nm);
+  if(i>=0){ME.keahlian.splice(i,1);el.style.background='#fff';el.style.color='#1b4d47';el.style.borderColor='var(--line)';}
+  else{ME.keahlian.push(nm);el.style.background='var(--brand)';el.style.color='#fff';el.style.borderColor='var(--brand)';}
+}
+async function simpanKeahlian(){
+  const {error}=await sb.from('profiles').update({keahlian:ME.keahlian||[]}).eq('id',ME.id);
+  if(error){toast('Gagal: '+error.message);return}
+  toast('✔ Keahlian disimpan');
+}
 async function setujuAturan(){
   if(!ME||!ME.id)return;
   const now=new Date().toISOString();
@@ -1308,6 +1338,50 @@ async function setujuAturan(){
   closeSheet();render();toast('✔ Persetujuan tercatat. Terima kasih.');
 }
 function openAturanTukang(){openSheet(aturanTukangHTML());}
+async function muatTrust(){
+  try{
+    const {data:st}=await sb.rpc('stats_publik');const box=$('statsbox');
+    if(st&&box){box.style.display='block';box.innerHTML=`<div style="display:flex;text-align:center">
+      <div style="flex:1"><div style="font-size:20px;font-weight:800;color:var(--brand)">${st.selesai||0}</div><div style="font-size:10.5px;color:var(--muted)">Pekerjaan selesai</div></div>
+      <div style="flex:1;border-left:1px solid var(--line)"><div style="font-size:20px;font-weight:800;color:var(--brand)">${st.tukang||0}</div><div style="font-size:10.5px;color:var(--muted)">Tukang terverifikasi</div></div>
+      <div style="flex:1;border-left:1px solid var(--line)"><div style="font-size:20px;font-weight:800;color:var(--brand)">⭐ ${st.rating||'5.0'}</div><div style="font-size:10.5px;color:var(--muted)">Rating</div></div></div>`;}
+  }catch(e){}
+  try{
+    const {data:ts}=await sb.rpc('testimoni_publik');const tb=$('testibox');
+    if(tb){
+      if(ts&&ts.length)tb.innerHTML=ts.map(t=>`<div class="card" style="padding:13px;margin-bottom:9px"><div style="color:var(--brass);font-size:13px">${'★'.repeat(t.bintang||5)}</div><p style="font-size:13px;margin-top:4px;color:#2c4642">"${esc(t.ulasan)}"</p><div class="meta" style="margin-top:5px">— ${esc(t.nama||'Pelanggan')} · ${katOf(t.kat).nm}</div></div>`).join('');
+      else tb.innerHTML=`<div class="card" style="padding:18px;text-align:center;color:var(--muted)"><div style="font-size:24px">💬</div><p style="font-size:12.5px;margin-top:5px">Belum ada ulasan. Jadilah pelanggan pertama yang memberi penilaian!</p></div>`;
+    }
+  }catch(e){}
+}
+function infoSheet(judul,sub,items){return `
+  <div style="padding:20px 20px 12px"><h3 style="font-size:18px;font-weight:800">${judul}</h3>${sub?`<p style="font-size:12px;color:var(--muted);margin-top:3px">${sub}</p>`:''}</div>
+  <div style="padding:0 20px 16px;font-size:13.5px;line-height:1.55;color:#2c4642">
+    ${items.map(([h,b])=>`<div style="margin-bottom:13px"><div style="font-weight:800;color:var(--brand);margin-bottom:2px">${h}</div><div>${b}</div></div>`).join('')}
+  </div>
+  <div style="padding:0 20px 24px"><button class="btn btn-primary" onclick="closeSheet()">Tutup</button></div>`;}
+function openTentang(){openSheet(infoSheet('ℹ️ Tentang Tukangin','Layanan tukang terpercaya di Bali',[
+  ['Dikelola oleh','<b>Guna Merta Home Service</b> (CV Karya Makmur) — kontraktor berpengalaman di Canggu, Bali. Di balik Tukangin ada usaha & orang nyata, bukan sekadar aplikasi.'],
+  ['Alamat','Jln Tukad Irawadi No. 44, Bali.'],
+  ['Hubungi kami','WhatsApp 0813-3877-3717 — dibalas cepat pada jam kerja.'],
+  ['Cara kami menjaga Anda','Setiap tukang diverifikasi (KTP + selfie). Pembayaran ditahan aman (escrow) sampai Anda konfirmasi selesai. Pekerjaan bergaransi.'],
+  ['Misi kami','Menghubungkan pemilik rumah & villa dengan tukang terpercaya — harga jelas, pembayaran aman.']
+]));}
+function openKebijakan(){openSheet(infoSheet('📜 Kebijakan Refund & Sengketa','Aturan main yang adil untuk dua pihak',[
+  ['Batal sebelum tukang ambil','Dana dikembalikan <b>100%</b>.'],
+  ['Batal setelah diambil, belum dikerjakan','Dana dikembalikan; potongan hanya sebatas biaya transfer bila ada.'],
+  ['Pekerjaan tidak selesai / tidak sesuai','Laporkan lewat app. Dana tetap ditahan sampai sengketa selesai — tidak langsung cair ke tukang.'],
+  ['Sistem Harian','Anda membayar hanya hari yang benar-benar dihadiri (terbukti absensi GPS). Sisa dana dikembalikan.'],
+  ['Proses sengketa','Admin meninjau bukti: foto sebelum/sesudah, absensi, dan riwayat aktivitas, lalu memutuskan seadil mungkin.'],
+  ['Garansi','Keluhan dalam masa garansi diperbaiki <b>tanpa biaya tambahan</b>. Tukang yang menolak memperbaiki dikenai sanksi.']
+]));}
+function openAturanPelanggan(){openSheet(infoSheet('📋 Aturan & Hak Pelanggan','Hak dan tanggung jawab Anda sebagai pemilik',[
+  ['Hak Anda','Tukang terverifikasi, dana aman lewat escrow, pekerjaan bergaransi, serta perlindungan & dukungan admin bila ada masalah.'],
+  ['Jelaskan pekerjaan dengan benar','Tulis kebutuhan sejelas mungkin (foto sangat membantu) agar tukang & harga sesuai.'],
+  ['Bayar lewat app','Selalu bayar melalui Tukangin. <b>Membayar di luar app menghilangkan jaminan & garansi.</b>'],
+  ['Konfirmasi tepat waktu','Setelah pekerjaan selesai dan benar, segera konfirmasi agar dana cair ke tukang. Jangan menahan tanpa alasan.'],
+  ['Saling menghormati','Perlakukan tukang dengan hormat dan beri akses/lokasi yang benar. Penilaian Anda membantu menjaga kualitas.']
+]));}
 function openSheet(html){
   let ov=$('ov');
   if(!ov){ov=document.createElement('div');ov.id='ov';ov.style.cssText='position:fixed;inset:0;background:rgba(8,30,28,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center';ov.onclick=e=>{if(e.target===ov)closeSheet()};document.body.appendChild(ov)}
