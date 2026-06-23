@@ -498,11 +498,69 @@ async function renderAdmin(){
   const list=r1.data||[], pending=list.filter(p=>p.verif_status==='menunggu'), done=list.filter(p=>p.verif_status==='terverifikasi'||p.verif_status==='ditolak');
   const kl=r2.data||[];
   sc.innerHTML=`
+    <div class="sec-title">💾 Backup Data</div>
+    <div class="card" style="padding:14px;margin-bottom:8px">
+      <p style="font-size:12.5px;color:#46605c;margin-bottom:11px">Unduh semua pesanan & data pengguna untuk arsip (komplain, refund, garansi). Simpan ke folder Google Drive Anda.</p>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary" style="flex:1" onclick="eksporXLSX()">📊 Excel</button>
+        <button class="btn btn-ghost" style="flex:1" onclick="eksporCSV()">📄 CSV</button>
+      </div></div>
     ${kl.length?`<div class="sec-title">🛠️ Klaim Garansi · ${kl.length}</div>${kl.map(o=>`<div class="card" style="padding:14px;margin-bottom:10px;border:1.5px solid var(--brass)"><div style="font-size:13.5px;font-weight:800">${esc(o.judul||'Pesanan')}</div><div class="meta">Tukang: ${esc(o.tukang_nama||'-')} · Pemilik: ${esc(o.pemilik_nama||'-')}</div><div style="display:flex;gap:8px;margin-top:11px"><button class="btn btn-danger btn-sm" style="flex:1" onclick="strikeTukang('${o.tukang_id}','${o.id}')">Tukang menolak (Strike)</button><button class="btn btn-primary btn-sm" style="flex:1" onclick="beresGaransi('${o.id}')">Sudah diperbaiki</button></div></div>`).join('')}`:''}
     <div class="sec-title">Menunggu Verifikasi${pending.length?` · ${pending.length}`:''}</div>
     ${pending.length?pending.map(adminCard).join(''):emptyBox('✅','Tidak ada antrean','Semua tukang sudah ditinjau.')}
     <div class="sec-title">Sudah Ditinjau</div>
     ${done.length?done.map(p=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><div class="tukav" style="width:34px;height:34px;font-size:13px">${esc(p.inisial||initial(p.nama))}</div><div style="flex:1"><b style="font-size:13.5px">${esc(p.nama)}</b><div class="meta" style="font-size:11px">💰 ${p.bayar_metode?esc(p.bayar_metode+(p.bayar_detail?' · '+p.bayar_detail:'')):'—'}${p.strike?` · ⚠️ ${p.strike} strike`:''}</div></div><span class="badge ${p.verif_status==='terverifikasi'?'b-done':'b-dispute'}">${p.verif_status}</span></div>`).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:4px 2px">Belum ada.</p>'}`;
+}
+function tglFile(){return new Date().toISOString().slice(0,10);}
+function unduhBlob(blob,nama){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=nama;a.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(url);},800);}
+function barisPesanan(o){const b=o.biaya||fee(o.harga);return {
+  Tanggal:o.dibuat?new Date(o.dibuat).toLocaleString('id-ID'):'',
+  Kode:String(o.id||'').slice(0,8),
+  Pemilik:o.pemilik_nama||'', Tukang:o.tukang_nama||'',
+  Kategori:katOf(o.kat).nm, Sistem:o.sistem||'borongan',
+  Judul:o.judul||'', Lokasi:o.lokasi||'',
+  Status:(ST[o.status]||{}).l||o.status||'',
+  Harga:o.harga||0, Escrow:b.escrow||0, TukangTerima:b.payout||0, BiayaLayanan:b.layanan||0,
+  HariHadir:o.sistem==='harian'?hariPenuh(o):'',
+  BuktiTransfer:o.bukti_transfer_url?'Ada':'-',
+  KlaimGaransi:o.garansi_klaim?'YA':'-',
+  Selesai:o.selesai_tgl?new Date(o.selesai_tgl).toLocaleDateString('id-ID'):''
+};}
+function barisPengguna(p){return {
+  Nama:p.nama||'', Peran:p.role||'', WhatsApp:p.telp||'', Verifikasi:p.verif_status||'belum',
+  CaraBayar:p.bayar_metode||'', DetailBayar:p.bayar_detail||'', Strike:p.strike||0,
+  Admin:p.is_admin?'YA':'-', Daftar:p.dibuat?new Date(p.dibuat).toLocaleDateString('id-ID'):''
+};}
+async function ambilDataEkspor(){
+  const [a,c]=await Promise.all([
+    sb.from('orders').select('*').order('dibuat',{ascending:false}),
+    sb.from('profiles').select('*').order('dibuat',{ascending:false})
+  ]);
+  return {ords:a.data||[], profs:c.data||[], err:a.error||c.error};
+}
+async function eksporCSV(){
+  toast('Menyiapkan CSV…');
+  const {ords,err}=await ambilDataEkspor();
+  if(err){toast('Gagal: '+err.message);return}
+  const rows=ords.map(barisPesanan);
+  const headers=rows.length?Object.keys(rows[0]):['Tanggal','Kode','Pemilik','Status'];
+  const cel=v=>{v=(v==null?'':String(v));return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const csv=[headers.join(',')].concat(rows.map(r=>headers.map(h=>cel(r[h])).join(','))).join('\n');
+  unduhBlob(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),`Pesanan-Tukangin-${tglFile()}.csv`);
+  toast('✅ CSV terunduh ('+rows.length+' pesanan)');
+}
+function loadXLSX(){return new Promise((res,rej)=>{if(window.XLSX)return res(window.XLSX);const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onload=()=>window.XLSX?res(window.XLSX):rej('gagal');s.onerror=()=>rej('gagal');document.head.appendChild(s);});}
+async function eksporXLSX(){
+  toast('Memuat modul Excel…');
+  let XLSX;try{XLSX=await loadXLSX();}catch(e){toast('Gagal memuat modul Excel — cek internet');return}
+  toast('Menyiapkan Excel…');
+  const {ords,profs,err}=await ambilDataEkspor();
+  if(err){toast('Gagal: '+err.message);return}
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(ords.map(barisPesanan)),'Pesanan');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(profs.map(barisPengguna)),'Pengguna');
+  XLSX.writeFile(wb,`Tukangin-${tglFile()}.xlsx`);
+  toast('✅ Excel terunduh');
 }
 function adminCard(p){
   const img=(url)=>url?`<img src="${url}" onclick="window.open('${url}')" style="width:100%;height:100px;object-fit:cover;border-radius:10px;border:1px solid var(--line)">`:'<div style="height:100px;background:var(--surface);border-radius:10px;display:grid;place-items:center;color:var(--muted)">—</div>';
