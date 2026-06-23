@@ -6,1168 +6,1448 @@
 <meta name="theme-color" content="#0D5953">
 <title>Tukangin — Jasa Tukang Bali</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
-  --teal:#0D5953; --teal-d:#093E3A; --teal-l:#127A71;
-  --brass:#E89A2D; --brass-d:#C97D17;
-  --ink:#15211F; --muted:#6A7B77; --line:#E4E9E7;
-  --surface:#FBFAF6; --card:#FFFFFF;
-  --ok:#1E9E6A; --warn:#E89A2D; --bad:#D8473B;
-  --hold:#B5760E; --hold-bg:#FDF4E3;
+  --teal:#0D5953;--teal-d:#093E3A;--brass:#E89A2D;--brass-d:#C97D17;
+  --ink:#15211F;--muted:#6A7B77;--line:#E4E9E7;--surface:#FBFAF6;--card:#fff;
+  --ok:#1E9E6A;--bad:#D8473B;--hold:#B5760E;--hold-bg:#FDF4E3;
   --shadow:0 1px 3px rgba(13,89,83,.06),0 8px 24px rgba(13,89,83,.07);
-  --r:16px;
   --font:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%}
-body{
-  font-family:var(--font);color:var(--ink);background:#E9ECEA;
-  font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;
-  display:flex;justify-content:center;
-}
+body{font-family:var(--font);color:var(--ink);background:#E9ECEA;display:flex;justify-content:center;font-size:15px;line-height:1.45}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 input,textarea,select{font-family:inherit;font-size:15px}
-img{display:block}
-
-/* phone frame */
-#phone{
-  width:100%;max-width:440px;min-height:100vh;background:var(--surface);
-  position:relative;display:flex;flex-direction:column;
-  box-shadow:0 0 60px rgba(0,0,0,.12);overflow:hidden;
-}
+#phone{width:100%;max-width:440px;min-height:100vh;background:var(--surface);position:relative;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 60px rgba(0,0,0,.12)}
 @media(min-width:480px){#phone{margin:18px 0;min-height:calc(100vh - 36px);border-radius:30px}}
-
-/* ---- top bar ---- */
-.topbar{
-  background:linear-gradient(135deg,var(--teal) 0%,var(--teal-d) 100%);
-  color:#fff;padding:14px 18px 16px;position:sticky;top:0;z-index:30;
-}
-.topbar.flat{background:#fff;color:var(--ink);border-bottom:1px solid var(--line)}
+.scroll{flex:1;overflow-y:auto;padding:16px 16px 92px}
+.scroll::-webkit-scrollbar{width:0}
+.topbar{background:linear-gradient(135deg,var(--teal),var(--teal-d));color:#fff;padding:14px 18px 16px;position:sticky;top:0;z-index:20}
 .tb-row{display:flex;align-items:center;gap:12px}
-.brandwrap{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
-.logo{width:34px;height:34px;border-radius:9px;background:var(--brass);display:grid;place-items:center;flex:none;box-shadow:0 2px 8px rgba(232,154,45,.4)}
-.logo svg{width:20px;height:20px}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--brass);display:grid;place-items:center;flex:none;font-size:18px}
 .brand b{font-weight:800;font-size:17px;letter-spacing:-.02em;display:block;line-height:1.1}
-.brand small{font-size:11px;opacity:.85;font-weight:500}
-.flat .brand small{color:var(--muted)}
-.rolepill{font-size:11px;font-weight:700;background:rgba(255,255,255,.16);padding:5px 11px;border-radius:20px;display:flex;align-items:center;gap:5px}
-.flat .rolepill{background:var(--surface);border:1px solid var(--line)}
-.demo-pill{font-size:10px;font-weight:700;letter-spacing:.04em;background:rgba(255,255,255,.14);padding:4px 9px;border-radius:7px}
-
+.brand small{font-size:11px;opacity:.85}
+.rolepill{font-size:11px;font-weight:700;background:rgba(255,255,255,.16);padding:5px 11px;border-radius:20px;margin-left:auto}
 .balance{margin-top:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
 .balance .lbl{font-size:11px;opacity:.85;font-weight:600}
-.balance .amt{font-size:21px;font-weight:800;letter-spacing:-.02em;margin-top:1px}
-.balance button{background:#fff;color:var(--teal-d);font-weight:700;font-size:13px;padding:9px 14px;border-radius:10px}
-
-/* ---- scroll body ---- */
-.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px 16px 90px;-webkit-overflow-scrolling:touch}
-.scroll::-webkit-scrollbar{width:0}
-
+.balance .amt{font-size:20px;font-weight:800;margin-top:1px}
 .sec-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:18px 2px 10px}
 .sec-title:first-child{margin-top:2px}
-
-/* ---- cards ---- */
-.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
 .card+.card{margin-top:12px}
-
-/* category grid */
+.hero{background:linear-gradient(135deg,#127A71,#0D5953);color:#fff;border-radius:18px;padding:18px;box-shadow:0 8px 24px rgba(13,89,83,.22)}
+.hero h3{font-size:17px;font-weight:800}
+.hero p{font-size:12.5px;opacity:.9;margin-top:3px}
+.hero button{margin-top:13px;background:var(--brass);color:#3a2400;font-weight:800;font-size:14px;padding:11px 16px;border-radius:11px}
 .catgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
-.cat{background:var(--card);border-radius:14px;padding:12px 4px 9px;text-align:center;box-shadow:var(--shadow);transition:transform .12s}
-.cat:active{transform:scale(.94)}
+.cat{background:var(--card);border-radius:14px;padding:12px 4px 9px;text-align:center;box-shadow:var(--shadow)}
 .cat .ic{font-size:22px;display:block;margin-bottom:5px}
-.cat .nm{font-size:10.5px;font-weight:600;color:var(--ink);line-height:1.15}
-
-/* hero post button */
-.hero{
-  background:linear-gradient(135deg,#127A71,#0D5953);color:#fff;border-radius:18px;
-  padding:18px;box-shadow:0 8px 24px rgba(13,89,83,.22);position:relative;overflow:hidden;
-}
-.hero h3{font-size:17px;font-weight:800;letter-spacing:-.01em}
-.hero p{font-size:12.5px;opacity:.9;margin-top:3px;max-width:230px}
-.hero button{margin-top:13px;background:var(--brass);color:#3a2400;font-weight:800;font-size:14px;padding:11px 16px;border-radius:11px;display:inline-flex;align-items:center;gap:7px}
-.hero .blob{position:absolute;right:-26px;top:-26px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.07)}
-.hero .blob2{position:absolute;right:18px;bottom:-40px;width:90px;height:90px;border-radius:50%;background:rgba(232,154,45,.18)}
-
-/* order card */
+.cat .nm{font-size:10.5px;font-weight:600;line-height:1.15}
 .ocard{padding:14px}
 .ocard .top{display:flex;gap:12px;align-items:flex-start}
 .othumb{width:48px;height:48px;border-radius:12px;background:var(--surface);display:grid;place-items:center;font-size:24px;flex:none;border:1px solid var(--line)}
-.ocard .ti{flex:1;min-width:0}
-.ocard h4{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.ocard h4{font-size:15px;font-weight:700}
 .ocard .meta{font-size:12px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.ocard .price{font-weight:800;font-size:15px;text-align:right;white-space:nowrap}
+.ocard .price{font-weight:800;font-size:15px;text-align:right;white-space:nowrap;margin-left:auto}
 .ocard .price small{display:block;font-size:10px;color:var(--muted);font-weight:600}
-
-.badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:7px;letter-spacing:.01em}
-.b-draft{background:#EEF1F0;color:#5b6b68}
-.b-wait{background:#FEF3E0;color:var(--hold)}
-.b-hold{background:var(--hold-bg);color:var(--hold)}
-.b-work{background:#E5F0FF;color:#2563c9}
-.b-confirm{background:#EAF6F0;color:#15875a}
-.b-done{background:#E7F5EC;color:var(--ok)}
-.b-dispute{background:#FBE9E7;color:var(--bad)}
-
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:7px}
+.b-wait{background:#FEF3E0;color:var(--hold)}.b-hold{background:var(--hold-bg);color:var(--hold)}
+.b-work{background:#E5F0FF;color:#2563c9}.b-confirm{background:#EAF6F0;color:#15875a}
+.b-done{background:#E7F5EC;color:var(--ok)}.b-dispute{background:#FBE9E7;color:var(--bad)}
 .divider{height:1px;background:var(--line);margin:13px 0}
-.ocard .foot{display:flex;gap:9px}
 .dot{width:3px;height:3px;border-radius:50%;background:var(--muted);opacity:.5}
-
-/* buttons */
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border-radius:13px;font-weight:700;font-size:15px;transition:transform .1s,opacity .15s}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border-radius:13px;font-weight:700;font-size:15px}
 .btn:active{transform:scale(.985)}
-.btn-primary{background:var(--teal);color:#fff}
-.btn-brass{background:var(--brass);color:#3a2400}
+.btn-primary{background:var(--teal);color:#fff}.btn-brass{background:var(--brass);color:#3a2400}
 .btn-ghost{background:var(--surface);color:var(--ink);border:1.5px solid var(--line)}
 .btn-danger{background:#fff;color:var(--bad);border:1.5px solid #f3cdc9}
 .btn:disabled{opacity:.45;pointer-events:none}
 .btn-sm{padding:10px 14px;font-size:13px;border-radius:10px;width:auto}
-.btnrow{display:flex;gap:9px;margin-top:12px}
-.btnrow .btn{flex:1}
-
-/* tukang job card */
-.jobcard{padding:14px}
-.jdist{font-size:11px;font-weight:700;color:var(--teal);background:#E7F1EF;padding:3px 8px;border-radius:7px}
-.tukmini{display:flex;align-items:center;gap:8px}
-.tukav{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--brass),var(--brass-d));display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;flex:none}
-.stars{color:var(--brass);font-size:12px;font-weight:700}
-
-/* ---- bottom nav ---- */
-.botnav{position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;padding:7px 6px 9px;z-index:30}
-.navb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px;color:var(--muted);font-size:10.5px;font-weight:600;position:relative}
-.navb svg{width:23px;height:23px}
-.navb.on{color:var(--teal)}
-.navb .nbadge{position:absolute;top:0;right:50%;transform:translateX(16px);background:var(--bad);color:#fff;font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:9px;display:grid;place-items:center;padding:0 4px}
-
-/* ---- sheet / overlay ---- */
-.overlay{position:fixed;inset:0;background:rgba(8,30,28,.55);z-index:100;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
-.overlay.show{display:flex}
-@media(min-width:480px){.overlay{align-items:center}}
-.sheet{background:var(--surface);width:100%;max-width:440px;max-height:92vh;border-radius:24px 24px 0 0;overflow-y:auto;animation:up .28s cubic-bezier(.2,.9,.3,1)}
-@media(min-width:480px){.sheet{border-radius:24px;max-height:88vh}}
-@keyframes up{from{transform:translateY(40px);opacity:.6}to{transform:translateY(0);opacity:1}}
-.sheet-hd{position:sticky;top:0;background:var(--surface);padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);z-index:5}
-.sheet-hd h3{font-size:17px;font-weight:800;letter-spacing:-.01em}
-.xbtn{width:32px;height:32px;border-radius:9px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;font-size:18px;color:var(--muted)}
-.sheet-bd{padding:16px 18px 24px}
-
-.grip{width:38px;height:4px;border-radius:3px;background:var(--line);margin:8px auto 0}
-
-/* form */
 .field{margin-bottom:14px}
-.field label{display:block;font-size:12.5px;font-weight:700;margin-bottom:6px;color:var(--ink)}
+.field label{display:block;font-size:12.5px;font-weight:700;margin-bottom:6px}
 .field .hint{font-size:11.5px;color:var(--muted);font-weight:500}
-.input,textarea.input,select.input{width:100%;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;font-size:15px;color:var(--ink);outline:none;transition:border .15s}
+.input{width:100%;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;font-size:15px;color:var(--ink);outline:none}
 .input:focus{border-color:var(--teal)}
-textarea.input{resize:vertical;min-height:80px}
+textarea.input{resize:vertical;min-height:78px}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
 .chip{padding:9px 13px;border-radius:10px;background:#fff;border:1.5px solid var(--line);font-size:13px;font-weight:600;color:var(--muted)}
 .chip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
-
-.uploadbox{border:1.5px dashed var(--line);border-radius:13px;padding:22px;text-align:center;background:#fff;color:var(--muted)}
-.uploadbox .ic{font-size:26px}
-.uploadbox span{display:block;font-size:12.5px;font-weight:600;margin-top:4px}
-.thumb-prev{width:100%;height:150px;object-fit:cover;border-radius:13px;border:1px solid var(--line)}
-
-/* price estimate box */
 .estbox{background:linear-gradient(135deg,#FDF4E3,#FBEAC8);border:1px solid #f0dca8;border-radius:14px;padding:14px}
-.estbox .lab{font-size:11px;font-weight:700;color:var(--brass-d);text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:6px}
-.estbox .rng{font-size:21px;font-weight:800;color:#5a3d05;margin-top:3px;letter-spacing:-.02em}
+.estbox .lab{font-size:11px;font-weight:700;color:var(--brass-d);text-transform:uppercase}
+.estbox .rng{font-size:20px;font-weight:800;color:#5a3d05;margin-top:3px}
 .estbox .note{font-size:11px;color:#8a6a2a;margin-top:4px}
-
-/* fee breakdown */
 .fee{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px}
 .feerow{display:flex;justify-content:space-between;font-size:13.5px;padding:5px 0}
 .feerow.tot{border-top:1.5px dashed var(--line);margin-top:6px;padding-top:11px;font-weight:800;font-size:16px}
 .feerow .sub{color:var(--muted);font-size:11.5px}
-
-/* escrow tracker (signature) */
 .escrow-banner{background:linear-gradient(135deg,#093E3A,#0D5953);border-radius:16px;padding:16px;color:#fff;position:relative;overflow:hidden}
 .escrow-banner .lk{position:absolute;right:-10px;bottom:-14px;font-size:90px;opacity:.08}
-.escrow-banner .st{font-size:11px;font-weight:700;opacity:.85;text-transform:uppercase;letter-spacing:.05em}
-.escrow-banner .amt{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
-.escrow-banner .sub{font-size:12px;opacity:.9;margin-top:5px;max-width:250px}
-
-.tracker{margin-top:6px}
-.tstep{display:flex;gap:13px;position:relative;padding-bottom:18px}
-.tstep:last-child{padding-bottom:0}
-.tstep .line{position:absolute;left:13px;top:26px;bottom:-2px;width:2px;background:var(--line)}
-.tstep.done .line{background:var(--teal)}
-.tstep .node{width:26px;height:26px;border-radius:50%;background:#fff;border:2px solid var(--line);display:grid;place-items:center;flex:none;z-index:1;font-size:12px;color:var(--muted)}
-.tstep.done .node{background:var(--teal);border-color:var(--teal);color:#fff}
-.tstep.active .node{background:#fff;border-color:var(--teal);color:var(--teal);box-shadow:0 0 0 4px rgba(13,89,83,.12)}
-.tstep .txt h5{font-size:14px;font-weight:700}
-.tstep .txt p{font-size:12px;color:var(--muted);margin-top:1px}
-.tstep.active .txt h5{color:var(--teal)}
-
-/* OTP code card */
+.escrow-banner .st{font-size:11px;font-weight:700;opacity:.85;text-transform:uppercase}
+.escrow-banner .amt{font-size:25px;font-weight:800;margin-top:2px}
+.escrow-banner .sub{font-size:12px;opacity:.9;margin-top:5px}
 .otpcard{background:#fff;border:2px dashed var(--brass);border-radius:16px;padding:16px;text-align:center}
-.otpcard .lab{font-size:11.5px;font-weight:700;color:var(--brass-d);text-transform:uppercase;letter-spacing:.05em}
-.otpcard .code{font-size:38px;font-weight:800;letter-spacing:.18em;color:var(--ink);margin:6px 0 2px;font-variant-numeric:tabular-nums}
-.otpcard .note{font-size:11.5px;color:var(--muted);line-height:1.4}
-.otp-inputs{display:flex;gap:10px;justify-content:center;margin:8px 0}
-.otp-inputs input{width:52px;height:60px;text-align:center;font-size:26px;font-weight:800;border:1.5px solid var(--line);border-radius:13px;background:#fff;outline:none}
-.otp-inputs input:focus{border-color:var(--teal)}
-
-/* chat */
+.otpcard .lab{font-size:11.5px;font-weight:700;color:var(--brass-d);text-transform:uppercase}
+.otpcard .code{font-size:36px;font-weight:800;letter-spacing:.18em;margin:6px 0 2px}
+.otpcard .note{font-size:11.5px;color:var(--muted)}
 .chatbox{background:#fff;border-radius:14px;border:1px solid var(--line);overflow:hidden}
-.chat-warn{background:var(--hold-bg);color:var(--hold);font-size:11px;font-weight:600;padding:8px 12px;display:flex;gap:7px;align-items:center;border-bottom:1px solid #f0dca8}
-.msgs{padding:12px;display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto}
-.msg{max-width:78%;padding:9px 12px;border-radius:14px;font-size:13.5px;line-height:1.35}
+.chat-warn{background:var(--hold-bg);color:var(--hold);font-size:11px;font-weight:600;padding:8px 12px}
+.msgs{padding:12px;display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto}
+.msg{max-width:78%;padding:9px 12px;border-radius:14px;font-size:13.5px}
 .msg.me{align-self:flex-end;background:var(--teal);color:#fff;border-bottom-right-radius:4px}
 .msg.them{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
 .chat-in{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
 .chat-in input{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:10px 14px;outline:none}
-.chat-in button{width:42px;height:42px;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;flex:none}
-
-/* audit log */
+.chat-in button{width:42px;height:42px;border-radius:50%;background:var(--teal);color:#fff;flex:none}
 .logitem{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
 .logitem:last-child{border-bottom:none}
 .logitem .ldot{width:9px;height:9px;border-radius:50%;background:var(--teal);margin-top:5px;flex:none}
-.logitem .lc{flex:1}
 .logitem h6{font-size:13px;font-weight:700}
 .logitem p{font-size:11.5px;color:var(--muted);margin-top:1px}
-.logitem .hash{font-size:9.5px;color:#b3beba;font-family:ui-monospace,monospace;margin-top:2px}
-
-/* profile */
-.profhd{display:flex;align-items:center;gap:14px}
-.profav{width:62px;height:62px;border-radius:18px;background:linear-gradient(135deg,var(--brass),var(--brass-d));display:grid;place-items:center;color:#fff;font-weight:800;font-size:26px}
-.kyc{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--ok);background:#E7F5EC;padding:3px 9px;border-radius:7px;margin-top:5px}
-.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
-.statbox{background:#fff;border:1px solid var(--line);border-radius:13px;padding:12px;text-align:center}
-.statbox .n{font-size:20px;font-weight:800;letter-spacing:-.02em}
-.statbox .l{font-size:10.5px;color:var(--muted);font-weight:600;margin-top:1px}
-
-/* misc */
-.empty{text-align:center;padding:48px 20px;color:var(--muted)}
-.empty .ic{font-size:46px;opacity:.5}
-.empty p{font-size:13.5px;margin-top:10px;max-width:240px;margin-inline:auto}
-.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:13.5px;font-weight:600;z-index:200;opacity:0;transition:.28s;box-shadow:0 8px 30px rgba(0,0,0,.3);max-width:380px;text-align:center}
+.botnav{position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;padding:7px 6px 9px;z-index:20}
+.navb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px;color:var(--muted);font-size:10.5px;font-weight:600}
+.navb svg{width:23px;height:23px}.navb.on{color:var(--teal)}
+.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;font-size:13.5px;font-weight:600;z-index:200;opacity:0;transition:.28s;max-width:380px;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{text-align:center;padding:42px 20px;color:var(--muted)}
+.empty .ic{font-size:44px;opacity:.5}.empty p{font-size:13.5px;margin-top:8px}
 .infoline{display:flex;gap:8px;font-size:12px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:11px;padding:10px 12px;align-items:flex-start}
-.infoline b{color:var(--ink)}
-.countdown{font-variant-numeric:tabular-nums;font-weight:800;color:var(--hold)}
-.switch-role{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:3px;gap:3px}
-.switch-role button{flex:1;padding:9px;border-radius:9px;font-size:12.5px;font-weight:700;color:var(--muted)}
-.switch-role button.on{background:#fff;color:var(--teal);box-shadow:0 1px 4px rgba(0,0,0,.08)}
-.guarantee{display:flex;gap:9px;align-items:center;background:#E7F1EF;border-radius:11px;padding:11px 12px}
-.guarantee .g-ic{font-size:18px}
-.guarantee p{font-size:11.5px;color:var(--teal-d);font-weight:600;line-height:1.35}
+.profav{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--brass),var(--brass-d));display:grid;place-items:center;color:#fff;font-weight:800;font-size:22px}
+.kyc{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--ok);background:#E7F5EC;padding:3px 9px;border-radius:7px;margin-top:5px}
+/* auth */
+.auth{flex:1;display:flex;flex-direction:column;justify-content:center;padding:28px 22px;min-height:100vh}
+.auth .logo-lg{width:60px;height:60px;border-radius:16px;background:var(--brass);display:grid;place-items:center;font-size:30px;margin-bottom:16px}
+.auth h1{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.auth p.sub{font-size:13.5px;color:var(--muted);margin:4px 0 22px}
+.seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px;margin-bottom:18px}
+.seg button{flex:1;padding:10px;border-radius:9px;font-size:13.5px;font-weight:700;color:var(--muted)}
+.seg button.on{background:#fff;color:var(--teal);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.errbox{background:#FBE9E7;color:#a8352a;font-size:12.5px;font-weight:600;padding:11px 13px;border-radius:11px;margin-bottom:14px}
+.loadwrap{flex:1;display:grid;place-items:center;min-height:100vh;color:var(--muted)}
+.spinner{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<div id="phone">
-  <div id="top"></div>
-  <div class="scroll" id="scroll"></div>
-  <div id="nav"></div>
-</div>
-<div class="overlay" id="overlay" onclick="if(event.target===this)closeSheet()">
-  <div class="sheet" id="sheet"></div>
-</div>
+<div id="phone"><div id="app"><div class="loadwrap"><div><div class="spinner"></div>Memuat…</div></div></div></div>
 <div class="toast" id="toast"></div>
-
 <script>
-/* ============================================================
-   TUKANGIN — prototip siap-publish (escrow + anti-curang)
-   Catatan integrasi nyata:
-   - Escrow uang asli WAJIB lewat PJP berlisensi (Xendit/Midtrans/Doku)
-     sesuai aturan Bank Indonesia. Fungsi bayar() di sini = simulasi
-     status escrow; titik colok Xendit ditandai // <== XENDIT.
-   - Persistensi & auth: ganti store.* dengan Supabase. // <== SUPABASE
-   ============================================================ */
+/* ====== KONFIGURASI ====== */
+const SUPA_URL="https://uzngebmqhksfmmqwrelk.supabase.co";
+const SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6bmdlYm1xaGtzZm1tcXdyZWxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5Mjc2NzEsImV4cCI6MjA5NzUwMzY3MX0.yFMZojlMQz9GQ_r-33G_DEYHchg2Kt-phfWNo3UQDiM";
+const AI_ENDPOINT=""; // <== isi URL Cloudflare Worker Anda untuk taksir AI. Kosong = pakai estimator lokal.
 
-/* ---------- penyimpanan aman (localStorage + fallback memori) ---------- */
-const mem={};
-const store={
-  get(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):(k in mem?mem[k]:null)}catch(e){return k in mem?mem[k]:null}},
-  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){mem[k]=v}}
-};
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 
-/* ---------- util ---------- */
-const rp=n=>'Rp'+Math.round(n).toLocaleString('id-ID');
+/* ====== util ====== */
+const rp=n=>'Rp'+Math.round(n||0).toLocaleString('id-ID');
 const $=id=>document.getElementById(id);
 const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const uid=()=>Math.random().toString(36).slice(2,8);
+const initial=n=>(n||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600)}
+const FEE={layanan:0.05,komisi:0.06};
+function fee(h){h=+h||0;const layanan=Math.round(h*FEE.layanan),komisi=Math.round(h*FEE.komisi);return{harga:h,layanan,komisi,escrow:h+layanan,payout:h-komisi}}
+const KAT=[{id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa',ic:'🔧'},{id:'ac',nm:'AC',ic:'❄️'},{id:'las',nm:'Las/Pagar',ic:'🔥'},{id:'cat',nm:'Cat',ic:'🎨'},{id:'bocor',nm:'Atap Bocor',ic:'🏠'},{id:'kunci',nm:'Kunci',ic:'🔑'},{id:'umum',nm:'Lainnya',ic:'🛠️'}];
+const katOf=id=>KAT.find(k=>k.id===id)||KAT[7];
+const ST={MENUNGGU_DANA:{l:'Menunggu Pembayaran',c:'b-wait'},MENUNGGU_VERIFIKASI:{l:'Cek Pembayaran',c:'b-wait'},DANA_DITAHAN:{l:'Dana Ditahan',c:'b-hold'},DIKERJAKAN:{l:'Dikerjakan',c:'b-work'},MENUNGGU_KONFIRMASI:{l:'Menunggu Konfirmasi',c:'b-confirm'},SELESAI:{l:'Selesai',c:'b-done'},SENGKETA:{l:'Sengketa',c:'b-dispute'},DIBATALKAN:{l:'Dibatalkan',c:'b-dispute'}};
+/* Identitas usaha — EDIT di sini bila perlu */
+const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6281338773717',waTampil:'0813-3877-3717',bank:'BNI',rek:'1881552632',rekNama:'Putu Helyvia',garansiHari:7,retensiPersen:10,markupHarian:0.15};
+/* Garansi pengerjaan per kategori (hari) — sesuai umumnya di Bali, bisa diubah */
+const GARANSI={listrik:7,pipa:14,ac:14,las:30,cat:14,bocor:30,kunci:7,umum:7};
+function garansiHariKat(kat){return GARANSI[kat]||7}
 const otp=()=>String(Math.floor(1000+Math.random()*9000));
-function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400)}
 
-/* ---------- AI pricing endpoint ----------
-   Di preview Claude.ai, endpoint Anthropic langsung jalan.
-   Untuk PRODUKSI saat di-host sendiri: ganti ke Cloudflare Worker Anda
-   yang menyimpan API key (jangan taruh key di sisi klien). */
-const AI_ENDPOINT="https://api.anthropic.com/v1/messages"; // <== ganti ke Worker Anda di produksi
+/* ====== state ====== */
+let ME=null;            // profil pengguna login
+let VIEW={tab:'beranda',orderId:null};
+let ORDERS=[];
 
-/* ---------- biaya platform (transparan) ---------- */
-const FEE={layanan:0.05, komisi:0.06}; // pemilik +5% (biaya layanan & proteksi) ; tukang -6% (komisi)
-function hitungBiaya(harga){
-  const layanan=Math.round(harga*FEE.layanan);
-  const komisi=Math.round(harga*FEE.komisi);
-  return {harga, layanan, komisi, escrow:harga+layanan, payout:harga-komisi};
+/* ====== AUTH ====== */
+let authMode='login';
+async function boot(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){renderAuth();return}
+  await loadMe();
 }
-
-/* ---------- kategori ---------- */
-const KAT=[
- {id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa/Ledeng',ic:'🔧'},
- {id:'ac',nm:'Servis AC',ic:'❄️'},{id:'las',nm:'Las/Pagar',ic:'🔥'},
- {id:'cat',nm:'Cat',ic:'🎨'},{id:'bocor',nm:'Atap Bocor',ic:'🏠'},
- {id:'kunci',nm:'Kunci',ic:'🔑'},{id:'kayu',nm:'Kayu/Mebel',ic:'🪚'},
- {id:'pompa',nm:'Pompa Air',ic:'💧'},{id:'umum',nm:'Lainnya',ic:'🛠️'},
-];
-const katOf=id=>KAT.find(k=>k.id===id)||KAT[9];
-
-/* ---------- status meta ---------- */
-const ST={
- DRAFT:{lbl:'Draft',cls:'b-draft'},
- MENUNGGU_DANA:{lbl:'Menunggu Pembayaran',cls:'b-wait'},
- DANA_DITAHAN:{lbl:'Dana Ditahan',cls:'b-hold'},
- DIKERJAKAN:{lbl:'Dikerjakan',cls:'b-work'},
- MENUNGGU_KONFIRMASI:{lbl:'Menunggu Konfirmasi',cls:'b-confirm'},
- SELESAI:{lbl:'Selesai',cls:'b-done'},
- SENGKETA:{lbl:'Sengketa',cls:'b-dispute'},
-};
-
-/* ---------- seed tukang ---------- */
-const TUKANG=[
- {id:'t1',nm:'Wayan Sudira',inisial:'WS',kat:['listrik','pompa','umum'],rating:4.9,job:214,batal:'1%',verif:true,jarak:1.2},
- {id:'t2',nm:'Komang Arta',inisial:'KA',kat:['las','pagar','kunci','umum'],rating:4.8,job:156,batal:'2%',verif:true,jarak:2.4},
- {id:'t3',nm:'Made Surya',inisial:'MS',kat:['pipa','bocor','umum'],rating:4.7,job:98,batal:'3%',verif:true,jarak:3.1},
- {id:'t4',nm:'Putu Yasa',inisial:'PY',kat:['ac','listrik','umum'],rating:5.0,job:67,batal:'0%',verif:true,jarak:0.8},
-];
-const ME_TUKANG=TUKANG[1]; // akun tukang demo = Komang Arta
-
-/* ---------- state ---------- */
-let S=store.get('tk_state');
-if(!S){
-  S={
-    role:'pemilik', tab:'beranda', view:null,
-    pemilik:{nm:'Budi Santoso',inisial:'BS'},
-    saldoTukang: 1850000,
-    orders:[
-      seedOrder('las','Perbaikan pagar besi roboh','Pagar depan miring & engsel lepas akibat angin. Perlu las ulang 2 titik.',650000,'Jl. Pantai Berawa, Canggu',ME_TUKANG.id,'DIKERJAKAN'),
-      seedOrder('listrik','MCB sering turun','Listrik di dapur sering jepret kalau nyalain microwave + kulkas bareng.',300000,'Jl. Raya Kerobokan',null,'MENUNGGU_DANA'),
-    ],
-    draft:null,
-  };
-  store.set('tk_state',S);
-}
-function save(){store.set('tk_state',S)}
-
-function seedOrder(kat,judul,desk,harga,lokasi,tukangId,status){
-  const b=hitungBiaya(harga);
-  const o={
-    id:uid(),kat,judul,desk,harga,lokasi,jarakKm:(Math.random()*3+0.5).toFixed(1),
-    pemilik:'Budi Santoso',tukangId,status,kodeSelesai:otp(),
-    biaya:b, checkin:status==='DIKERJAKAN',
-    fotoSebelum:status==='DIKERJAKAN', fotoSesudah:false,
-    dibuat:Date.now()-86400000, autoRelease:null,
-    chat:[{me:false,t:'Siap pak, saya berangkat sekarang nggih.'}],
-    riwayat:[]
-  };
-  logAdd(o,'Pesanan dibuat','Pemilik membuat pesanan '+katOf(kat).nm);
-  if(tukangId){logAdd(o,'Tukang menerima',ME_TUKANG.nm+' menerima pekerjaan');logAdd(o,'Dana masuk escrow',rp(b.escrow)+' ditahan sistem');}
-  if(status==='DIKERJAKAN')logAdd(o,'Check-in GPS','Tukang tiba di lokasi (jarak 18m)');
-  return o;
-}
-
-/* ---------- audit log (kesan tamper-evident: rantai hash sederhana) ---------- */
-function logAdd(o,judul,detail){
-  const prev=o.riwayat.length?o.riwayat[o.riwayat.length-1].hash:'0000';
-  const raw=prev+judul+detail+o.riwayat.length;
-  let h=0;for(let i=0;i<raw.length;i++){h=(h*31+raw.charCodeAt(i))>>>0}
-  o.riwayat.push({judul,detail,t:Date.now(),hash:('00000000'+h.toString(16)).slice(-8)});
-}
-
-/* ============================================================
-   RENDER
-   ============================================================ */
-function render(){
-  renderTop();
-  renderNav();
-  if(S.role==='pemilik') renderPemilik();
-  else renderTukang();
-  save();
-}
-
-/* ---------- TOP BAR ---------- */
-function renderTop(){
-  const inDetail=S.view&&S.view.name==='detail';
-  if(inDetail){
-    $('top').innerHTML=`<div class="topbar flat"><div class="tb-row">
-      <button class="xbtn" onclick="back()" style="margin-right:2px">‹</button>
-      <div class="brand" style="flex:1"><b style="font-size:16px">Detail Pesanan</b><small>Pantau status & keamanan dana</small></div>
-    </div></div>`;
-    return;
+async function loadMe(){
+  const {data:{user}}=await sb.auth.getUser();
+  if(!user){renderAuth();return}
+  let {data:prof}=await sb.from('profiles').select('*').eq('id',user.id).maybeSingle();
+  if(!prof){ // profil belum ada (mis. daftar tapi gagal simpan) -> minta lengkapi
+    renderCompleteProfile(user);return;
   }
-  if(S.role==='tukang'){
-    $('top').innerHTML=`<div class="topbar">
-      <div class="tb-row">
-        <div class="brandwrap"><div class="logo">${logoSVG()}</div>
-          <div class="brand"><b>Tukangin Mitra</b><small>Halo, ${ME_TUKANG.nm.split(' ')[0]} 👋</small></div></div>
-        <span class="rolepill">🛠️ Tukang</span>
+  ME=prof;
+  VIEW={tab: ME.role==='pemilik'?'beranda':'kerja', orderId:null};
+  await refresh();
+}
+function renderAuth(){
+  $('app').innerHTML=`<div class="auth">
+    <div class="logo-lg">🔧</div>
+    <h1>Tukangin</h1><p class="sub">Tukang tepercaya, dana aman lewat escrow.</p>
+    <div class="seg"><button id="seg-login" class="${authMode==='login'?'on':''}" onclick="setAuth('login')">Masuk</button>
+      <button id="seg-daftar" class="${authMode==='daftar'?'on':''}" onclick="setAuth('daftar')">Daftar</button></div>
+    <div id="autherr"></div>
+    <div id="authform"></div>
+  </div>`;
+  renderAuthForm();
+}
+function setAuth(m){authMode=m;renderAuth()}
+function renderAuthForm(){
+  if(authMode==='daftar'){
+    $('authform').innerHTML=`
+      <div class="field"><label>Saya seorang</label>
+        <div class="seg" id="roleseg"><button class="on" data-r="pemilik" onclick="pickRole(this)">👤 Pemilik (cari tukang)</button>
+        <button data-r="tukang" onclick="pickRole(this)">🛠️ Tukang</button></div></div>
+      <div class="field"><label>Nama lengkap</label><input class="input" id="a_nama" placeholder="Nama Anda"></div>
+      <div class="field"><label>No. WhatsApp</label><input class="input" id="a_telp" inputmode="tel" placeholder="08…"></div>
+      <div class="field"><label>Email</label><input class="input" id="a_email" inputmode="email" placeholder="email@contoh.com"></div>
+      <div class="field"><label>Password</label><input class="input" id="a_pass" type="password" placeholder="Min. 6 karakter"></div>
+      <div style="margin:2px 2px 14px">
+        <label style="display:flex;gap:9px;align-items:flex-start;font-size:12px;color:#46605c;line-height:1.45"><input type="checkbox" id="a_setuju" style="margin-top:2px;width:16px;height:16px;flex-shrink:0"><span>Saya menyetujui Aturan & Komitmen Tukangin.</span></label>
+        <div style="font-size:11.5px;margin-top:5px;margin-left:25px"><b onclick="openAturanTukang()" style="color:var(--brand);text-decoration:underline">Baca aturannya →</b></div>
       </div>
-      <div class="balance">
-        <div><div class="lbl">Saldo dapat dicairkan</div><div class="amt">${rp(S.saldoTukang)}</div></div>
-        <button onclick="sheetTarik()">Tarik</button>
-      </div></div>`;
+      <button class="btn btn-primary" id="a_btn" onclick="doDaftar()">Buat Akun</button>`;
   }else{
-    $('top').innerHTML=`<div class="topbar">
-      <div class="tb-row">
-        <div class="brandwrap"><div class="logo">${logoSVG()}</div>
-          <div class="brand"><b>Tukangin</b><small>Tukang tepercaya, dana aman</small></div></div>
-        <span class="demo-pill">DEMO</span>
-      </div></div>`;
+    $('authform').innerHTML=`
+      <div class="field"><label>Email</label><input class="input" id="a_email" inputmode="email" placeholder="email@contoh.com"></div>
+      <div class="field"><label>Password</label><input class="input" id="a_pass" type="password" placeholder="Password"></div>
+      <button class="btn btn-primary" id="a_btn" onclick="doLogin()">Masuk</button>`;
   }
 }
-function logoSVG(){return `<svg viewBox="0 0 24 24" fill="none"><path d="M14.5 3.5a4 4 0 0 0-5 5l-6 6 2.5 2.5 6-6a4 4 0 0 0 5-5l-2.3 2.3-1.7-.3-.3-1.7L14.5 3.5z" stroke="#3a2400" stroke-width="1.6" stroke-linejoin="round"/></svg>`}
+let pickedRole='pemilik';
+function pickRole(b){pickedRole=b.dataset.r;document.querySelectorAll('#roleseg button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}
+function authErr(m){$('autherr').innerHTML=m?`<div class="errbox">${esc(m)}</div>`:''}
+function busy(on,label){const b=$('a_btn');if(b){b.disabled=on;b.textContent=on?'Mohon tunggu…':label}}
 
-/* ---------- BOTTOM NAV ---------- */
-function renderNav(){
-  if(S.view&&S.view.name==='detail'){$('nav').innerHTML='';return}
-  const tabs = S.role==='pemilik'
-    ? [['beranda','Beranda',icHome()],['pesanan','Pesanan',icList()],['akun','Akun',icUser()]]
-    : [['kerja','Cari Kerja',icSearch()],['aktif','Aktif',icList()],['dompet','Dompet',icWallet()],['profil','Profil',icUser()]];
-  $('nav').innerHTML=`<div class="botnav">${tabs.map(([id,nm,ic])=>{
-    let badge='';
-    if(S.role==='pemilik'&&id==='pesanan'){const n=S.orders.filter(o=>o.status==='MENUNGGU_KONFIRMASI'||o.status==='MENUNGGU_DANA').length;if(n)badge=`<span class="nbadge">${n}</span>`}
-    if(S.role==='tukang'&&id==='aktif'){const n=S.orders.filter(o=>o.tukangId===ME_TUKANG.id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status)).length;if(n)badge=`<span class="nbadge">${n}</span>`}
-    return `<button class="navb ${S.tab===id?'on':''}" onclick="go('${id}')">${ic}${badge}<span>${nm}</span></button>`}).join('')}</div>`;
+async function doDaftar(){
+  authErr('');
+  const nama=$('a_nama').value.trim(),telp=$('a_telp').value.trim(),email=$('a_email').value.trim(),pass=$('a_pass').value;
+  if(!nama||!email||pass.length<6){authErr('Lengkapi nama, email, dan password (min. 6 karakter).');return}
+  if(pickedRole==='tukang'&&!($('a_setuju')&&$('a_setuju').checked)){authErr('Centang persetujuan Aturan & Komitmen Tukang dulu.');return}
+  busy(true,'Buat Akun');
+  const {data,error}=await sb.auth.signUp({email,password:pass});
+  if(error){authErr(error.message);busy(false,'Buat Akun');return}
+  if(!data.session){ // email confirm masih aktif
+    authErr('Akun dibuat, tapi verifikasi email masih aktif. Matikan "Confirm email" di Supabase → Authentication → Providers → Email, lalu coba Masuk.');
+    busy(false,'Buat Akun');return;
+  }
+  const uid=data.user.id;
+  const {error:pe}=await sb.from('profiles').insert({id:uid,nama,telp,role:pickedRole,inisial:initial(nama),kyc:pickedRole==='tukang',setuju_aturan:pickedRole==='tukang'?new Date().toISOString():null});
+  if(pe){authErr('Akun dibuat tapi gagal simpan profil: '+pe.message);busy(false,'Buat Akun');return}
+  await loadMe();
 }
+async function doLogin(){
+  authErr('');
+  const email=$('a_email').value.trim(),pass=$('a_pass').value;
+  if(!email||!pass){authErr('Isi email dan password.');return}
+  busy(true,'Masuk');
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){authErr(error.message);busy(false,'Masuk');return}
+  await loadMe();
+}
+function renderCompleteProfile(user){
+  $('app').innerHTML=`<div class="auth"><div class="logo-lg">🔧</div>
+    <h1>Lengkapi Profil</h1><p class="sub">Sedikit lagi sebelum mulai.</p>
+    <div id="autherr"></div>
+    <div class="field"><label>Saya seorang</label><div class="seg" id="roleseg">
+      <button class="on" data-r="pemilik" onclick="pickRole(this)">👤 Pemilik</button>
+      <button data-r="tukang" onclick="pickRole(this)">🛠️ Tukang</button></div></div>
+    <div class="field"><label>Nama lengkap</label><input class="input" id="a_nama" placeholder="Nama Anda"></div>
+    <div class="field"><label>No. WhatsApp</label><input class="input" id="a_telp" inputmode="tel" placeholder="08…"></div>
+    <button class="btn btn-primary" id="a_btn" onclick="saveProfile('${user.id}')">Simpan</button></div>`;
+}
+async function saveProfile(uid){
+  const nama=$('a_nama').value.trim(),telp=$('a_telp').value.trim();
+  if(!nama){authErr('Isi nama dulu.');return}
+  busy(true,'Simpan');
+  const {error}=await sb.from('profiles').insert({id:uid,nama,telp,role:pickedRole,inisial:initial(nama),kyc:pickedRole==='tukang'});
+  if(error){authErr(error.message);busy(false,'Simpan');return}
+  await loadMe();
+}
+async function logout(){await sb.auth.signOut();ME=null;ORDERS=[];renderAuth()}
 
-/* ============================================================
-   PEMILIK
-   ============================================================ */
+/* ====== DATA ====== */
+async function refresh(){
+  let q=sb.from('orders').select('*').order('dibuat',{ascending:false});
+  const {data,error}=await q;
+  if(error){toast('Gagal muat: '+error.message);ORDERS=[]}
+  else ORDERS=data||[];
+  render();
+}
+function myOrders(){return ORDERS.filter(o=>o.pemilik_id===ME.id)}
+function tukangAvailable(){return ORDERS.filter(o=>!o.tukang_id&&o.status==='DANA_DITAHAN')}
+function tukangMine(){return ORDERS.filter(o=>o.tukang_id===ME.id)}
+
+async function addLog(orderId,judul,detail){await sb.from('activity_log').insert({order_id:orderId,judul,detail})}
+async function getLog(orderId){const {data}=await sb.from('activity_log').select('*').eq('order_id',orderId).order('dibuat',{ascending:false});return data||[]}
+async function getMsgs(orderId){const {data}=await sb.from('messages').select('*').eq('order_id',orderId).order('dibuat',{ascending:true});return data||[]}
+
+/* ====== RENDER SHELL ====== */
+function render(){
+  const top=ME.role==='pemilik'?topPemilik():topTukang();
+  let body='';
+  if(VIEW.orderId){body=`<div class="scroll" id="scroll"></div>`}
+  else if(ME.role==='pemilik')body=`<div class="scroll" id="scroll"></div>`;
+  else body=`<div class="scroll" id="scroll"></div>`;
+  const nav=VIEW.orderId?'':navBar();
+  $('app').innerHTML=top+body+nav;
+  if(VIEW.orderId)renderDetail();
+  else if(VIEW.page)renderPage();
+  else if(VIEW.tab==='admin'&&ME.is_admin)renderAdmin();
+  else if(VIEW.tab==='bantuan')renderBantuan();
+  else if(ME.role==='pemilik')renderPemilik();
+  else renderTukang();
+}
+function topPemilik(){
+  if(VIEW.orderId)return topDetail();
+  return `<div class="topbar"><div class="tb-row">
+    <div class="logo">🔧</div><div class="brand"><b>Tukangin</b><small>Halo, ${esc(ME.nama.split(' ')[0])}</small></div>
+    <span class="rolepill">👤 Pemilik</span></div></div>`;
+}
+function topTukang(){
+  if(VIEW.orderId)return topDetail();
+  return `<div class="topbar"><div class="tb-row">
+    <div class="logo">🔧</div><div class="brand"><b>Tukangin Mitra</b><small>Halo, ${esc(ME.nama.split(' ')[0])}</small></div>
+    <span class="rolepill">🛠️ Tukang</span></div></div>`;
+}
+function topDetail(){return `<div class="topbar" style="background:#fff;color:var(--ink);border-bottom:1px solid var(--line)">
+  <div class="tb-row"><button onclick="back()" style="font-size:24px;width:30px">‹</button>
+  <div class="brand"><b style="font-size:16px">Detail Pesanan</b><small style="color:var(--muted)">Status & keamanan dana</small></div></div></div>`}
+function navBar(){
+  let tabs=ME.role==='pemilik'
+    ?[['beranda','Beranda','🏠'],['pesanan','Pesanan','📋'],['bantuan','Bantuan','🛟'],['akun','Akun','👤']]
+    :[['kerja','Cari Kerja','🔍'],['aktif','Aktif','🧰'],['bantuan','Bantuan','🛟'],['profil','Profil','👤']];
+  if(ME.is_admin)tabs.push(['admin','Admin','🛡️']);
+  return `<div class="botnav">${tabs.map(([id,nm,ic])=>`<button class="navb ${VIEW.tab===id?'on':''}" onclick="go('${id}')"><span style="font-size:21px">${ic}</span>${nm}</button>`).join('')}</div>`;
+}
+function go(t){VIEW={tab:t,orderId:null};render();const s=$('scroll');if(s)s.scrollTop=0}
+function back(){VIEW.orderId=null;render()}
+function openOrder(id){VIEW.orderId=id;render();const s=$('scroll');if(s)s.scrollTop=0}
+
+/* ====== PEMILIK ====== */
 function renderPemilik(){
-  if(S.view&&S.view.name==='detail'){renderDetailPemilik();return}
   const sc=$('scroll');
-  if(S.tab==='beranda'){
-    sc.innerHTML=`
-      <div class="hero">
-        <div class="blob"></div><div class="blob2"></div>
-        <h3>Butuh tukang hari ini?</h3>
-        <p>Posting pekerjaan, bandingkan tukang terverifikasi, bayar aman lewat escrow.</p>
-        <button onclick="sheetBuat()">＋ Buat Pesanan</button>
+  if(VIEW.tab==='beranda'){
+    sc.innerHTML=`<div class="hero"><h3>Butuh tukang hari ini?</h3>
+      <p>Posting pekerjaan, bayar aman lewat escrow.</p>
+      <button onclick="sheetBuat()">＋ Buat Pesanan</button></div>
+      <div class="card" style="padding:15px;margin-top:13px">
+        <div style="display:flex;gap:6px;text-align:center">
+          <div style="flex:1"><div style="font-size:21px">📝</div><div style="font-size:11.5px;font-weight:800;margin-top:2px">1. Pesan</div><div style="font-size:10px;color:var(--muted)">pilih kategori</div></div>
+          <div style="flex:1"><div style="font-size:21px">🔒</div><div style="font-size:11.5px;font-weight:800;margin-top:2px">2. Bayar</div><div style="font-size:10px;color:var(--muted)">dana ditahan</div></div>
+          <div style="flex:1"><div style="font-size:21px">✅</div><div style="font-size:11.5px;font-weight:800;margin-top:2px">3. Selesai</div><div style="font-size:10px;color:var(--muted)">dana cair</div></div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;border-top:1px solid var(--line);margin-top:12px;padding-top:12px">
+          <span style="font-size:10.5px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:#1b4d47;padding:5px 10px;border-radius:999px">✔ Tukang terverifikasi</span>
+          <span style="font-size:10.5px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:#1b4d47;padding:5px 10px;border-radius:999px">🔒 Dana aman</span>
+          <span style="font-size:10.5px;font-weight:700;background:var(--surface);border:1px solid var(--line);color:#1b4d47;padding:5px 10px;border-radius:999px">🛡️ Bergaransi</span>
+        </div>
+        <p style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:10px">Pembayaran ditahan ${BIZ.nama} sampai Anda konfirmasi pekerjaan selesai.</p>
       </div>
-      <div class="guarantee" style="margin-top:14px"><span class="g-ic">🔒</span>
-        <p>Uang Anda <b>ditahan sistem</b> dan baru diteruskan ke tukang setelah Anda konfirmasi pekerjaan selesai.</p></div>
+      <div id="statsbox" class="card" style="padding:14px;margin-top:13px;display:none"></div>
+      <div style="display:flex;gap:8px;margin-top:11px">
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openTentang()">ℹ️ Tentang</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openKebijakan()">📜 Kebijakan</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openAturanPelanggan()">📋 Hak Anda</button>
+      </div>
       <div class="sec-title">Pilih Kategori</div>
       <div class="catgrid">${KAT.map(k=>`<button class="cat" onclick="sheetBuat('${k.id}')"><span class="ic">${k.ic}</span><span class="nm">${k.nm}</span></button>`).join('')}</div>
-      <div class="sec-title">Tukang Top di Sekitar Canggu</div>
-      ${TUKANG.map(t=>tukangRow(t)).join('')}`;
-  }
-  else if(S.tab==='pesanan'){
-    const list=[...S.orders].sort((a,b)=>b.dibuat-a.dibuat);
-    sc.innerHTML=`<div class="sec-title">Pesanan Saya</div>${list.length?list.map(orderCard).join(''):emptyBox('📋','Belum ada pesanan','Buat pesanan pertama Anda dari Beranda.')}`;
-  }
-  else if(S.tab==='akun'){
-    sc.innerHTML=akunPemilik();
+      <div class="sec-title">Pesanan Terbaru</div>
+      ${myOrders().slice(0,3).map(orderCard).join('')||emptyBox('📋','Belum ada pesanan')}
+      <div class="sec-title">Apa Kata Pelanggan</div>
+      <div id="testibox"><div class="card" style="padding:18px;text-align:center"><div class="spinner" style="margin:0 auto"></div></div></div>`;
+    muatTrust();
+  }else if(VIEW.tab==='pesanan'){
+    const l=myOrders();
+    sc.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><div class="sec-title" style="margin:2px">Pesanan Saya</div><button class="btn-sm btn-ghost" onclick="refresh()">⟳ Muat ulang</button></div>${l.map(orderCard).join('')||emptyBox('📋','Belum ada pesanan','Buat dari Beranda.')}`;
+  }else{
+    sc.innerHTML=akun();
   }
 }
-
-function tukangRow(t){
-  return `<div class="card jobcard" style="margin-bottom:10px"><div class="top" style="display:flex;align-items:center;gap:12px">
-    <div class="tukav" style="width:44px;height:44px;font-size:16px">${t.inisial}</div>
-    <div style="flex:1;min-width:0"><h4 style="font-size:14.5px;font-weight:700">${t.nm} ${t.verif?'<span style="color:#1E9E6A">✔</span>':''}</h4>
-      <div class="meta" style="font-size:12px;color:var(--muted);margin-top:2px"><span class="stars">★ ${t.rating}</span><span class="dot"></span>${t.job} pekerjaan<span class="dot"></span>batal ${t.batal}</div>
-      <div style="margin-top:4px;display:flex;gap:5px;flex-wrap:wrap">${t.kat.slice(0,3).map(k=>`<span style="font-size:10px;background:var(--surface);border:1px solid var(--line);padding:2px 7px;border-radius:6px;color:var(--muted)">${katOf(k).nm}</span>`).join('')}</div>
-    </div>
-    <span class="jdist">${t.jarak} km</span></div></div>`;
-}
-
 function orderCard(o){
-  const k=katOf(o.kat),s=ST[o.status];
-  const tk=o.tukangId?TUKANG.find(t=>t.id===o.tukangId):null;
-  return `<div class="card ocard" onclick="openDetail('${o.id}')">
-    <div class="top">
-      <div class="othumb">${k.ic}</div>
-      <div class="ti"><h4>${esc(o.judul)}</h4>
-        <div class="meta">📍 ${esc(o.lokasi)}</div>
-        <div class="meta" style="margin-top:4px"><span class="badge ${s.cls}">${s.lbl}</span>${tk?`<span class="dot"></span>${tk.nm}`:''}</div>
-      </div>
-      <div class="price">${rp(o.harga)}<small>${k.nm}</small></div>
-    </div></div>`;
+  const k=katOf(o.kat),s=ST[o.status]||ST.MENUNGGU_DANA;
+  return `<div class="card ocard" onclick="openOrder('${o.id}')"><div class="top">
+    <div class="othumb">${k.ic}</div>
+    <div style="flex:1;min-width:0"><h4>${esc(o.judul)}</h4>
+      <div class="meta">📍 ${esc(o.lokasi||'-')}</div>
+      <div class="meta" style="margin-top:4px"><span class="badge ${s.c}">${s.l}</span>${o.sistem==='harian'?' <span class="badge b-hold">📅 Harian</span>':''}${o.tukang_nama?`<span class="dot"></span>${esc(o.tukang_nama)}`:''}</div></div>
+    <div class="price">${rp(o.harga)}<small>${k.nm}</small></div></div></div>`;
 }
-
-function akunPemilik(){
-  const p=S.pemilik;
-  return `<div class="card" style="padding:16px"><div class="profhd">
-    <div class="profav" style="background:linear-gradient(135deg,#127A71,#0D5953)">${p.inisial}</div>
-    <div><h4 style="font-size:18px;font-weight:800">${p.nm}</h4>
-      <div class="kyc">✔ Akun terverifikasi</div></div></div>
-    <div class="statgrid">
-      <div class="statbox"><div class="n">${S.orders.length}</div><div class="l">Total Pesanan</div></div>
-      <div class="statbox"><div class="n">${S.orders.filter(o=>o.status==='SELESAI').length}</div><div class="l">Selesai</div></div>
-      <div class="statbox"><div class="n">4.9</div><div class="l">Rating Anda</div></div>
-    </div></div>
-    <div class="sec-title">Mode Demo</div>
+function akun(){
+  return `<div class="card" style="padding:16px"><div style="display:flex;align-items:center;gap:14px">
+    <div class="profav" style="background:linear-gradient(135deg,#127A71,#0D5953)">${esc(ME.inisial||initial(ME.nama))}</div>
+    <div><h4 style="font-size:18px;font-weight:800">${esc(ME.nama)}</h4><div class="kyc">✔ Akun aktif</div></div></div></div>
+    <div class="sec-title">Akun</div>
     <div class="card" style="padding:14px">
-      <p style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Coba dari sisi tukang untuk melihat alur terima kerja, check-in GPS, dan pencairan dana.</p>
-      <div class="switch-role"><button class="on">👤 Pemilik</button><button onclick="setRole('tukang')">🛠️ Tukang</button></div>
-    </div>
-    ${infoPlatform()}`;
+      <div class="infoline" style="border:none;padding:0;margin-bottom:12px">📱 <span>WhatsApp: <b>${esc(ME.telp||'-')}</b></span></div>
+      <button class="btn btn-ghost" onclick="logout()">Keluar</button></div>`;
 }
 
-/* ---------- DETAIL (PEMILIK) ---------- */
-function renderDetailPemilik(){
-  const o=S.orders.find(x=>x.id===S.view.id);if(!o){back();return}
-  const k=katOf(o.kat),tk=o.tukangId?TUKANG.find(t=>t.id===o.tukangId):null;
-  const sc=$('scroll');
-  let actions='';
-
-  if(o.status==='MENUNGGU_DANA'){
-    actions=`<button class="btn btn-primary" onclick="bayarEscrow('${o.id}')">🔒 Bayar ke Escrow ${rp(o.biaya.escrow)}</button>
-      <p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">Dana ditahan Tukangin — aman, baru cair setelah Anda setujui.</p>`;
-  }
-  else if(o.status==='MENUNGGU_KONFIRMASI'){
-    actions=`<div class="card" style="padding:14px;margin-bottom:12px"><h5 style="font-size:14px;font-weight:700;margin-bottom:8px">Tukang menyatakan pekerjaan selesai</h5>
-      <div style="display:flex;gap:9px">
-        <div style="flex:1;text-align:center"><div style="height:80px;border-radius:10px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;font-size:24px">📷</div><span style="font-size:10.5px;color:var(--muted)">Foto sebelum</span></div>
-        <div style="flex:1;text-align:center"><div style="height:80px;border-radius:10px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;font-size:24px">✅</div><span style="font-size:10.5px;color:var(--muted)">Foto sesudah</span></div>
-      </div></div>
-      ${o.autoRelease?`<div class="infoline" style="margin-bottom:12px">⏳ <span>Dana otomatis cair ke tukang dalam <span class="countdown" data-cd="${o.autoRelease}"></span> bila tidak ada konfirmasi. Ini melindungi tukang dari penahanan dana.</span></div>`:''}
-      <button class="btn btn-primary" onclick="konfirmasiSelesai('${o.id}')">✔ Konfirmasi & Cairkan Dana</button>
-      <button class="btn btn-danger" style="margin-top:9px" onclick="sheetSengketa('${o.id}')">⚠ Ada Masalah / Ajukan Sengketa</button>`;
-  }
-  else if(o.status==='SELESAI'){
-    actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:34px">🎉</div>
-      <h5 style="font-weight:800;margin-top:4px">Pekerjaan Selesai</h5>
-      <p style="font-size:12.5px;color:var(--muted);margin-top:3px">Dana ${rp(o.biaya.payout)} sudah diteruskan ke ${tk?tk.nm:'tukang'}.</p>
-      ${o.rating?`<div class="stars" style="font-size:18px;margin-top:8px">${'★'.repeat(o.rating)}${'☆'.repeat(5-o.rating)}</div>`:`<button class="btn btn-brass" style="margin-top:12px" onclick="sheetRating('${o.id}')">Beri Rating Tukang</button>`}</div>`;
-  }
-  else if(o.status==='SENGKETA'){
-    actions=`<div class="card" style="padding:16px"><div class="badge b-dispute" style="font-size:12px">⚠ Sengketa sedang ditinjau</div>
-      <p style="font-size:12.5px;color:var(--muted);margin-top:9px">Dana <b>dibekukan</b> dan tim mediasi Tukangin akan menghubungi kedua pihak dalam 1×24 jam. Bukti foto, GPS, dan chat digunakan sebagai dasar.</p></div>`;
-  }
-  else { // DANA_DITAHAN / DIKERJAKAN
-    actions=`<div class="infoline">⏱️ <span>Tukang sedang menuju / mengerjakan. Anda akan diminta konfirmasi saat pekerjaan selesai.</span></div>`;
-  }
-
-  sc.innerHTML=`
-    ${escrowBanner(o)}
-    <div class="card ocard" style="margin-top:12px"><div class="top">
-      <div class="othumb">${k.ic}</div>
-      <div class="ti"><h4>${esc(o.judul)}</h4><div class="meta">📍 ${esc(o.lokasi)} <span class="dot"></span>${o.jarakKm} km</div></div>
-    </div>
-    <div class="divider"></div>
-    <p style="font-size:13.5px;color:#37514d">${esc(o.desk)}</p></div>
-
-    ${tk?tukangContactCard(tk,o):''}
-
-    <div class="sec-title">Status & Keamanan</div>
-    <div class="card" style="padding:16px">${tracker(o)}</div>
-
-    ${o.tukangId&&['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status)?kodeSelesaiCard(o):''}
-
-    <div class="sec-title">Rincian Pembayaran</div>
-    <div class="fee">
-      <div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div>
-      <div class="feerow"><span>Biaya layanan & proteksi <span class="sub">(5%)</span></span><span>${rp(o.biaya.layanan)}</span></div>
-      <div class="feerow tot"><span>Total escrow</span><span>${rp(o.biaya.escrow)}</span></div>
-    </div>
-    ${usulanSection(o,'pemilik')}
-
-    ${o.tukangId&&['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status)?chatBox(o,true):''}
-
-    <div style="margin-top:18px">${actions}</div>
-
-    <div class="sec-title">Riwayat Aktivitas (anti-curang)</div>
-    <div class="card" style="padding:14px 16px">${auditLog(o)}</div>
-  `;
-  startCountdowns();
-}
-
-function escrowBanner(o){
-  let st='Dana ditahan sistem',sub='Aman di escrow Tukangin sampai Anda konfirmasi.';
-  if(o.status==='MENUNGGU_DANA'){st='Menunggu pembayaran';sub='Dana belum masuk. Bayar untuk mengunci tukang.'}
-  if(o.status==='SELESAI'){st='Dana telah dicairkan';sub='Transaksi selesai & aman.'}
-  if(o.status==='SENGKETA'){st='Dana dibekukan';sub='Sedang dimediasi tim Tukangin.'}
-  return `<div class="escrow-banner"><div class="lk">🔒</div>
-    <div class="st">${st}</div><div class="amt">${rp(o.biaya.escrow)}</div>
-    <div class="sub">${sub}</div></div>`;
-}
-
-function tukangContactCard(tk,o){
-  return `<div class="card" style="padding:14px;margin-top:12px"><div style="display:flex;align-items:center;gap:12px">
-    <div class="tukav" style="width:44px;height:44px;font-size:16px">${tk.inisial}</div>
-    <div style="flex:1"><h4 style="font-size:14.5px;font-weight:700">${tk.nm} <span style="color:#1E9E6A">✔</span></h4>
-      <div class="meta" style="font-size:12px;color:var(--muted)"><span class="stars">★ ${tk.rating}</span><span class="dot"></span>${tk.job} pekerjaan</div></div>
-    <button class="btn btn-ghost btn-sm" onclick="toast('Nomor disamarkan demi keamanan — chat lewat aplikasi')">💬 Chat</button>
-  </div></div>`;
-}
-
-function kodeSelesaiCard(o){
-  if(o.status==='MENUNGGU_KONFIRMASI'||o.status==='SELESAI')return '';
-  return `<div class="sec-title">Kode Selesai Anda</div>
-    <div class="otpcard"><div class="lab">🔑 Berikan kode ini saat puas</div>
-    <div class="code">${o.kodeSelesai}</div>
-    <p class="note">Sebutkan kode ini ke tukang <b>hanya jika</b> pekerjaan benar-benar selesai & memuaskan. Tukang butuh kode ini untuk menyelesaikan pesanan — mencegah klaim selesai palsu.</p></div>`;
-}
-
-function tracker(o){
-  const order=['MENUNGGU_DANA','DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI','SELESAI'];
-  const steps=[
-    {k:'MENUNGGU_DANA',h:'Pesanan dibuat',p:'Detail & lokasi tercatat'},
-    {k:'DANA_DITAHAN',h:'Dana masuk escrow',p:'Uang ditahan sistem 🔒'},
-    {k:'DIKERJAKAN',h:'Tukang check-in GPS',p:'Diverifikasi di lokasi'},
-    {k:'MENUNGGU_KONFIRMASI',h:'Pekerjaan + foto bukti',p:'Foto sebelum & sesudah'},
-    {k:'SELESAI',h:'Dana dicairkan',p:'Diteruskan ke tukang'},
-  ];
-  let cur=o.status==='SENGKETA'?3:order.indexOf(o.status);
-  return `<div class="tracker">${steps.map((s,i)=>{
-    const done=i<cur, active=i===cur;
-    return `<div class="tstep ${done?'done':''} ${active?'active':''}">
-      ${i<steps.length-1?'<div class="line"></div>':''}
-      <div class="node">${done?'✓':(active?'●':i+1)}</div>
-      <div class="txt"><h5>${s.h}</h5><p>${s.p}</p></div></div>`}).join('')}</div>`;
-}
-
-function chatBox(o,asPemilik){
-  return `<div class="sec-title">Pesan</div>
-    <div class="chatbox"><div class="chat-warn">🛡️ Jaga transaksi di dalam aplikasi. Bayar di luar = tidak terlindungi.</div>
-    <div class="msgs" id="msgs">${o.chat.map(m=>`<div class="msg ${(m.me===asPemilik)?'me':'them'}">${esc(m.t)}</div>`).join('')}</div>
-    <div class="chat-in"><input id="chatin" placeholder="Tulis pesan…" onkeydown="if(event.key==='Enter')kirimChat('${o.id}',${asPemilik})">
-    <button onclick="kirimChat('${o.id}',${asPemilik})">➤</button></div></div>`;
-}
-
-function auditLog(o){
-  return o.riwayat.slice().reverse().map(r=>`<div class="logitem"><div class="ldot"></div>
-    <div class="lc"><h6>${esc(r.judul)}</h6><p>${esc(r.detail)} · ${timeAgo(r.t)}</p>
-    <div class="hash">🔗 ${r.hash}</div></div></div>`).join('');
-}
-
-/* ============================================================
-   TUKANG
-   ============================================================ */
+/* ====== TUKANG ====== */
 function renderTukang(){
-  if(S.view&&S.view.name==='detail'){renderDetailTukang();return}
   const sc=$('scroll');
-  if(S.tab==='kerja'){
-    const avail=S.orders.filter(o=>!o.tukangId&&o.status==='MENUNGGU_DANA');
-    // tampilkan juga yang sudah dibayar tapi belum ada tukang? di demo: yg MENUNGGU_DANA = peluang
-    sc.innerHTML=`<div class="guarantee"><span class="g-ic">💰</span><p>Ambil kerja, datang & check-in, lalu dana cair otomatis ke saldo Anda. Tidak ada utang dari pelanggan.</p></div>
-      <div class="sec-title">Pekerjaan Tersedia di Sekitar Anda</div>
-      ${avail.length?avail.map(jobCardTukang).join(''):emptyBox('🔍','Belum ada pekerjaan baru','Pekerjaan baru muncul otomatis. Tarik untuk menyegarkan.')}`;
-  }
-  else if(S.tab==='aktif'){
-    const mine=S.orders.filter(o=>o.tukangId===ME_TUKANG.id).sort((a,b)=>b.dibuat-a.dibuat);
-    sc.innerHTML=`<div class="sec-title">Pekerjaan Saya</div>${mine.length?mine.map(orderCardTukang).join(''):emptyBox('🧰','Belum ada pekerjaan aktif','Ambil pekerjaan dari tab Cari Kerja.')}`;
-  }
-  else if(S.tab==='dompet'){
-    sc.innerHTML=dompet();
-  }
-  else if(S.tab==='profil'){
-    sc.innerHTML=profilTukang();
+  if(VIEW.tab==='kerja'){
+    const a=tukangAvailable();
+    sc.innerHTML=`${verifBanner()}<div class="infoline">💰 <span>Hanya pekerjaan ber-escrow (dana sudah ditahan) yang tampil — pasti dibayar.</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><div class="sec-title" style="margin:14px 2px 6px">Pekerjaan Tersedia</div><button class="btn-sm btn-ghost" onclick="refresh()">⟳</button></div>
+      ${a.map(jobCard).join('')||emptyBox('🔍','Belum ada pekerjaan','Tarik ⟳ untuk menyegarkan.')}`;
+  }else if(VIEW.tab==='aktif'){
+    const m=tukangMine();
+    sc.innerHTML=`<div class="sec-title">Pekerjaan Saya</div>${m.map(orderCardT).join('')||emptyBox('🧰','Belum ada pekerjaan aktif','Ambil dari Cari Kerja.')}`;
+  }else{
+    sc.innerHTML=profilT();
   }
 }
-
-function jobCardTukang(o){
-  const k=katOf(o.kat),b=hitungBiaya(o.harga);
-  return `<div class="card jobcard" style="margin-bottom:11px">
-    <div class="top" style="display:flex;gap:12px;align-items:flex-start">
-      <div class="othumb">${k.ic}</div>
-      <div style="flex:1;min-width:0"><h4 style="font-size:15px;font-weight:700">${esc(o.judul)}</h4>
-        <div class="meta" style="font-size:12px;color:var(--muted);margin-top:2px">📍 ${esc(o.lokasi)}</div></div>
-      <span class="jdist">${o.jarakKm} km</span>
-    </div>
-    <p style="font-size:12.5px;color:#46605c;margin-top:9px">${esc(o.desk)}</p>
+function jobCard(o){
+  const k=katOf(o.kat),b=o.biaya||fee(o.harga);
+  return `<div class="card" style="padding:14px;margin-bottom:11px">
+    <div style="display:flex;gap:12px"><div class="othumb">${k.ic}</div>
+    <div style="flex:1;min-width:0"><h4 style="font-size:15px;font-weight:700">${esc(o.judul)} ${o.sistem==='harian'?'<span class="badge b-hold" style="font-size:9px;vertical-align:middle">📅 Harian</span>':''}</h4>
+    <div class="meta">📍 ${esc(o.lokasi||'-')}</div></div></div>
+    <p style="font-size:12.5px;color:#46605c;margin-top:9px">${esc(o.desk||'')}</p>
     <div class="divider"></div>
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <div><div style="font-size:11px;color:var(--muted)">Anda terima bersih</div>
-        <div style="font-size:18px;font-weight:800;color:var(--ok)">${rp(b.payout)}</div></div>
-      <button class="btn btn-primary btn-sm" onclick="ambilKerja('${o.id}')">Ambil Pekerjaan</button>
+      <div><div style="font-size:11px;color:var(--muted)">Diterima bersih</div><div style="font-size:18px;font-weight:800;color:var(--ok)">${rp(b.payout)}</div></div>
+      ${ME.verif_status==='terverifikasi'?`<button class="btn btn-primary btn-sm" onclick="ambil('${o.id}')">Ambil</button>`:`<button class="btn btn-ghost btn-sm" onclick="go('profil')">🔒 Verifikasi dulu</button>`}</div></div>`;
+}
+function orderCardT(o){
+  const k=katOf(o.kat),s=ST[o.status]||ST.DANA_DITAHAN,b=o.biaya||fee(o.harga);
+  return `<div class="card ocard" onclick="openOrder('${o.id}')"><div class="top">
+    <div class="othumb">${k.ic}</div><div style="flex:1;min-width:0"><h4>${esc(o.judul)}</h4>
+    <div class="meta">📍 ${esc(o.lokasi||'-')}</div>
+    <div class="meta" style="margin-top:4px"><span class="badge ${s.c}">${s.l}</span></div></div>
+    <div class="price" style="color:var(--ok)">${rp(b.payout)}<small>bersih</small></div></div></div>`;
+}
+function profilT(){
+  const vs=ME.verif_status||'belum';
+  const badge={terverifikasi:'<div class="kyc">✔ Terverifikasi</div>',
+    menunggu:'<div class="kyc" style="background:#FEF3E0;color:var(--hold)">⏳ Menunggu verifikasi</div>',
+    ditolak:'<div class="kyc" style="background:#FBE9E7;color:var(--bad)">❌ Verifikasi ditolak</div>',
+    belum:'<div class="kyc" style="background:#FBE9E7;color:var(--bad)">⚠️ Belum terverifikasi</div>'}[vs]||'';
+  return `<div class="card" style="padding:16px"><div style="display:flex;align-items:center;gap:14px">
+    <div class="profav">${esc(ME.inisial||initial(ME.nama))}</div>
+    <div><h4 style="font-size:18px;font-weight:800">${esc(ME.nama)}</h4>${badge}</div></div></div>
+    ${vs==='terverifikasi'?kartuPenghasilan():verifSection()}
+    <div class="sec-title">Cara Pembayaran</div>
+    <div class="card" style="padding:16px">
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Bagaimana Anda ingin menerima bayaran dari ${BIZ.nama}?</p>
+      <div class="seg" id="bayarseg" style="margin-bottom:0">
+        <button class="${(ME.bayar_metode||'Tunai')==='Tunai'?'on':''}" onclick="pickBayar('Tunai',this)">💵 Tunai</button>
+        <button class="${ME.bayar_metode==='E-wallet'?'on':''}" onclick="pickBayar('E-wallet',this)">📱 E-wallet</button>
+        <button class="${ME.bayar_metode==='Rekening'?'on':''}" onclick="pickBayar('Rekening',this)">🏦 Rekening</button>
+      </div>
+      <input class="input" id="bayardetail" style="margin-top:10px;display:${(ME.bayar_metode&&ME.bayar_metode!=='Tunai')?'block':'none'}" placeholder="Nomor e-wallet / rekening + nama" value="${esc(ME.bayar_detail||'')}" oninput="ME.bayar_detail=this.value">
+      <button class="btn btn-primary" style="margin-top:12px" onclick="simpanBayar()">Simpan</button>
+    </div>
+    <div class="sec-title">Keahlian Anda</div>
+    <div class="card" style="padding:16px">
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:11px">Pilih keahlian Anda — ditampilkan di profil agar pelanggan lebih percaya.</p>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        ${KAT.map(k=>{const on=(ME.keahlian||[]).includes(k.nm);return `<button onclick="toggleKeahlian('${k.nm}',this)" style="font-size:12px;font-weight:600;padding:7px 12px;border-radius:999px;border:1px solid ${on?'var(--brand)':'var(--line)'};background:${on?'var(--brand)':'#fff'};color:${on?'#fff':'#1b4d47'}">${k.ic} ${k.nm}</button>`;}).join('')}
+      </div>
+      <button class="btn btn-primary" style="margin-top:13px" onclick="simpanKeahlian()">Simpan Keahlian</button>
+    </div>
+    <div class="sec-title">Aturan & Komitmen</div>
+    <div class="card" style="padding:14px;cursor:pointer" onclick="openAturanTukang()">
+      <div class="infoline" style="border:none;padding:0">📋 <span style="flex:1">Baca <b>Aturan & Komitmen Tukang</b>${ME.setuju_aturan?' · <span style="color:var(--ok);font-weight:700">✔ disetujui</span>':' — penting dipahami.'}</span><span style="color:var(--muted);font-size:18px">›</span></div></div>
+    <div class="sec-title">Akun</div>
+    <div class="card" style="padding:14px"><div class="infoline" style="border:none;padding:0;margin-bottom:12px">📱 <span>WhatsApp: <b>${esc(ME.telp||'-')}</b></span></div>
+    <button class="btn btn-ghost" onclick="logout()">Keluar</button></div>`;
+}
+function pickBayar(m,el){ME.bayar_metode=m;document.querySelectorAll('#bayarseg button').forEach(b=>b.classList.remove('on'));el.classList.add('on');const d=$('bayardetail');if(d)d.style.display=m==='Tunai'?'none':'block';}
+async function simpanBayar(){
+  const det=$('bayardetail');if(det)ME.bayar_detail=det.value;
+  if(!ME.bayar_metode)ME.bayar_metode='Tunai';
+  if(ME.bayar_metode!=='Tunai'&&!(ME.bayar_detail||'').trim()){toast('Isi nomor e-wallet/rekening dulu');return}
+  const {error}=await sb.from('profiles').update({bayar_metode:ME.bayar_metode,bayar_detail:ME.bayar_detail||''}).eq('id',ME.id);
+  if(error){toast('Gagal: '+error.message);return}
+  toast('✅ Cara pembayaran tersimpan');
+}
+function verifBanner(){
+  if(ME.verif_status==='terverifikasi')return '';
+  const map={belum:['⚠️','Akun belum terverifikasi','Unggah KTP & selfie agar bisa ambil pekerjaan.','Verifikasi Sekarang'],
+    menunggu:['⏳','Menunggu verifikasi','Identitas Anda sedang ditinjau admin.',''],
+    ditolak:['❌','Verifikasi ditolak','Unggah ulang KTP & selfie yang jelas.','Unggah Ulang']};
+  const [ic,t,d,btn]=map[ME.verif_status||'belum']||map.belum;
+  return `<div class="card" style="padding:16px;border:1.5px solid var(--brass);background:var(--hold-bg);margin-bottom:4px">
+    <div style="font-size:22px">${ic}</div><h4 style="font-size:15px;font-weight:800;margin-top:4px">${t}</h4>
+    <p style="font-size:12.5px;color:#8a6a2a;margin-top:3px">${d}</p>
+    ${btn?`<button class="btn btn-brass" style="margin-top:12px" onclick="go('profil')">${btn}</button>`:''}</div>`;
+}
+function verifSection(){
+  if(ME.verif_status==='menunggu')return `<div class="card" style="padding:16px;text-align:center;margin-top:12px"><div style="font-size:28px">⏳</div><h5 style="font-weight:800;margin-top:4px">Menunggu peninjauan</h5><p style="font-size:12.5px;color:var(--muted)">Admin akan memverifikasi identitas Anda. Anda bisa ambil kerja setelah disetujui.</p></div>`;
+  const cell=(url,jenis,lbl,ic)=>url
+    ?`<div style="flex:1"><img src="${url}" style="width:100%;height:90px;object-fit:cover;border-radius:11px;border:1px solid var(--line)"><div onclick="pilihKyc('${jenis}')" style="font-size:10.5px;color:var(--ok);text-align:center;margin-top:3px;font-weight:600">✓ ${lbl} · ketuk ganti</div></div>`
+    :`<button class="uploadbox" style="flex:1;border:1.5px dashed var(--line);border-radius:13px;padding:16px;background:#fff" onclick="pilihKyc('${jenis}')"><div style="font-size:22px">${ic}</div><div style="font-size:11px;font-weight:600;margin-top:3px">${lbl}</div></button>`;
+  const ok=ME.ktp_url&&ME.wajah_url;
+  return `<div class="sec-title">Verifikasi Identitas</div>
+    <div class="card" style="padding:16px">
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px">Demi keamanan pelanggan, unggah <b>foto KTP</b> dan <b>selfie wajah</b>. Data ini <b>hanya dilihat admin</b> Tukangin, tidak ditampilkan ke publik.</p>
+      <div style="display:flex;gap:10px">${cell(ME.ktp_url,'ktp','Foto KTP','🪪')}${cell(ME.wajah_url,'wajah','Selfie','🤳')}</div>
+      <button class="btn ${ok?'btn-primary':'btn-ghost'}" ${ok?'':'disabled'} style="margin-top:14px" onclick="kirimVerifikasi()">${ok?'Kirim untuk Verifikasi':'Unggah kedua foto dulu'}</button>
+    </div>`;
+}
+function pilihKyc(jenis){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';inp.setAttribute('capture',jenis==='wajah'?'user':'environment');
+  inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+  inp.onchange=()=>{if(inp.files&&inp.files[0])uploadKyc(jenis,inp.files[0]);inp.remove();};
+  document.body.appendChild(inp);inp.click();
+}
+async function uploadKyc(jenis,file){
+  toast('Memproses…');
+  try{
+    const dataUrl=await kompresFoto(file);
+    const col=jenis==='ktp'?'ktp_url':'wajah_url';
+    const {error}=await sb.from('profiles').update({[col]:dataUrl}).eq('id',ME.id);
+    if(error)throw error;
+    ME[col]=dataUrl;render();toast('✅ Foto tersimpan');
+  }catch(e){toast('Gagal: '+(e.message||e))}
+}
+async function kirimVerifikasi(){
+  if(!ME.ktp_url||!ME.wajah_url){toast('Unggah KTP & selfie dulu');return}
+  const {error}=await sb.from('profiles').update({verif_status:'menunggu'}).eq('id',ME.id);
+  if(error){toast('Gagal: '+error.message);return}
+  ME.verif_status='menunggu';render();toast('Terkirim — menunggu peninjauan admin');
+}
+
+/* ====== ADMIN: verifikasi tukang ====== */
+let ADMIN_TUKANG=[];
+async function renderAdmin(){
+  const sc=$('scroll');sc.innerHTML=`<div class="loadwrap" style="min-height:150px"><div class="spinner"></div></div>`;
+  const [r1,r3]=await Promise.all([
+    sb.from('profiles').select('*').eq('role','tukang').order('dibuat',{ascending:false}),
+    sb.from('orders').select('*').order('dibuat',{ascending:false})
+  ]);
+  if(r1.error){sc.innerHTML=`<div class="empty"><p>Gagal memuat: ${esc(r1.error.message)}</p></div>`;return}
+  const list=r1.data||[], pending=list.filter(p=>p.verif_status==='menunggu'), done=list.filter(p=>p.verif_status==='terverifikasi'||p.verif_status==='ditolak');
+  ADMIN_TUKANG=list;
+  const ords=r3.data||[];
+  const cekBayar=ords.filter(o=>o.status==='MENUNGGU_VERIFIKASI');
+  const belumTukang=ords.filter(o=>o.status==='DANA_DITAHAN'&&!o.tukang_id);
+  const seng=ords.filter(o=>o.status==='SENGKETA');
+  const kl=ords.filter(o=>o.garansi_klaim);
+  const adaTindakan=cekBayar.length||belumTukang.length||seng.length||kl.length||pending.length;
+  sc.innerHTML=`
+    <div class="sec-title">⚡ Perlu Tindakan</div>
+    ${cekBayar.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--brass)"><div style="font-weight:800;font-size:13.5px">💵 Verifikasi Pembayaran · ${cekBayar.length}</div>${cekBayar.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp((o.biaya||fee(o.harga)).escrow)}</div><div class="meta">Pemilik: ${esc(o.pemilik_nama||'-')}</div>${o.bukti_transfer_url?`<img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px">`:'<div style="font-size:11px;color:var(--bad);margin-top:4px">⚠ tanpa bukti</div>'}<button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="verifPembayaran('${o.id}')">✔ Konfirmasi Dana Masuk</button></div>`).join('')}</div>`:''}
+    ${belumTukang.length?`<div class="card" style="padding:13px;margin-bottom:8px"><div style="font-weight:800;font-size:13.5px">🔍 Belum Ada Tukang · ${belumTukang.length}</div>${belumTukang.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px;display:flex;align-items:center;gap:8px"><div style="flex:1"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')}</div><div class="meta">${esc(o.lokasi||'-')} · ${esc(o.pemilik_nama||'-')}</div></div><button class="btn btn-primary btn-sm" onclick="openAssign('${o.id}')">Tugaskan</button></div>`).join('')}</div>`:''}
+    ${seng.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--bad)"><div style="font-weight:800;font-size:13.5px">⚠️ Sengketa · ${seng.length}</div>${seng.map(o=>`<div style="border-top:1px solid var(--line);padding-top:8px;margin-top:8px;font-size:12.5px">${esc(o.judul||'Pesanan')} — ${esc(o.pemilik_nama||'-')} & ${esc(o.tukang_nama||'-')}. Hubungi kedua pihak (WA) untuk penyelesaian.</div>`).join('')}</div>`:''}
+    ${!adaTindakan?'<div class="card" style="padding:16px;text-align:center;color:var(--muted)">✅ Tidak ada yang perlu ditindak saat ini.</div>':''}
+    <div class="sec-title">💾 Backup Data</div>
+    <div class="card" style="padding:14px;margin-bottom:8px">
+      <p style="font-size:12.5px;color:#46605c;margin-bottom:11px">Unduh semua pesanan & data pengguna untuk arsip (komplain, refund, garansi). Simpan ke folder Google Drive Anda.</p>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-primary" style="flex:1" onclick="eksporXLSX()">📊 Excel</button>
+        <button class="btn btn-ghost" style="flex:1" onclick="eksporCSV()">📄 CSV</button>
+      </div></div>
+    ${kl.length?`<div class="sec-title">🛠️ Klaim Garansi · ${kl.length}</div>${kl.map(o=>`<div class="card" style="padding:14px;margin-bottom:10px;border:1.5px solid var(--brass)"><div style="font-size:13.5px;font-weight:800">${esc(o.judul||'Pesanan')}</div><div class="meta">Tukang: ${esc(o.tukang_nama||'-')} · Pemilik: ${esc(o.pemilik_nama||'-')}</div><div style="display:flex;gap:8px;margin-top:11px"><button class="btn btn-danger btn-sm" style="flex:1" onclick="strikeTukang('${o.tukang_id}','${o.id}')">Tukang menolak (Strike)</button><button class="btn btn-primary btn-sm" style="flex:1" onclick="beresGaransi('${o.id}')">Sudah diperbaiki</button></div></div>`).join('')}`:''}
+    <div class="sec-title">Verifikasi Tukang${pending.length?` · ${pending.length}`:''}</div>
+    ${pending.length?pending.map(adminCard).join(''):emptyBox('✅','Tidak ada antrean','Semua tukang sudah ditinjau.')}
+    <div class="sec-title">Sudah Ditinjau</div>
+    ${done.length?done.map(p=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><div class="tukav" style="width:34px;height:34px;font-size:13px">${esc(p.inisial||initial(p.nama))}</div><div style="flex:1"><b style="font-size:13.5px">${esc(p.nama)}</b><div class="meta" style="font-size:11px">💰 ${p.bayar_metode?esc(p.bayar_metode+(p.bayar_detail?' · '+p.bayar_detail:'')):'—'}${p.strike?` · ⚠️ ${p.strike} strike`:''}</div></div><span class="badge ${p.verif_status==='terverifikasi'?'b-done':'b-dispute'}">${p.verif_status}</span></div>`).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:4px 2px">Belum ada.</p>'}`;
+}
+async function verifPembayaran(id){
+  const {error}=await sb.from('orders').update({status:'DANA_DITAHAN'}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,'Pembayaran diverifikasi','Admin mengonfirmasi dana masuk & ditahan');
+  toast('✅ Dana dikonfirmasi — pesanan dibuka ke tukang');renderAdmin();
+}
+let _assignOrder=null;
+function openAssign(orderId){
+  _assignOrder=orderId;
+  const sub=ADMIN_TUKANG.filter(p=>p.verif_status==='terverifikasi');
+  const items=sub.length?sub.map(p=>`<button class="card" style="width:100%;text-align:left;padding:13px 14px;margin-bottom:8px;display:flex;align-items:center;gap:11px;border:1px solid var(--line);background:#fff" onclick="assignTukang('${p.id}')"><div class="tukav" style="width:38px;height:38px;font-size:14px">${esc(p.inisial||initial(p.nama))}</div><div style="flex:1"><b style="font-size:14px">${esc(p.nama)}</b><div class="meta" style="font-size:11px">${(p.keahlian||[]).slice(0,3).join(', ')||'—'}</div></div><span style="color:var(--brand);font-weight:700;font-size:12px">Pilih ›</span></button>`).join(''):'<p style="font-size:13px;color:var(--muted);text-align:center;padding:20px">Belum ada tukang terverifikasi.</p>';
+  openSheet(`<div style="padding:20px"><h3 style="font-size:17px;font-weight:800;margin-bottom:4px">Tugaskan Tukang</h3><p style="font-size:12px;color:var(--muted);margin-bottom:14px">Pilih tukang terverifikasi untuk pekerjaan ini.</p>${items}<button class="btn btn-ghost" style="margin-top:6px" onclick="closeSheet()">Batal</button></div>`);
+}
+async function assignTukang(tukangId){
+  const p=ADMIN_TUKANG.find(x=>x.id===tukangId);if(!p||!_assignOrder)return;
+  const {error}=await sb.from('orders').update({tukang_id:p.id,tukang_nama:p.nama,tukang_inisial:p.inisial||initial(p.nama)}).eq('id',_assignOrder);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(_assignOrder,'Tukang ditugaskan admin','Ditugaskan ke '+p.nama);
+  closeSheet();toast('✔ Tukang ditugaskan');renderAdmin();
+}
+function tglFile(){return new Date().toISOString().slice(0,10);}
+function unduhBlob(blob,nama){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=nama;a.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(url);},800);}
+function barisPesanan(o){const b=o.biaya||fee(o.harga);return {
+  Tanggal:o.dibuat?new Date(o.dibuat).toLocaleString('id-ID'):'',
+  Kode:String(o.id||'').slice(0,8),
+  Pemilik:o.pemilik_nama||'', Tukang:o.tukang_nama||'',
+  Kategori:katOf(o.kat).nm, Sistem:o.sistem||'borongan',
+  Judul:o.judul||'', Lokasi:o.lokasi||'',
+  Status:(ST[o.status]||{}).l||o.status||'',
+  Harga:o.harga||0, Escrow:b.escrow||0, TukangTerima:b.payout||0, BiayaLayanan:b.layanan||0,
+  HariHadir:o.sistem==='harian'?hariPenuh(o):'',
+  BuktiTransfer:o.bukti_transfer_url?'Ada':'-',
+  KlaimGaransi:o.garansi_klaim?'YA':'-',
+  Selesai:o.selesai_tgl?new Date(o.selesai_tgl).toLocaleDateString('id-ID'):''
+};}
+function barisPengguna(p){return {
+  Nama:p.nama||'', Peran:p.role||'', WhatsApp:p.telp||'', Verifikasi:p.verif_status||'belum',
+  CaraBayar:p.bayar_metode||'', DetailBayar:p.bayar_detail||'', Strike:p.strike||0,
+  Admin:p.is_admin?'YA':'-', SetujuAturan:p.setuju_aturan?new Date(p.setuju_aturan).toLocaleDateString('id-ID'):'-', Daftar:p.dibuat?new Date(p.dibuat).toLocaleDateString('id-ID'):''
+};}
+async function ambilDataEkspor(){
+  const [a,c]=await Promise.all([
+    sb.from('orders').select('*').order('dibuat',{ascending:false}),
+    sb.from('profiles').select('*').order('dibuat',{ascending:false})
+  ]);
+  return {ords:a.data||[], profs:c.data||[], err:a.error||c.error};
+}
+async function eksporCSV(){
+  toast('Menyiapkan CSV…');
+  const {ords,err}=await ambilDataEkspor();
+  if(err){toast('Gagal: '+err.message);return}
+  const rows=ords.map(barisPesanan);
+  const headers=rows.length?Object.keys(rows[0]):['Tanggal','Kode','Pemilik','Status'];
+  const cel=v=>{v=(v==null?'':String(v));return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const csv=[headers.join(',')].concat(rows.map(r=>headers.map(h=>cel(r[h])).join(','))).join('\n');
+  unduhBlob(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),`Pesanan-Tukangin-${tglFile()}.csv`);
+  toast('✅ CSV terunduh ('+rows.length+' pesanan)');
+}
+function loadXLSX(){return new Promise((res,rej)=>{if(window.XLSX)return res(window.XLSX);const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';s.onload=()=>window.XLSX?res(window.XLSX):rej('gagal');s.onerror=()=>rej('gagal');document.head.appendChild(s);});}
+async function eksporXLSX(){
+  toast('Memuat modul Excel…');
+  let XLSX;try{XLSX=await loadXLSX();}catch(e){toast('Gagal memuat modul Excel — cek internet');return}
+  toast('Menyiapkan Excel…');
+  const {ords,profs,err}=await ambilDataEkspor();
+  if(err){toast('Gagal: '+err.message);return}
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(ords.map(barisPesanan)),'Pesanan');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(profs.map(barisPengguna)),'Pengguna');
+  XLSX.writeFile(wb,`Tukangin-${tglFile()}.xlsx`);
+  toast('✅ Excel terunduh');
+}
+function adminCard(p){
+  const img=(url)=>url?`<img src="${url}" onclick="window.open('${url}')" style="width:100%;height:100px;object-fit:cover;border-radius:10px;border:1px solid var(--line)">`:'<div style="height:100px;background:var(--surface);border-radius:10px;display:grid;place-items:center;color:var(--muted)">—</div>';
+  return `<div class="card" style="padding:16px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:12px"><div class="tukav" style="width:42px;height:42px;font-size:15px">${esc(p.inisial||initial(p.nama))}</div>
+      <div><h4 style="font-size:15px;font-weight:700">${esc(p.nama)}</h4><div class="meta">📱 ${esc(p.telp||'-')}</div><div class="meta">💰 ${p.bayar_metode?esc(p.bayar_metode+(p.bayar_detail?' · '+p.bayar_detail:'')):'belum diisi'}</div>${p.strike?`<div class="meta">⚠️ ${p.strike} strike</div>`:''}</div></div>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <div style="flex:1"><div style="font-size:10.5px;color:var(--muted);margin-bottom:3px">KTP</div>${img(p.ktp_url)}</div>
+      <div style="flex:1"><div style="font-size:10.5px;color:var(--muted);margin-bottom:3px">Selfie</div>${img(p.wajah_url)}</div></div>
+    <div style="display:flex;gap:9px;margin-top:12px"><button class="btn btn-danger" style="flex:1" onclick="tinjau('${p.id}',false)">Tolak</button><button class="btn btn-primary" style="flex:1" onclick="tinjau('${p.id}',true)">Setujui</button></div></div>`;
+}
+async function tinjau(uid,ok){
+  const {error}=await sb.from('profiles').update({verif_status:ok?'terverifikasi':'ditolak',kyc:ok}).eq('id',uid);
+  if(error){toast('Gagal: '+error.message);return}
+  toast(ok?'✅ Tukang diverifikasi':'Ditolak');renderAdmin();
+}
+async function strikeTukang(tukangId,orderId){
+  if(!tukangId){toast('Tukang tidak ditemukan');return}
+  if(!confirm('Beri STRIKE ke tukang ini karena menolak/abai memperbaiki garansi?'))return;
+  const {data:p}=await sb.from('profiles').select('strike').eq('id',tukangId).maybeSingle();
+  const ns=((p&&p.strike)||0)+1; const upd={strike:ns}; if(ns>=3)upd.verif_status='ditolak';
+  const {error}=await sb.from('profiles').update(upd).eq('id',tukangId);
+  if(error){toast('Gagal: '+error.message);return}
+  await sb.from('orders').update({garansi_klaim:false}).eq('id',orderId);
+  toast('Strike diberikan'+(ns>=3?' · tukang di-suspend (3 strike)':` (${ns})`));renderAdmin();
+}
+async function beresGaransi(orderId){
+  const {error}=await sb.from('orders').update({garansi_klaim:false}).eq('id',orderId);
+  if(error){toast('Gagal: '+error.message);return}
+  toast('Ditandai sudah diperbaiki');renderAdmin();
+}
+
+/* ====== PENGHASILAN TUKANG ====== */
+function statTukang(){
+  const mine=ORDERS.filter(o=>o.tukang_id===ME.id);
+  const selesai=mine.filter(o=>o.status==='SELESAI');
+  const aktif=mine.filter(o=>['DANA_DITAHAN','DIKERJAKAN'].includes(o.status));
+  const nunggu=mine.filter(o=>o.status==='MENUNGGU_KONFIRMASI');
+  const sum=arr=>arr.reduce((s,o)=>s+((o.biaya||fee(o.harga)).payout||0),0);
+  const retensi=selesai.filter(o=>{const g=garansiInfo(o);return g&&g.aktif;}).reduce((s,o)=>s+Math.round(((o.biaya||fee(o.harga)).payout||0)*(BIZ.retensiPersen||0)/100),0);
+  return {selesai:selesai.length,aktif:aktif.length,total:sum(selesai),pending:sum(nunggu),retensi};
+}
+function kartuPenghasilan(){
+  const s=statTukang();
+  return `<div class="card" style="padding:0;overflow:hidden;margin:4px 0 4px">
+    <div style="background:linear-gradient(135deg,#093E3A,#0D5953);color:#fff;padding:18px">
+      <div style="font-size:11px;font-weight:700;opacity:.85;text-transform:uppercase">Total Penghasilan</div>
+      <div style="font-size:27px;font-weight:800;margin-top:2px">${rp(s.total)}</div>
+      ${s.pending?`<div style="font-size:12px;opacity:.9;margin-top:5px">⏳ ${rp(s.pending)} menunggu pencairan</div>`:'<div style="font-size:12px;opacity:.85;margin-top:5px">Dibayarkan setelah pelanggan konfirmasi.</div>'}
+      ${s.retensi?`<div style="font-size:12px;opacity:.9;margin-top:3px">🛡️ ${rp(s.retensi)} ditahan untuk garansi</div>`:''}
+    </div>
+    <div style="display:flex;text-align:center">
+      <div style="flex:1;padding:13px 6px"><div style="font-size:19px;font-weight:800">${s.selesai}</div><div style="font-size:11px;color:var(--muted)">Selesai</div></div>
+      <div style="flex:1;padding:13px 6px;border-left:1px solid var(--line);border-right:1px solid var(--line)"><div style="font-size:19px;font-weight:800">${s.aktif}</div><div style="font-size:11px;color:var(--muted)">Dikerjakan</div></div>
+      <div style="flex:1;padding:13px 6px"><div style="font-size:19px;font-weight:800">⭐ ${ME.rating||'5.0'}</div><div style="font-size:11px;color:var(--muted)">Rating</div></div>
     </div></div>`;
 }
 
-function orderCardTukang(o){
-  const k=katOf(o.kat),s=ST[o.status];
-  return `<div class="card ocard" onclick="openDetail('${o.id}')"><div class="top">
-    <div class="othumb">${k.ic}</div>
-    <div class="ti"><h4>${esc(o.judul)}</h4><div class="meta">📍 ${esc(o.lokasi)}</div>
-      <div class="meta" style="margin-top:4px"><span class="badge ${s.cls}">${s.lbl}</span></div></div>
-    <div class="price" style="color:var(--ok)">${rp(o.biaya.payout)}<small>diterima</small></div>
-  </div></div>`;
+/* ====== HALAMAN TENTANG & BANTUAN ====== */
+function openPage(p){VIEW.page=p;render();const s=$('scroll');if(s)s.scrollTop=0}
+function closePage(){VIEW.page=null;render()}
+function waLink(pesan){return `https://wa.me/${BIZ.wa}?text=${encodeURIComponent(pesan||'')}`}
+function menuItem(ic,judul,sub,onclick){
+  return `<button class="card" style="width:100%;padding:14px;display:flex;align-items:center;gap:13px;text-align:left;margin-bottom:10px;background:#fff;border:1px solid var(--line)" onclick="${onclick}">
+    <div style="font-size:20px">${ic}</div><div style="flex:1"><div style="font-size:14.5px;font-weight:700">${judul}</div><div style="font-size:12px;color:var(--muted)">${sub}</div></div>
+    <div style="color:var(--muted);font-size:20px">›</div></button>`;
 }
-
-function renderDetailTukang(){
-  const o=S.orders.find(x=>x.id===S.view.id);if(!o){back();return}
-  const k=katOf(o.kat);const sc=$('scroll');
-  let actions='';
-
-  if(o.status==='DANA_DITAHAN'){
-    actions=`<div class="guarantee" style="margin-bottom:12px"><span class="g-ic">✅</span><p>Dana <b>${rp(o.biaya.escrow)} sudah ditahan sistem</b>. Pelanggan tidak bisa kabur — aman dikerjakan.</p></div>
-      <button class="btn btn-primary" onclick="checkinGPS('${o.id}')">📍 Check-in di Lokasi (GPS)</button>
-      <p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">Wajib check-in saat tiba agar bisa mulai & sebagai bukti kehadiran.</p>`;
-  }
-  else if(o.status==='DIKERJAKAN'){
-    const fotoOk=o.fotoSebelum&&o.fotoSesudah;
-    actions=`<div class="card" style="padding:14px;margin-bottom:12px"><h5 style="font-size:14px;font-weight:700;margin-bottom:10px">Bukti Pekerjaan (wajib)</h5>
-      <div style="display:flex;gap:10px">
-        <button onclick="uploadFoto('${o.id}','sebelum')" style="flex:1" class="uploadbox">${o.fotoSebelum?'<div class="ic">✅</div><span>Foto sebelum ✓</span>':'<div class="ic">📷</div><span>Foto sebelum</span>'}</button>
-        <button onclick="uploadFoto('${o.id}','sesudah')" style="flex:1" class="uploadbox">${o.fotoSesudah?'<div class="ic">✅</div><span>Foto sesudah ✓</span>':'<div class="ic">📷</div><span>Foto sesudah</span>'}</button>
-      </div></div>
-      <button class="btn ${fotoOk?'btn-primary':'btn-ghost'}" ${fotoOk?'':'disabled'} onclick="sheetInputKode('${o.id}')">🔑 Selesaikan — Masukkan Kode dari Pelanggan</button>
-      <p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">${fotoOk?'Minta kode 4 digit ke pelanggan untuk menyelesaikan.':'Unggah kedua foto dulu untuk bisa menyelesaikan.'}</p>`;
-  }
-  else if(o.status==='MENUNGGU_KONFIRMASI'){
-    actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:30px">⏳</div>
-      <h5 style="font-weight:800;margin-top:4px">Menunggu konfirmasi pelanggan</h5>
-      <p style="font-size:12.5px;color:var(--muted);margin-top:4px">Dana ${rp(o.biaya.payout)} cair ke saldo Anda setelah pelanggan konfirmasi${o.autoRelease?', atau otomatis dalam <span class="countdown" data-cd="'+o.autoRelease+'"></span>':''}.</p></div>`;
-  }
-  else if(o.status==='SELESAI'){
-    actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:34px">💰</div>
-      <h5 style="font-weight:800;margin-top:4px">Dana Cair</h5>
-      <p style="font-size:12.5px;color:var(--muted);margin-top:3px">${rp(o.biaya.payout)} masuk ke saldo Anda.</p></div>`;
-  }
-  else if(o.status==='SENGKETA'){
-    actions=`<div class="card" style="padding:16px"><div class="badge b-dispute" style="font-size:12px">⚠ Dalam mediasi</div>
-      <p style="font-size:12.5px;color:var(--muted);margin-top:9px">Tim Tukangin meninjau bukti foto, GPS & chat. Dana ditahan sampai keputusan.</p></div>`;
-  }
-
+function renderPage(){
+  const sc=$('scroll');
+  if(VIEW.page==='tentang')sc.innerHTML=pageTentang();
+  else if(VIEW.page==='bantuan')sc.innerHTML=pageBantuan();
+  else sc.innerHTML='';
+}
+function renderBantuan(){
+  const sc=$('scroll');
+  const faq=[['Bagaimana cara membayar?','Setelah memesan, ikuti instruksi pembayaran. Dana ditahan '+BIZ.nama+' dan diteruskan ke tukang hanya setelah Anda menekan Konfirmasi Selesai.'],
+    ['Pekerjaan tidak sesuai?','Jangan tekan Konfirmasi. Tekan tombol "Ada Masalah" pada pesanan — dana dibekukan dan tim kami menghubungi Anda.'],
+    ['Kapan tukang dibayar?','Tukang menerima uangnya tepat setelah Anda mengonfirmasi pekerjaan selesai.'],
+    ['Bisa batalkan pesanan?','Selama tukang belum mulai, hubungi kami lewat WhatsApp untuk dibatalkan dan dana dikembalikan.']];
   sc.innerHTML=`
-    ${escrowBanner(o)}
-    <div class="card ocard" style="margin-top:12px"><div class="top">
-      <div class="othumb">${k.ic}</div>
-      <div class="ti"><h4>${esc(o.judul)}</h4><div class="meta">📍 ${esc(o.lokasi)} <span class="dot"></span>${o.jarakKm} km</div></div>
-      <div class="price" style="color:var(--ok)">${rp(o.biaya.payout)}<small>bersih</small></div>
-    </div><div class="divider"></div><p style="font-size:13.5px;color:#37514d">${esc(o.desk)}</p></div>
-
-    <div class="sec-title">Status</div>
-    <div class="card" style="padding:16px">${tracker(o)}</div>
-
-    <div class="sec-title">Rincian Bayaran Anda</div>
-    <div class="fee">
-      <div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div>
-      <div class="feerow"><span>Komisi platform <span class="sub">(6%)</span></span><span style="color:var(--bad)">−${rp(o.biaya.komisi)}</span></div>
-      <div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(o.biaya.payout)}</span></div>
+    <div class="card" style="padding:22px;text-align:center">
+      <div style="font-size:38px">🛟</div>
+      <h3 style="font-size:21px;font-weight:800;margin-top:8px">Butuh bantuan?</h3>
+      <p style="font-size:15px;color:#46605c;margin-top:6px;line-height:1.55">Tim ${BIZ.nama} siap membantu Anda lewat WhatsApp.</p>
+      <a href="${waLink('Halo '+BIZ.nama+', saya butuh bantuan.')}" target="_blank" class="btn btn-primary" style="margin-top:18px;display:block;text-decoration:none;font-size:17px;padding:16px;font-weight:800">💬 Chat WhatsApp</a>
+      <p style="font-size:14px;color:var(--muted);margin-top:10px">${BIZ.waTampil}</p>
     </div>
-    ${usulanSection(o,'tukang')}
 
-    ${chatBox(o,false)}
-    <div style="margin-top:18px">${actions}</div>
-    <div class="sec-title">Riwayat Aktivitas</div>
-    <div class="card" style="padding:14px 16px">${auditLog(o)}</div>
-  `;
-  startCountdowns();
-}
+    <button class="btn btn-ghost" style="margin-top:11px;font-size:15px;padding:14px;font-weight:700" onclick="panduanPakai()">📖 Panduan: Cara Pakai Tukangin</button>
 
-function dompet(){
-  const tx=[
-    {t:'Pencairan ke BCA •••4821',a:-500000,d:'2 hari lalu',ic:'🏦'},
-    {t:'Servis AC — Putu',a:470000,d:'3 hari lalu',ic:'❄️'},
-    {t:'Las pagar — Budi',a:611000,d:'5 hari lalu',ic:'🔥'},
-    {t:'Perbaikan kunci — Sari',a:188000,d:'1 minggu lalu',ic:'🔑'},
-  ];
-  return `<div class="card" style="padding:18px;background:linear-gradient(135deg,#093E3A,#0D5953);color:#fff">
-    <div style="font-size:12px;opacity:.85;font-weight:600">Saldo aktif</div>
-    <div style="font-size:30px;font-weight:800;letter-spacing:-.02em;margin-top:2px">${rp(S.saldoTukang)}</div>
-    <button class="btn btn-brass" style="margin-top:14px" onclick="sheetTarik()">Tarik Saldo ke Bank</button></div>
-    <div class="infoline" style="margin-top:12px">🔒 <span>Bayaran dilindungi escrow: dana sudah ditahan sistem sebelum Anda mengerjakan, jadi pasti dibayar.</span></div>
-    <div class="sec-title">Riwayat Transaksi</div>
-    <div class="card" style="padding:6px 16px">${tx.map(t=>`<div class="logitem"><div style="font-size:18px">${t.ic}</div>
-      <div class="lc"><h6>${t.t}</h6><p>${t.d}</p></div>
-      <div style="font-weight:800;font-size:14px;color:${t.a<0?'var(--muted)':'var(--ok)'}">${t.a<0?'−':'+'}${rp(Math.abs(t.a))}</div></div>`).join('')}</div>`;
-}
-
-function profilTukang(){
-  const t=ME_TUKANG;
-  return `<div class="card" style="padding:16px"><div class="profhd">
-    <div class="profav">${t.inisial}</div>
-    <div><h4 style="font-size:18px;font-weight:800">${t.nm}</h4>
-      <div class="kyc">✔ KTP & Wajah Terverifikasi</div></div></div>
-    <div class="statgrid">
-      <div class="statbox"><div class="n" style="color:var(--brass-d)">★${t.rating}</div><div class="l">Rating</div></div>
-      <div class="statbox"><div class="n">${t.job}</div><div class="l">Pekerjaan</div></div>
-      <div class="statbox"><div class="n">${t.batal}</div><div class="l">Batal</div></div>
-    </div></div>
-    <div class="sec-title">Keahlian</div>
-    <div class="card" style="padding:14px"><div class="chips">${t.kat.map(k=>`<span class="chip on">${katOf(k).nm}</span>`).join('')}</div></div>
-    <div class="sec-title">Verifikasi Akun (anti-akun palsu)</div>
-    <div class="card" style="padding:6px 14px">
-      ${['KTP terverifikasi','Selfie cocok dengan KTP','Nomor HP aktif','Rekening bank terdaftar'].map(v=>`<div class="logitem"><div style="color:var(--ok);font-size:16px">✔</div><div class="lc"><h6 style="font-weight:600">${v}</h6></div></div>`).join('')}
+    <div class="sec-title" style="font-size:15px">Tentang ${BIZ.nama}</div>
+    <div class="card" style="padding:20px">
+      <div style="font-size:16px;font-weight:800">${BIZ.badan}</div>
+      <div style="font-size:14.5px;color:#46605c;margin-top:6px">📍 ${BIZ.alamat}, ${BIZ.kota}</div>
+      <p style="font-size:15px;color:#314b47;line-height:1.65;margin-top:14px">${BIZ.nama} menghubungkan Anda dengan tukang tepercaya untuk perbaikan rumah & villa di Bali. Setiap tukang sudah kami verifikasi (KTP & foto).</p>
     </div>
-    <div class="sec-title">Mode Demo</div>
-    <div class="card" style="padding:14px"><div class="switch-role"><button onclick="setRole('pemilik')">👤 Pemilik</button><button class="on">🛠️ Tukang</button></div></div>`;
+
+    <div class="sec-title" style="font-size:15px">Pembayaran aman</div>
+    <div class="card" style="padding:20px">
+      <p style="font-size:15px;color:#314b47;line-height:1.7">💰 Uang Anda <b>ditahan dulu oleh ${BIZ.nama}</b>.<br>✅ Baru diteruskan ke tukang <b>setelah Anda menekan "Konfirmasi Selesai"</b>.<br>⚠️ Kalau ada masalah, tekan <b>"Ada Masalah"</b> — dana <b>dibekukan</b> dan kami bantu selesaikan dengan adil.</p>
+    </div>
+
+    <div class="sec-title" style="font-size:15px">Garansi Pengerjaan</div>
+    <div class="card" style="padding:20px">
+      <p style="font-size:15px;color:#314b47;line-height:1.7">🛡️ Setiap pekerjaan <b>bergaransi</b>. Kalau ada masalah dari hasil kerja tukang dalam masa garansi, hubungi kami — <b>diperbaiki tanpa biaya tambahan</b>.</p>
+      <p style="font-size:13.5px;color:var(--muted);line-height:1.8;margin-top:10px">Lama garansi menyesuaikan jenis pekerjaan:<br>• Listrik & Kunci: <b>7 hari</b><br>• Pipa, AC & Cat: <b>14 hari</b><br>• Las/Pagar & Atap Bocor: <b>30 hari</b></p>
+    </div>
+
+    <div class="sec-title" style="font-size:15px">Pertanyaan umum</div>
+    ${faq.map(([q,a])=>`<div class="card" style="padding:18px;margin-bottom:11px"><div style="font-size:15.5px;font-weight:800">${q}</div><p style="font-size:14.5px;color:#46605c;margin-top:7px;line-height:1.6">${a}</p></div>`).join('')}
+
+    <a href="${waLink('Halo '+BIZ.nama+', saya butuh bantuan.')}" target="_blank" class="btn btn-primary" style="display:block;text-decoration:none;font-size:16px;padding:15px;font-weight:800;margin-top:4px">💬 Masih bingung? Chat kami</a>
+    <p style="text-align:center;font-size:12.5px;color:var(--muted);margin:16px 0">${BIZ.nama} · ${BIZ.badan} · ${BIZ.kota}</p>`;
+}
+function pageTentang(){
+  return `<button class="btn btn-ghost" style="margin-bottom:14px" onclick="closePage()">‹ Kembali</button>
+    <div class="card" style="padding:20px;text-align:center">
+      <div style="width:62px;height:62px;border-radius:16px;background:var(--brass);display:grid;place-items:center;font-size:30px;margin:0 auto 10px">🔧</div>
+      <h3 style="font-size:20px;font-weight:800">${BIZ.nama}</h3>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:4px">Tukang tepercaya untuk perbaikan rumah & villa di Bali.</p>
+    </div>
+    <div class="sec-title">Dikelola oleh</div>
+    <div class="card" style="padding:16px">
+      <div style="font-size:14.5px;font-weight:700">${BIZ.badan}</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-top:4px">📍 ${BIZ.alamat}, ${BIZ.kota}</div>
+      <a href="${waLink('Halo '+BIZ.nama+', saya mau bertanya.')}" target="_blank" class="btn btn-primary" style="margin-top:14px;display:block;text-align:center;text-decoration:none">💬 Hubungi via WhatsApp</a>
+    </div>
+    <div class="sec-title">Bagaimana pembayaran dilindungi</div>
+    <div class="card" style="padding:16px">
+      <p style="font-size:13px;color:#314b47;line-height:1.6">Saat Anda memesan, pembayaran <b>ditahan dulu oleh ${BIZ.nama}</b> — belum diteruskan ke tukang. Dana baru kami teruskan ke tukang <b>setelah Anda menekan "Konfirmasi Selesai"</b>. Jika hasil tidak sesuai, ajukan <b>"Ada Masalah"</b> dan dana tetap ditahan sampai diselesaikan bersama.</p>
+      <div class="infoline" style="margin-top:12px">ℹ️ <span>Saat ini ${BIZ.nama} masih tahap awal — penjaminan dana dikelola langsung oleh tim kami (belum otomatis). Kami selalu terbuka soal ini.</span></div>
+    </div>
+    <div class="sec-title">Tukang terverifikasi</div>
+    <div class="card" style="padding:16px"><p style="font-size:13px;color:#314b47;line-height:1.6">Setiap tukang wajib mengunggah <b>KTP & foto wajah</b> yang kami tinjau manual sebelum boleh menerima pekerjaan — demi keamanan & kualitas.</p></div>
+    <p style="text-align:center;font-size:11px;color:var(--muted);margin:16px 0">${BIZ.nama} · ${BIZ.badan} · ${BIZ.kota}</p>`;
+}
+function pageBantuan(){
+  const faq=[['Bagaimana cara membayar?','Setelah memesan, ikuti instruksi pembayaran. Dana ditahan '+BIZ.nama+' dan diteruskan ke tukang hanya setelah Anda konfirmasi selesai.'],
+    ['Pekerjaan tidak sesuai, bagaimana?','Jangan tekan "Konfirmasi & Cairkan". Tekan "Ada Masalah" pada pesanan — dana dibekukan dan tim kami menghubungi Anda.'],
+    ['Kapan tukang dibayar?','Tukang menerima dana (setelah komisi) begitu Anda mengonfirmasi pekerjaan selesai.'],
+    ['Bisa batalkan pesanan?','Selama tukang belum mulai, hubungi kami via WhatsApp untuk pembatalan & pengembalian dana.']];
+  return `<button class="btn btn-ghost" style="margin-bottom:14px" onclick="closePage()">‹ Kembali</button>
+    <div class="card" style="padding:18px;text-align:center">
+      <div style="font-size:30px">🛟</div>
+      <h3 style="font-size:18px;font-weight:800;margin-top:4px">Butuh bantuan?</h3>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:3px">Tim ${BIZ.nama} siap membantu lewat WhatsApp.</p>
+      <a href="${waLink('Halo '+BIZ.nama+', saya butuh bantuan dengan pesanan saya.')}" target="_blank" class="btn btn-primary" style="margin-top:14px;display:block;text-align:center;text-decoration:none">💬 Chat Bantuan (${BIZ.waTampil})</a>
+    </div>
+    <div class="sec-title">Cara kerja sengketa</div>
+    <div class="card" style="padding:16px"><p style="font-size:13px;color:#314b47;line-height:1.6">Jika hasil tidak sesuai, tekan <b>"Ada Masalah"</b> di halaman pesanan. Status berubah jadi <b>Sengketa</b>, dana <b>tetap ditahan</b> ${BIZ.nama}, dan tim menghubungi pemilik & tukang untuk solusi adil (perbaikan, sebagian, atau pengembalian).</p></div>
+    <div class="sec-title">Pertanyaan umum</div>
+    ${faq.map(([q,a])=>`<div class="card" style="padding:14px;margin-bottom:10px"><div style="font-size:13.5px;font-weight:700">${q}</div><p style="font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.55">${a}</p></div>`).join('')}`;
 }
 
-/* ============================================================
-   AKSI
-   ============================================================ */
-function setRole(r){S.role=r;S.view=null;S.tab=r==='pemilik'?'beranda':'kerja';render()}
-function go(t){S.tab=t;S.view=null;render();$('scroll').scrollTop=0}
-function openDetail(id){S.view={name:'detail',id};render();$('scroll').scrollTop=0}
-function back(){S.view=null;render()}
-
-/* ---- pemilik: buat pesanan ---- */
+/* ====== BUAT PESANAN ====== */
+let draft={};
 function sheetBuat(kat){
-  const k=kat||'umum';
-  S.draft={kat:k,judul:'',desk:'',harga:'',lokasi:'Jl. Pantai Berawa, Canggu'};
-  openSheet(`<div class="grip"></div><div class="sheet-hd"><h3>Buat Pesanan</h3><button class="xbtn" onclick="closeSheet()">✕</button></div>
-    <div class="sheet-bd">
-      <div class="field"><label>Kategori</label><div class="chips" id="katchips">${KAT.map(c=>`<button class="chip ${c.id===k?'on':''}" onclick="pickKat('${c.id}')">${c.ic} ${c.nm}</button>`).join('')}</div></div>
-      <div class="field"><label>Judul singkat</label><input class="input" id="f_judul" placeholder="Cth: Stop kontak dapur mati" oninput="S.draft.judul=this.value"></div>
-      <div class="field"><label>Deskripsi masalah</label><textarea class="input" id="f_desk" placeholder="Jelaskan kondisi, lokasi di rumah, sejak kapan… makin detail, makin akurat taksiran AI" oninput="S.draft.desk=this.value"></textarea></div>
-      <div class="field"><label>Foto kerusakan <span class="hint">(opsional, bantu tukang & AI menaksir)</span></label>
-        <button class="uploadbox" style="width:100%" onclick="toast('Demo: foto tersimpan. Di versi nyata pakai kamera HP.');this.querySelector('span').textContent='Foto ditambahkan ✓'"><div class="ic">📷</div><span>Ambil / unggah foto</span></button></div>
-      <div class="field"><label>Lokasi</label><input class="input" id="f_lok" value="Jl. Pantai Berawa, Canggu" oninput="S.draft.lokasi=this.value">
-        <div class="hint" style="margin-top:5px">📍 GPS aktif — jarak ke tukang dihitung otomatis.</div></div>
-      <div class="field"><label>Harga ditaksir AI</label>
-        <div class="estbox" id="estbox"><div class="lab">✨ Estimasi Tukangin AI</div><div class="rng">Belum ditaksir</div><div class="note">Tekan tombol di bawah — AI menaksir dari kategori & deskripsi Anda.</div></div>
-        <button class="btn btn-brass" id="aibtn" style="margin-top:10px" onclick="estimasiAI()">✨ Taksir Harga dengan AI</button></div>
-      <div class="field"><label>Harga yang Anda tawarkan <span class="hint">(bisa diubah dari hasil AI)</span></label>
-        <input class="input" id="f_harga" inputmode="numeric" placeholder="Rp" oninput="S.draft.harga=this.value.replace(/\\D/g,'');this.value=S.draft.harga?rp(+S.draft.harga):''"></div>
-      <div class="infoline" style="margin-bottom:14px">🤝 <span>Harga bukan harga mati. Setelah tukang melihat kondisi asli, <b>harga bisa disesuaikan</b> bila kedua pihak setuju.</span></div>
-      <button class="btn btn-primary" onclick="submitPesanan()">Posting Pesanan</button>
-      <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:9px">Belum ditagih. Anda bayar ke escrow setelah memilih tukang.</p>
-    </div>`);
-}
-function pickKat(id){S.draft.kat=id;document.querySelectorAll('#katchips .chip').forEach(c=>c.classList.remove('on'));event.target.classList.add('on');
-  const box=$('estbox');if(box){box.querySelector('.rng').textContent='Belum ditaksir';box.querySelector('.note').textContent='Tekan tombol di bawah — AI menaksir dari kategori & deskripsi Anda.'}}
-
-/* ---- taksir harga oleh AI ---- */
-async function estimasiAI(){
-  const d=S.draft, box=$('estbox'), btn=$('aibtn');
-  if((d.desk||'').trim().length<6){toast('Isi deskripsi dulu agar AI bisa menaksir');return}
-  if(btn){btn.disabled=true;btn.textContent='✨ AI sedang menaksir…'}
-  box.querySelector('.rng').textContent='Menganalisis…';
-  box.querySelector('.note').textContent='AI membaca deskripsi & kategori Anda.';
-  const h=await taksirHarga(d.kat,d.desk);
-  box.querySelector('.rng').textContent=`${rp(h.min)} – ${rp(h.max)}`;
-  box.querySelector('.note').innerHTML=`${esc(h.alasan)} · Keyakinan: <b>${esc(h.keyakinan)}</b>${h.ai?'':' · <i>mode offline</i>'}`;
-  // isi rekomendasi ke kolom harga
-  const f=$('f_harga');
-  if(f){S.draft.harga=String(h.rekomendasi);f.value=rp(h.rekomendasi)}
-  S.draft.hargaAI=h.rekomendasi;
-  if(btn){btn.disabled=false;btn.textContent='✨ Taksir Ulang dengan AI'}
-}
-
-async function taksirHarga(kat,desk){
-  const katNm=katOf(kat).nm;
-  const prompt=`Anda penaksir harga JASA tukang di Bali, Indonesia. Taksir HANYA upah/jasa tenaga (TANPA harga material mahal).
-Kategori: ${katNm}
-Deskripsi dari pelanggan: "${desk}"
-
-Gunakan PATOKAN tarif jasa nyata di Bali (Canggu/Kerobokan/Seminyak) ini:
-- Ganti bohlam / saklar / stop kontak / hal sangat ringan: Rp 25.000–75.000
-- Pasang/perbaiki keran, kran bocor, kloset kecil: Rp 75.000–200.000
-- Cuci/servis AC: Rp 60.000–150.000 per unit
-- Perbaikan listrik kecil (MCB turun, tambah titik): Rp 150.000–400.000
-- Las ringan (pagar, teralis, engsel): Rp 200.000–600.000
-- Cat 1 ruangan kecil: Rp 300.000–800.000
-- Atap bocor titik kecil: Rp 200.000–500.000
-
-ATURAN:
-- Pekerjaan sederhana WAJIB dihargai kecil sesuai patokan. Jangan melebih-lebihkan.
-- Jangan masukkan harga material mahal, hanya jasa.
-- Biaya panggil minimum tukang sekitar Rp 50.000, jadi jangan lebih rendah dari itu.
-
-Balas HANYA JSON, tanpa teks lain, tanpa markdown:
-{"min":<rupiah_angka>,"max":<rupiah_angka>,"rekomendasi":<rupiah_angka>,"alasan":"<maks 12 kata>","keyakinan":"tinggi|sedang|rendah"}`;
-  try{
-    const res=await fetch(AI_ENDPOINT,{
-      method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}]})
-    });
-    const data=await res.json();
-    const txt=(data.content||[]).map(i=>i.text||"").join("").replace(/```json|```/g,"").trim();
-    const j=JSON.parse(txt);
-    if(typeof j.min==='number'&&typeof j.max==='number'){
-      return {ai:true,min:j.min,max:j.max,rekomendasi:j.rekomendasi||Math.round((j.min+j.max)/2),alasan:j.alasan||'Taksiran AI',keyakinan:j.keyakinan||'sedang'};
-    }
-    throw new Error('format');
-  }catch(e){
-    return taksirLokal(kat,desk); // fallback offline (saat di-host tanpa Worker / jaringan mati)
-  }
-}
-
-function taksirLokal(kat,desk){
-  const t=(desk||'').toLowerCase();
-  // pekerjaan sangat ringan -> tarif kecil, abaikan kategori
-  if(/bohlam|lampu|saklar|stop ?kontak|fitting|colokan/.test(t) && /ganti|pasang| tambah|baru|mati|rusak/.test(t)){
-    return {ai:false,min:25000,max:75000,rekomendasi:50000,alasan:'Pekerjaan ringan (biaya panggil minimum)',keyakinan:'tinggi'};
-  }
-  const base={listrik:[100000,400000],pipa:[100000,400000],ac:[60000,200000],las:[200000,700000],cat:[300000,900000],bocor:[200000,600000],kunci:[80000,250000],kayu:[150000,600000],pompa:[150000,500000],umum:[75000,400000]};
-  let [lo,hi]=base[kat]||base.umum;
-  let f=1;
-  if(/ganti|pasang baru|total|semua|beberapa|banyak|besar|parah/.test(t))f+=0.4;
-  if(/cek|kecil|satu|sedikit|ringan|mudah/.test(t))f-=0.25;
-  f=Math.max(0.6,Math.min(1.6,f));
-  lo=Math.max(50000,Math.round(lo*f/5000)*5000); hi=Math.round(hi*f/5000)*5000;
-  return {ai:false,min:lo,max:hi,rekomendasi:Math.round((lo+hi)/2/5000)*5000,alasan:'Estimasi pola kategori',keyakinan:'sedang'};
-}
-function submitPesanan(){
-  const d=S.draft;
-  if(!d.judul||!d.harga){toast('Isi judul & tawaran harga dulu');return}
-  const o=seedOrder(d.kat,d.judul,d.desk||'-',+d.harga,d.lokasi,null,'MENUNGGU_DANA');
-  o.dibuat=Date.now();
-  S.orders.unshift(o);
-  closeSheet();S.tab='pesanan';S.view={name:'detail',id:o.id};render();
-  toast('Pesanan dibuat — lanjut bayar ke escrow');
-}
-
-/* ---- pemilik: bayar escrow ---- */
-function bayarEscrow(id){
-  const o=S.orders.find(x=>x.id===id);
-  openSheet(`<div class="grip"></div><div class="sheet-hd"><h3>Bayar ke Escrow</h3><button class="xbtn" onclick="closeSheet()">✕</button></div>
-    <div class="sheet-bd">
-      <div class="estbox" style="background:linear-gradient(135deg,#E7F1EF,#dfeeeb);border-color:#bfe0da"><div class="lab" style="color:var(--teal-d)">🔒 Dana ditahan, bukan ke tukang</div>
-        <div class="rng" style="color:var(--teal-d)">${rp(o.biaya.escrow)}</div>
-        <div class="note" style="color:#37635d">Tukangin menahan dana sampai Anda konfirmasi selesai. Bila batal/bermasalah, dana dikembalikan.</div></div>
-      <div class="sec-title" style="margin-top:16px">Metode Pembayaran</div>
-      ${['QRIS','Transfer Virtual Account','GoPay / OVO / DANA','Kartu Kredit/Debit'].map((m,i)=>`<button class="card" style="padding:14px;width:100%;display:flex;align-items:center;gap:12px;margin-bottom:9px;text-align:left" onclick="prosesBayar('${id}')">
-        <span style="font-size:20px">${['📱','🏧','💳','💳'][i]}</span><b style="flex:1;font-weight:700;font-size:14px">${m}</b><span style="color:var(--muted)">›</span></button>`).join('')}
-      <div class="infoline" style="margin-top:6px">ℹ️ <span>Pembayaran asli diproses lewat <b>Xendit</b> (PJP berlisensi BI). Saldo escrow dipegang penyedia, bukan rekening pribadi.</span></div>
-    </div>`);
-}
-function prosesBayar(id){ // <== XENDIT: ganti dengan create invoice + webhook konfirmasi
-  const o=S.orders.find(x=>x.id===id);
-  // simulasi: pemilik membayar -> sistem mencari/menetapkan tukang (di demo: tetapkan tukang demo bila belum)
-  if(!o.tukangId){o.tukangId=ME_TUKANG.id;logAdd(o,'Tukang ditugaskan',ME_TUKANG.nm+' menerima pekerjaan');}
-  o.status='DANA_DITAHAN';
-  logAdd(o,'Dana masuk escrow',rp(o.biaya.escrow)+' ditahan sistem (Xendit)');
-  closeSheet();render();toast('✅ Dana aman di escrow. Tukang menuju lokasi.');
-}
-
-/* ---- pemilik: konfirmasi & sengketa & rating ---- */
-function konfirmasiSelesai(id){
-  const o=S.orders.find(x=>x.id===id);
-  o.status='SELESAI';o.autoRelease=null;
-  S.saldoTukang+=o.biaya.payout;
-  logAdd(o,'Pemilik konfirmasi selesai','Dana '+rp(o.biaya.payout)+' dicairkan ke tukang');
-  render();toast('Dana dicairkan ke tukang 🎉');
-}
-function sheetSengketa(id){
-  openSheet(`<div class="grip"></div><div class="sheet-hd"><h3>Ajukan Sengketa</h3><button class="xbtn" onclick="closeSheet()">✕</button></div>
-    <div class="sheet-bd">
-      <div class="infoline" style="margin-bottom:14px">🛡️ <span>Dana <b>tetap dibekukan</b> dan tidak cair ke tukang selama sengketa. Tim mediasi meninjau bukti.</span></div>
-      <div class="field"><label>Apa masalahnya?</label>
-        <div class="chips" style="flex-direction:column;align-items:stretch">
-        ${['Pekerjaan belum selesai','Hasil tidak sesuai','Tukang tidak datang','Ada kerusakan lain'].map(a=>`<button class="chip" style="text-align:left" onclick="kirimSengketa('${id}','${a}')">${a}</button>`).join('')}
-        </div></div>
-    </div>`);
-}
-function kirimSengketa(id,alasan){
-  const o=S.orders.find(x=>x.id===id);
-  o.status='SENGKETA';o.autoRelease=null;
-  logAdd(o,'Sengketa diajukan','Alasan: '+alasan+' — dana dibekukan');
-  closeSheet();render();toast('Sengketa dikirim. Dana dibekukan & ditinjau.');
-}
-function sheetRating(id){
-  openSheet(`<div class="grip"></div><div class="sheet-hd"><h3>Beri Rating</h3><button class="xbtn" onclick="closeSheet()">✕</button></div>
-    <div class="sheet-bd" style="text-align:center">
-      <p style="font-size:13.5px;color:var(--muted);margin-bottom:14px">Seberapa puas dengan pekerjaan tukang?</p>
-      <div style="font-size:38px;letter-spacing:8px" id="ratestars">${[1,2,3,4,5].map(n=>`<span style="cursor:pointer;color:#ddd" onclick="setRate('${id}',${n})" data-n="${n}">★</span>`).join('')}</div>
-      <button class="btn btn-primary" style="margin-top:20px" id="ratebtn" disabled onclick="submitRate('${id}')">Kirim Rating</button>
-    </div>`);
-}
-let _rate=0;
-function setRate(id,n){_rate=n;document.querySelectorAll('#ratestars span').forEach(s=>s.style.color=(+s.dataset.n<=n)?'#E89A2D':'#ddd');$('ratebtn').disabled=false}
-function submitRate(id){const o=S.orders.find(x=>x.id===id);o.rating=_rate;logAdd(o,'Rating diberikan',_rate+' bintang untuk tukang');closeSheet();render();toast('Terima kasih atas rating Anda')}
-
-/* ============================================================
-   PENYESUAIAN HARGA (harus disetujui kedua pihak)
-   ============================================================ */
-const ALASAN_TUKANG=['Ternyata lebih mudah dari perkiraan','Ada pekerjaan tambahan','Butuh material lebih banyak','Lebih rumit dari perkiraan'];
-const ALASAN_PEMILIK=['Lingkup saya tambah','Sebagian saya kerjakan sendiri','Sesuai kondisi di lapangan'];
-
-function sheetSesuaikan(id,oleh){
-  const o=S.orders.find(x=>x.id===id);
-  const alasan = oleh==='tukang'?ALASAN_TUKANG:ALASAN_PEMILIK;
-  S._usul={harga:o.harga,alasan:alasan[0]};
-  openSheet(`<div class="grip"></div><div class="sheet-hd"><h3>Sesuaikan Harga</h3><button class="xbtn" onclick="closeSheet()">✕</button></div>
-    <div class="sheet-bd">
-      <div class="infoline" style="margin-bottom:14px">🤝 <span>Usulan ini <b>tidak berlaku otomatis</b>. Harga hanya berubah jika ${oleh==='tukang'?'pemilik':'tukang'} menyetujui.</span></div>
-      <div class="fee" style="margin-bottom:14px"><div class="feerow"><span>Harga saat ini</span><span>${rp(o.harga)}</span></div></div>
-      <div class="field"><label>Alasan penyesuaian</label>
-        <div class="chips" id="alasanchips" style="flex-direction:column;align-items:stretch">
-          ${alasan.map((a,i)=>`<button class="chip ${i===0?'on':''}" style="text-align:left" onclick="pickAlasan(this,'${esc(a)}')">${a}</button>`).join('')}
-        </div></div>
-      <div class="field"><label>Harga baru yang diusulkan</label>
-        <input class="input" id="u_harga" inputmode="numeric" value="${rp(o.harga)}" oninput="S._usul.harga=+this.value.replace(/\\D/g,'')||0;this.value=S._usul.harga?rp(S._usul.harga):'';previewUsul('${id}')"></div>
-      <div class="estbox" id="u_prev" style="margin-bottom:14px"></div>
-      <button class="btn btn-primary" onclick="ajukanUsulan('${id}','${oleh}')">Kirim Usulan ke ${oleh==='tukang'?'Pemilik':'Tukang'}</button>
-    </div>`);
-  previewUsul(id);
-}
-function pickAlasan(el,a){document.querySelectorAll('#alasanchips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');S._usul.alasan=a}
-function previewUsul(id){
-  const o=S.orders.find(x=>x.id===id), box=$('u_prev'); if(!box)return;
-  const baru=hitungBiaya(S._usul.harga||0);
-  const selisih=(S._usul.harga||0)-o.harga;
-  const turun=selisih<0;
-  box.style.background=turun?'linear-gradient(135deg,#E7F5EC,#d7efe0)':'linear-gradient(135deg,#FDF4E3,#FBEAC8)';
-  box.style.borderColor=turun?'#bfe0ca':'#f0dca8';
-  box.innerHTML=`<div class="lab" style="color:${turun?'#15875a':'var(--brass-d)'}">${selisih===0?'Tidak ada perubahan':(turun?'⬇ Harga turun':'⬆ Harga naik')} ${selisih?rp(Math.abs(selisih)):''}</div>
-    <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:8px"><span>Tukang terima bersih</span><b>${rp(baru.payout)}</b></div>
-    <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:3px"><span>Total escrow pemilik</span><b>${rp(baru.escrow)}</b></div>
-    <div class="note" style="margin-top:6px">${turun?'Selisih dikembalikan ke pemilik.':(selisih>0?'Pemilik menambah selisih ke escrow saat menyetujui.':'')}</div>`;
-}
-function ajukanUsulan(id,oleh){
-  const o=S.orders.find(x=>x.id===id);
-  const baru=S._usul.harga||0;
-  if(baru<50000){toast('Masukkan harga yang wajar');return}
-  if(baru===o.harga){toast('Harga belum berubah');return}
-  o.usulan={oleh,hargaBaru:baru,alasan:S._usul.alasan,t:Date.now()};
-  logAdd(o,'Usulan penyesuaian harga',`${oleh==='tukang'?'Tukang':'Pemilik'} usul ${rp(o.harga)} → ${rp(baru)} (${S._usul.alasan})`);
-  closeSheet();render();
-  toast(`Usulan dikirim. Menunggu persetujuan ${oleh==='tukang'?'pemilik':'tukang'}.`);
-}
-function setujuUsulan(id){
-  const o=S.orders.find(x=>x.id===id), u=o.usulan, lama=o.harga;
-  const naik=u.hargaBaru>lama, selisih=Math.abs(u.hargaBaru-lama);
-  o.harga=u.hargaBaru; o.biaya=hitungBiaya(o.harga);            // <== XENDIT: jika naik, buat invoice top-up; jika turun, refund partial
-  logAdd(o,'Penyesuaian harga disetujui',`${rp(lama)} → ${rp(u.hargaBaru)} disepakati kedua pihak`);
-  logAdd(o, naik?'Top-up escrow':'Refund selisih', `${rp(selisih)} ${naik?'ditambahkan pemilik ke escrow':'dikembalikan ke pemilik'}`);
-  o.usulan=null; render();
-  toast(naik?'Disetujui — pemilik menambah selisih ke escrow':'Disetujui — selisih dikembalikan ke pemilik');
-}
-function tolakUsulan(id){const o=S.orders.find(x=>x.id===id);logAdd(o,'Usulan penyesuaian ditolak','Harga tetap '+rp(o.harga));o.usulan=null;render();toast('Usulan ditolak. Harga tetap.')}
-function batalUsulan(id){const o=S.orders.find(x=>x.id===id);o.usulan=null;logAdd(o,'Usulan dibatalkan','Usulan penyesuaian ditarik');render();toast('Usulan dibatalkan')}
-
-/* render bagian penyesuaian harga di detail; role = sudut pandang yang melihat */
-function usulanSection(o,role){
-  if(!['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))return '';
-  if(o.usulan)return usulanCard(o,role);
-  return `<button class="btn btn-ghost" style="margin-top:12px" onclick="sheetSesuaikan('${o.id}','${role}')">✎ Usulkan Penyesuaian Harga</button>`;
-}
-function usulanCard(o,role){
-  const u=o.usulan, turun=u.hargaBaru<o.harga, selisih=Math.abs(u.hargaBaru-o.harga);
-  const baru=hitungBiaya(u.hargaBaru);
-  const mine=u.oleh===role;
-  if(mine){
-    return `<div class="card" style="padding:16px;margin-top:12px;border:1.5px solid var(--brass)">
-      <div class="badge b-wait" style="font-size:11px">⏳ Menunggu persetujuan ${role==='tukang'?'pemilik':'tukang'}</div>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:15px;font-weight:700">
-        <span style="color:var(--muted);text-decoration:line-through">${rp(o.harga)}</span> → <span>${rp(u.hargaBaru)}</span>
-        <span class="badge ${turun?'b-done':'b-hold'}" style="margin-left:auto">${turun?'⬇':'⬆'} ${rp(selisih)}</span></div>
-      <p style="font-size:12px;color:var(--muted);margin-top:6px">Alasan Anda: ${esc(u.alasan)}</p>
-      <button class="btn btn-danger" style="margin-top:12px" onclick="batalUsulan('${o.id}')">Batalkan Usulan</button></div>`;
-  }
-  return `<div class="card" style="padding:16px;margin-top:12px;border:1.5px solid var(--brass)">
-    <h5 style="font-size:14px;font-weight:800">${u.oleh==='tukang'?'Tukang':'Pemilik'} mengusulkan harga baru</h5>
-    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:17px;font-weight:800">
-      <span style="color:var(--muted);text-decoration:line-through;font-size:14px">${rp(o.harga)}</span> →
-      <span style="color:${turun?'var(--ok)':'var(--hold)'}">${rp(u.hargaBaru)}</span>
-      <span class="badge ${turun?'b-done':'b-hold'}" style="margin-left:auto">${turun?'⬇ turun':'⬆ naik'} ${rp(selisih)}</span></div>
-    <p style="font-size:12.5px;color:#46605c;margin-top:8px">"${esc(u.alasan)}"</p>
-    <div class="divider"></div>
-    <div class="feerow" style="font-size:13px"><span>${role==='tukang'?'Anda terima bersih':'Total escrow Anda'}</span><b>${role==='tukang'?rp(baru.payout):rp(baru.escrow)}</b></div>
-    ${turun?'<p style="font-size:11.5px;color:var(--ok);margin-top:4px">✓ Selisih dikembalikan ke pemilik.</p>':`<p style="font-size:11.5px;color:var(--hold);margin-top:4px">Pemilik menambah ${rp(selisih)} ke escrow.</p>`}
-    <div class="btnrow"><button class="btn btn-danger" onclick="tolakUsulan('${o.id}')">Tolak</button>
-      <button class="btn btn-primary" onclick="setujuUsulan('${o.id}')">Setuju</button></div></div>`;
-}
-
-/* ---- tukang: ambil, checkin, foto, kode ---- */
-function ambilKerja(id){
-  const o=S.orders.find(x=>x.id===id);
-  o.tukangId=ME_TUKANG.id;
-  // Di alur nyata: tukang ambil -> pelanggan diminta bayar. Untuk demo, tandai menunggu dana dr pemilik.
-  logAdd(o,'Tukang ambil pekerjaan',ME_TUKANG.nm+' siap mengerjakan');
-  S.tab='aktif';S.view={name:'detail',id};render();
-  toast('Pekerjaan diambil. Menunggu pelanggan bayar ke escrow.');
-}
-function checkinGPS(id){
-  const o=S.orders.find(x=>x.id===id);
-  o.status='DIKERJAKAN';o.checkin=true;
-  logAdd(o,'Check-in GPS','Tukang terverifikasi di lokasi (jarak 12m)');
-  render();toast('📍 Check-in berhasil — selamat bekerja');
-}
-function uploadFoto(id,jenis){
-  const o=S.orders.find(x=>x.id===id);
-  if(jenis==='sebelum')o.fotoSebelum=true;else o.fotoSesudah=true;
-  logAdd(o,'Foto bukti diunggah','Foto '+jenis+' ditambahkan');
-  toast('Foto '+jenis+' tersimpan');render();
-}
-function sheetInputKode(id){
-  openSheet(`<div class="grip"></div><div class="sheet-hd"><h3>Kode Selesai</h3><button class="xbtn" onclick="closeSheet()">✕</button></div>
-    <div class="sheet-bd" style="text-align:center">
-      <div style="font-size:34px">🔑</div>
-      <p style="font-size:13.5px;color:var(--muted);margin:8px 0 16px">Minta <b>kode 4 digit</b> ke pelanggan. Mereka memberi kode hanya jika puas — ini bukti pekerjaan benar selesai.</p>
-      <div class="otp-inputs" id="otpwrap">
-        ${[0,1,2,3].map(i=>`<input inputmode="numeric" maxlength="1" data-i="${i}" oninput="otpNext(this,${i},'${id}')">`).join('')}
+  draft={kat:kat||'umum',judul:'',desk:'',lokasi:'Canggu',harga:'',lat:null,lng:null,panjang:'',tinggi:'',material:false,sistem:'borongan',tarif:'',hari:''};
+  openSheet(`<div style="padding:16px 18px"><h3 style="font-size:18px;font-weight:800;margin-bottom:14px">Buat Pesanan</h3>
+    <div class="field"><label>Kategori</label><div class="chips" id="katchips">${KAT.map(c=>`<button class="chip ${c.id===draft.kat?'on':''}" onclick="pickKat('${c.id}',this)">${c.ic} ${c.nm}</button>`).join('')}</div></div>
+    <div class="field" id="lasextra" style="display:${draft.kat==='las'?'block':'none'}">
+      <label>Ukuran pagar/pintu <span class="hint">untuk taksir per m²</span></label>
+      <div style="display:flex;gap:10px">
+        <input class="input" id="d_panjang" inputmode="decimal" placeholder="Panjang (m)" value="${draft.panjang||''}" oninput="draft.panjang=this.value">
+        <input class="input" id="d_tinggi" inputmode="decimal" placeholder="Tinggi (m)" value="${draft.tinggi||''}" oninput="draft.tinggi=this.value">
       </div>
-      <p id="otperr" style="color:var(--bad);font-size:12.5px;font-weight:600;height:16px"></p>
-      <button class="btn btn-primary" id="otpbtn" disabled onclick="cekKode('${id}')" style="margin-top:8px">Selesaikan Pekerjaan</button>
-    </div>`);
-  setTimeout(()=>document.querySelector('#otpwrap input')?.focus(),250);
-}
-function otpNext(el,i,id){
-  el.value=el.value.replace(/\D/g,'');
-  if(el.value&&i<3)document.querySelector(`#otpwrap input[data-i="${i+1}"]`).focus();
-  const all=[...document.querySelectorAll('#otpwrap input')].map(x=>x.value).join('');
-  $('otpbtn').disabled=all.length!==4;
-}
-function cekKode(id){
-  const o=S.orders.find(x=>x.id===id);
-  const val=[...document.querySelectorAll('#otpwrap input')].map(x=>x.value).join('');
-  if(val!==o.kodeSelesai){$('otperr').textContent='Kode salah. Pastikan dari pelanggan.';logAdd(o,'Kode salah dimasukkan','Percobaan kode tidak cocok');return}
-  o.status='MENUNGGU_KONFIRMASI';
-  o.autoRelease=Date.now()+24*3600*1000;
-  logAdd(o,'Kode selesai benar','Pekerjaan diselesaikan, menunggu konfirmasi pemilik');
-  closeSheet();render();toast('✅ Berhasil! Menunggu konfirmasi pelanggan.');
-}
-
-/* ---- tarik saldo ---- */
-function sheetTarik(){
-  openSheet(`<div class="grip"></div><div class="sheet-hd"><h3>Tarik Saldo</h3><button class="xbtn" onclick="closeSheet()">✕</button></div>
-    <div class="sheet-bd">
-      <div class="estbox" style="background:linear-gradient(135deg,#E7F1EF,#dfeeeb);border-color:#bfe0da">
-        <div class="lab" style="color:var(--teal-d)">Saldo tersedia</div>
-        <div class="rng" style="color:var(--teal-d)">${rp(S.saldoTukang)}</div></div>
-      <div class="field" style="margin-top:16px"><label>Rekening tujuan</label>
-        <select class="input"><option>BCA •••• 4821 — Komang Arta</option><option>Mandiri •••• 9930</option></select></div>
-      <div class="field"><label>Jumlah tarik</label><input class="input" inputmode="numeric" value="${rp(S.saldoTukang)}"></div>
-      <div class="infoline" style="margin-bottom:14px">⏱️ <span>Dana masuk rekening maks. 1×24 jam. Pencairan diproses lewat Xendit Disbursement.</span></div>
-      <button class="btn btn-primary" onclick="closeSheet();toast('Penarikan diproses ke bank Anda')">Tarik Sekarang</button>
+      <div class="seg" id="matseg" style="margin-top:10px;margin-bottom:0">
+        <button class="${draft.material?'':'on'}" onclick="pickMat(false,this)">🔧 Jasa saja</button>
+        <button class="${draft.material?'on':''}" onclick="pickMat(true,this)">📦 Termasuk material</button>
+      </div>
+    </div>
+    <div class="field"><label>Sistem kerja</label>
+      <div class="seg" id="sysseg" style="margin-bottom:0">
+        <button class="on" onclick="pickSistem('borongan',this)">📦 Borongan</button>
+        <button onclick="pickSistem('harian',this)">📅 Harian</button>
+      </div></div>
+    <div class="field"><label>Judul singkat</label><input class="input" id="d_judul" placeholder="Cth: Stop kontak dapur mati" oninput="draft.judul=this.value"></div>
+    <div class="field"><label>Deskripsi</label><textarea class="input" id="d_desk" placeholder="Jelaskan masalahnya…" oninput="draft.desk=this.value"></textarea></div>
+    <div class="field"><label>Lokasi</label><input class="input" id="d_lok" value="Canggu" oninput="draft.lokasi=this.value"></div>
+    <div class="field"><label>Titik GPS pekerjaan <span class="hint">opsional — untuk verifikasi check-in tukang</span></label>
+      <button class="btn btn-ghost" id="gpsbtn" onclick="tandaiLokasi()">📍 Tandai Lokasi Saat Ini</button></div>
+    <div id="borongan">
+    <div class="field"><label>Harga ditaksir AI</label>
+      <div class="estbox" id="estbox"><div class="lab">✨ Estimasi</div><div class="rng">Belum ditaksir</div><div class="note">Tekan tombol di bawah.</div></div>
+      <button class="btn btn-brass" id="aibtn" style="margin-top:10px" onclick="estimasiAI()">✨ Taksir Harga</button></div>
+    <div class="field"><label>Harga tawaran Anda</label><input class="input" id="d_harga" inputmode="numeric" placeholder="Rp" oninput="draft.harga=this.value.replace(/\\D/g,'');this.value=draft.harga?rp(+draft.harga):''"></div>
+    </div>
+    <div id="harian" style="display:none">
+      <div class="field"><label>Tarif tukang per hari</label><input class="input" id="d_tarif" inputmode="numeric" placeholder="Rp / hari" oninput="draft.tarif=this.value.replace(/\\D/g,'');this.value=draft.tarif?rp(+draft.tarif):'';hitungHarian()"></div>
+      <div class="field"><label>Perkiraan jumlah hari</label><input class="input" id="d_hari" inputmode="numeric" placeholder="Cth: 3" oninput="draft.hari=this.value.replace(/\\D/g,'');hitungHarian()"></div>
+      <div class="estbox" id="harianringkas"><div class="lab">Ringkasan</div><div class="rng">Isi tarif & jumlah hari</div><div class="note">Sudah termasuk biaya layanan.</div></div>
+    </div>
+    <button class="btn btn-primary" onclick="submitPesanan()">Posting Pesanan</button>
+    <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:9px">Belum ditagih. Bayar escrow setelah posting.</p>
     </div>`);
 }
-
-/* ---- chat ---- */
-function kirimChat(id,asPemilik){
-  const inp=$('chatin');if(!inp||!inp.value.trim())return;
-  const o=S.orders.find(x=>x.id===id);
-  o.chat.push({me:asPemilik,t:inp.value.trim()});
-  render();
-  setTimeout(()=>{const m=$('msgs');if(m)m.scrollTop=m.scrollHeight},30);
+function pickKat(id,el){draft.kat=id;document.querySelectorAll('#katchips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');const le=$('lasextra');if(le)le.style.display=id==='las'?'block':'none';}
+function pickMat(v,el){draft.material=v;document.querySelectorAll('#matseg button').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+function pickSistem(s,el){draft.sistem=s;document.querySelectorAll('#sysseg button').forEach(b=>b.classList.remove('on'));el.classList.add('on');const bo=$('borongan'),ha=$('harian');if(bo)bo.style.display=s==='borongan'?'block':'none';if(ha)ha.style.display=s==='harian'?'block':'none';}
+function hitungHarian(){
+  const t=+draft.tarif||0,h=+draft.hari||0,box=$('harianringkas');if(!box)return;
+  if(!t||!h){box.querySelector('.rng').textContent='Isi tarif & jumlah hari';box.querySelector('.note').textContent='Sudah termasuk biaya layanan.';return}
+  const base=t*h,markup=Math.round(base*(BIZ.markupHarian||0)),total=base+markup;
+  box.querySelector('.rng').textContent=`Total: ${rp(total)}`;
+  box.querySelector('.note').textContent=ME.is_admin?`Tukang terima ${rp(base)} · Anda dapat ${rp(markup)}`:'Sudah termasuk biaya layanan Tukangin.';
+}
+async function estimasiAI(){
+  if(draft.kat==='las'){ if(!(draft.panjang&&draft.tinggi)&&(draft.desk||'').trim().length<6){toast('Isi ukuran atau deskripsi dulu');return} }
+  else if((draft.desk||'').trim().length<6){toast('Isi deskripsi dulu');return}
+  const box=$('estbox'),btn=$('aibtn');btn.disabled=true;btn.textContent='Menaksir…';
+  const h=await taksir(draft);
+  box.querySelector('.rng').textContent=`${rp(h.min)} – ${rp(h.max)}`;
+  box.querySelector('.note').textContent=h.alasan;
+  const f=$('d_harga');draft.harga=String(h.rekomendasi);if(f)f.value=rp(h.rekomendasi);
+  btn.disabled=false;btn.textContent='✨ Taksir Ulang';
+}
+async function taksir(d){
+  const kat=d.kat,desk=d.desk||'';
+  const luas=(parseFloat(d.panjang)||0)*(parseFloat(d.tinggi)||0);
+  if(AI_ENDPOINT){
+    try{
+      let prompt;
+      if(kat==='las'&&luas>0){
+        const isPintu=/dorong|sliding|geser|pintu|gerbang/i.test(desk);
+        prompt=`Anda penaksir harga jasa las/pagar besi di ${d.lokasi||'Bali'}, Bali, memakai harga pasar lokal terkini. Pekerjaan pagar/pintu besi ukuran ${d.panjang}m x ${d.tinggi}m = ${luas.toFixed(1)} m².${isPintu?' Ini PINTU DORONG (sliding) — tambahkan biaya rel, roda, dan rangka penguat.':''} Lingkup: ${d.material?'TERMASUK material (besi hollow, spandek, rel, roda, cat).':'JASA saja (las + pasang, material disediakan pemilik).'} Deskripsi: "${desk}". Hitung per m² lalu total. Balas HANYA JSON {"min":n,"max":n,"rekomendasi":n,"alasan":"maks 12 kata"}`;
+      }else{
+        prompt=`Anda penaksir harga JASA tukang di ${d.lokasi||'Bali'}, Bali, memakai harga pasar lokal terkini. Patokan kasar: ganti bohlam/saklar Rp25.000-75.000; keran/pipa kecil Rp75.000-200.000; cuci AC Rp60.000-150.000; listrik kecil Rp150.000-400.000; cat ruangan Rp300.000-800.000. Minimum panggil Rp50.000. Kategori: ${katOf(kat).nm}. Deskripsi: "${desk}". Balas HANYA JSON {"min":n,"max":n,"rekomendasi":n,"alasan":"maks 10 kata"}`;
+      }
+      const r=await fetch(AI_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+      const dd=await r.json();const t=(dd.content||[]).map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+      const j=JSON.parse(t);if(typeof j.min==='number')return{min:j.min,max:j.max,rekomendasi:j.rekomendasi||Math.round((j.min+j.max)/2),alasan:j.alasan||'Taksiran AI'};
+    }catch(e){}
+  }
+  return taksirLokal(d);
+}
+function taksirLokal(d){
+  const kat=d.kat,t=(d.desk||'').toLowerCase();
+  const luas=(parseFloat(d.panjang)||0)*(parseFloat(d.tinggi)||0);
+  if(kat==='las'&&luas>0){
+    const isPintu=/dorong|sliding|geser|pintu|gerbang/.test(t);
+    let lo,hi; if(d.material){lo=400000;hi=650000}else{lo=100000;hi=250000}
+    let min=luas*lo,max=luas*hi;
+    if(isPintu){if(d.material){min+=600000;max+=1500000}else{min+=200000;max+=500000}}
+    min=Math.round(min/10000)*10000;max=Math.round(max/10000)*10000;
+    return{min,max,rekomendasi:Math.round((min+max)/2/10000)*10000,alasan:`Per m² (${d.material?'+material':'jasa'})${isPintu?' · pintu dorong':''}`};
+  }
+  if(/bohlam|lampu|saklar|stop ?kontak|fitting/.test(t)&&/ganti|pasang|mati|rusak|baru/.test(t))return{min:25000,max:75000,rekomendasi:50000,alasan:'Pekerjaan ringan'};
+  const base={listrik:[100000,400000],pipa:[100000,400000],ac:[60000,200000],las:[200000,700000],cat:[300000,900000],bocor:[200000,600000],kunci:[80000,250000],umum:[75000,400000]};
+  let[lo,hi]=base[kat]||base.umum;let f=1;
+  if(/ganti|total|semua|banyak|besar|parah/.test(t))f+=0.4;if(/cek|kecil|ringan|mudah/.test(t))f-=0.25;
+  f=Math.max(0.6,Math.min(1.6,f));lo=Math.max(50000,Math.round(lo*f/5000)*5000);hi=Math.round(hi*f/5000)*5000;
+  return{min:lo,max:hi,rekomendasi:Math.round((lo+hi)/2/5000)*5000,alasan:'Estimasi kategori'};
+}
+async function submitPesanan(){
+  if(!draft.judul){toast('Isi judul dulu');return}
+  const dasar={pemilik_id:ME.id,pemilik_nama:ME.nama,kat:draft.kat,judul:draft.judul,desk:draft.desk||'-',
+    lokasi:draft.lokasi,jarak_km:(Math.random()*3+0.5).toFixed(1),lat:draft.lat,lng:draft.lng,status:'MENUNGGU_DANA',kode_selesai:otp()};
+  let row;
+  if(draft.sistem==='harian'){
+    const t=+draft.tarif||0,h=+draft.hari||0;
+    if(!t||!h){toast('Isi tarif & jumlah hari');return}
+    const base=t*h,markup=Math.round(base*(BIZ.markupHarian||0)),total=base+markup;
+    row={...dasar,harga:base,biaya:{harga:base,layanan:markup,komisi:0,escrow:total,payout:base},sistem:'harian',tarif_harian:t,hari:h};
+  }else{
+    if(!draft.harga){toast('Isi harga');return}
+    row={...dasar,harga:+draft.harga,biaya:fee(+draft.harga),sistem:'borongan'};
+  }
+  const {data,error}=await sb.from('orders').insert(row).select().single();
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(data.id,'Pesanan dibuat','Pemilik membuat pesanan '+katOf(draft.kat).nm+(draft.sistem==='harian'?' (harian)':''));
+  closeSheet();await refresh();openOrder(data.id);toast('Pesanan dibuat — lanjut bayar escrow');
 }
 
-/* ---- sheet helpers ---- */
-function openSheet(html){$('sheet').innerHTML=html;$('overlay').classList.add('show');document.body.style.overflow='hidden'}
-function closeSheet(){$('overlay').classList.remove('show');document.body.style.overflow=''}
+/* ====== DETAIL ====== */
+async function renderDetail(){
+  const o=ORDERS.find(x=>x.id===VIEW.orderId);if(!o){back();return}
+  const sc=$('scroll');sc.innerHTML=`<div class="loadwrap" style="min-height:200px"><div class="spinner"></div></div>`;
+  const [log,msgs]=await Promise.all([getLog(o.id),getMsgs(o.id)]);
+  const k=katOf(o.kat),b=o.biaya||fee(o.harga),s=ST[o.status]||ST.MENUNGGU_DANA;
+  const harian=o.sistem==='harian';
+  const amPemilik=o.pemilik_id===ME.id;
+  let banner,actions='';
+  // banner
+  let bst='Dana ditahan Tukangin',bsub='Aman sampai pemilik konfirmasi.';
+  if(o.status==='MENUNGGU_DANA'){bst='Menunggu pembayaran';bsub='Bayar untuk mengaktifkan escrow.'}
+  if(o.status==='SELESAI'){bst='Dana telah dicairkan';bsub='Transaksi selesai.'}
+  if(o.status==='DIBATALKAN'){bst='Pesanan dibatalkan';bsub='Dana dikembalikan ke pemilik.'}
+  banner=`<div class="escrow-banner"><div class="lk">🔒</div><div class="st">${bst}</div><div class="amt">${rp(b.escrow)}</div><div class="sub">${bsub}</div></div>`;
 
-/* ---- info platform ---- */
-function infoPlatform(){
-  return `<div class="sec-title">Tentang Keamanan</div>
-  <div class="card" style="padding:6px 16px">
-  ${[['🔒','Escrow dana','Uang ditahan PJP berlisensi (Xendit), cair setelah Anda setujui'],
-     ['🔑','Kode selesai','Tukang butuh kode dari Anda — cegah klaim selesai palsu'],
-     ['📍','Verifikasi GPS','Tukang wajib check-in di lokasi'],
-     ['📷','Foto bukti','Foto sebelum & sesudah tiap pekerjaan'],
-     ['🆔','KYC tukang','KTP & wajah diverifikasi sebelum aktif'],
-     ['⚖️','Mediasi sengketa','Dana dibekukan & ditinjau tim bila ada masalah']].map(([i,t,d])=>`<div class="logitem"><div style="font-size:18px">${i}</div><div class="lc"><h6>${t}</h6><p>${d}</p></div></div>`).join('')}
-  </div>`;
+  // actions per role & status
+  if(amPemilik){
+    if(o.status==='MENUNGGU_DANA')actions=`<div class="card" style="padding:16px;border:1.5px solid var(--brass);background:var(--hold-bg)">
+        <div style="font-size:11.5px;color:#8a6a2a;font-weight:800;letter-spacing:.5px">TRANSFER PEMBAYARAN</div>
+        <div style="font-size:24px;font-weight:800;margin:2px 0 8px">${rp(b.escrow)}</div>
+        <div style="font-size:12.5px;color:#314b47">ke rekening berikut:</div>
+        <div class="card" style="background:#fff;padding:13px;margin-top:7px;border:1px solid var(--line)">
+          <div style="font-weight:800;font-size:16px">${esc(BIZ.bank)} ${esc(BIZ.rek)}</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:2px">a.n. ${esc(BIZ.rekNama)}</div>
+        </div>
+        <p style="font-size:11.5px;color:#8a6a2a;margin-top:9px">Dana ditahan Tukangin sampai pekerjaan selesai. Jika batal, dana dikembalikan.</p>
+      </div>
+      <button class="btn btn-primary" style="margin-top:12px" onclick="bayar('${o.id}')">✅ Saya sudah transfer</button>
+      ${o.bukti_transfer_url?`<div style="margin-top:10px;text-align:center"><img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:130px;border-radius:11px;border:1px solid var(--line)"><div style="font-size:11px;color:var(--ok);font-weight:600;margin-top:4px">✓ Bukti transfer terunggah</div></div>`:''}
+      <button class="btn btn-ghost" style="margin-top:9px" onclick="pilihBukti('${o.id}')">📷 ${o.bukti_transfer_url?'Ganti':'Unggah'} Bukti Transfer</button>
+      <button class="btn btn-ghost" style="margin-top:9px" onclick="batal('${o.id}')">Batalkan Pesanan</button>`;
+    else if(o.status==='MENUNGGU_VERIFIKASI')actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:30px">⏳</div><h5 style="font-weight:800">Menunggu verifikasi pembayaran</h5><p style="font-size:12.5px;color:var(--muted)">Admin ${BIZ.nama} sedang memeriksa pembayaran Anda. Pesanan dibuka ke tukang setelah dana dikonfirmasi.</p></div>${o.bukti_transfer_url?`<div style="margin-top:10px;text-align:center"><img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:120px;border-radius:11px;border:1px solid var(--line)"></div>`:''}<button class="btn btn-ghost" style="margin-top:10px" onclick="batal('${o.id}')">Batalkan Pesanan</button>`;
+    else if(o.status==='MENUNGGU_KONFIRMASI')actions=`<div class="infoline" style="margin-bottom:12px">📷 <span>Tukang menyatakan selesai (foto sebelum & sesudah terkirim).</span></div><button class="btn btn-primary" onclick="konfirmasi('${o.id}')">✔ Konfirmasi & Cairkan Dana</button><button class="btn btn-danger" style="margin-top:9px" onclick="sengketa('${o.id}')">⚠ Ada Masalah</button>`;
+    else if(o.status==='SELESAI'){const g=garansiInfo(o);
+      actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:32px">🎉</div><h5 style="font-weight:800">Selesai</h5><p style="font-size:12.5px;color:var(--muted)">Dana ${rp(b.payout)} diteruskan ke ${esc(o.tukang_nama||'tukang')}.</p></div>`
+        +(g&&g.aktif?(g.klaim
+          ?`<div class="card" style="padding:14px;margin-top:10px;border:1px solid var(--brass);background:var(--hold-bg)"><div style="font-size:13px;font-weight:800">🛠️ Masalah garansi dilaporkan</div><p style="font-size:12px;color:#8a6a2a;margin-top:4px">Tim ${BIZ.nama} menindaklanjuti — tukang wajib memperbaiki.</p></div>`
+          :`<div class="card" style="padding:14px;margin-top:10px"><div style="font-size:13px;font-weight:800">🛡️ Dalam garansi sampai ${tglID(g.end)}</div><p style="font-size:12px;color:var(--muted);margin-top:4px">Ada masalah dari hasil kerja? Laporkan, diperbaiki tanpa biaya.</p><button class="btn btn-ghost" style="margin-top:10px" onclick="klaimGaransi('${o.id}')">🛠️ Lapor Masalah Garansi</button></div>`)
+        :(g?`<p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:8px">Masa garansi berakhir ${tglID(g.end)}.</p>`:''));}
+    else if(o.status==='DANA_DITAHAN'&&!o.tukang_id)actions=`<div class="infoline">🔍 <span>Menunggu tukang mengambil pekerjaan ini.</span></div><button class="btn btn-danger" style="margin-top:11px" onclick="batal('${o.id}')">Batalkan & Kembalikan Dana</button>`;
+    else if(o.status==='DIBATALKAN')actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:30px">🚫</div><h5 style="font-weight:800">Pesanan dibatalkan</h5><p style="font-size:12.5px;color:var(--muted)">Dana dikembalikan ke pemilik.</p></div>`;
+    else if(harian&&(o.status==='DIKERJAKAN'||(o.status==='DANA_DITAHAN'&&o.tukang_id)))actions=`<div class="infoline">📅 <span>Pekerjaan harian berjalan — cek absensi di atas. Bayar hanya hari yang dihadiri.</span></div><button class="btn btn-danger" style="margin-top:11px" onclick="hentikanHarian('${o.id}')">⏹ Hentikan & Bayar Hari Terpakai</button>`;
+    else actions=`<div class="infoline">⏱️ <span>Tukang sedang menuju / mengerjakan. Anda akan diminta konfirmasi saat selesai.</span></div>`;
+  }else{ // tukang
+    if(harian&&o.tukang_id===ME.id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status)){
+      const open=(o.absensi||[]).find(a=>a.masuk&&!a.keluar),hp=hariPenuh(o);
+      actions=`${open?`<button class="btn btn-primary" onclick="absenKeluar('${o.id}')">🏁 Absen Keluar (selesai hari ini)</button>`:`<button class="btn btn-primary" onclick="absenMasuk('${o.id}')">📍 Absen Masuk (GPS)</button>`}
+        <button class="btn btn-ghost" ${hp>=1&&!open?'':'disabled'} style="margin-top:9px" onclick="inputKode('${o.id}')">🔑 Selesaikan Semua — Masukkan Kode</button>
+        <p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">${open?'Jangan lupa Absen Keluar saat pulang.':hp>=1?'Sudah '+hp+' hari hadir. Selesaikan jika pekerjaan rampung.':'Absen masuk untuk mulai hari kerja.'}</p>`;
+    }
+    else if(o.status==='DANA_DITAHAN'&&o.tukang_id===ME.id)actions=`<button class="btn btn-primary" onclick="checkin('${o.id}')">📍 Check-in di Lokasi (GPS)</button>`;
+    else if(o.status==='DIKERJAKAN'&&o.tukang_id===ME.id){
+      const ok=o.foto_sebelum&&o.foto_sesudah;
+      actions=`<div class="card" style="padding:14px;margin-bottom:12px"><h5 style="font-size:14px;font-weight:700;margin-bottom:10px">Bukti Pekerjaan (foto asli)</h5>
+        <div style="display:flex;gap:10px">${fotoBtn(o,'sebelum')}${fotoBtn(o,'sesudah')}</div></div>
+        <button class="btn ${ok?'btn-primary':'btn-ghost'}" ${ok?'':'disabled'} onclick="inputKode('${o.id}')">🔑 Selesaikan — Masukkan Kode</button>
+        <p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">${ok?'Minta kode 4 digit ke pelanggan.':'Unggah kedua foto dulu.'}</p>`;
+    }
+    else if(o.status==='MENUNGGU_KONFIRMASI')actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:30px">⏳</div><h5 style="font-weight:800">Menunggu konfirmasi pelanggan</h5><p style="font-size:12.5px;color:var(--muted)">Dana ${rp(b.payout)} cair setelah dikonfirmasi.</p></div>`;
+    else if(o.status==='SELESAI')actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:32px">💰</div><h5 style="font-weight:800">Dana Cair</h5><p style="font-size:12.5px;color:var(--muted)">${rp(b.payout)} masuk ke saldo Anda.</p></div>`;
+  }
+
+  const kodeCard=(amPemilik&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))
+    ?`<div class="sec-title">Kode Selesai Anda</div><div class="otpcard"><div class="lab">🔑 Berikan saat puas</div><div class="code">${o.kode_selesai}</div><p class="note">Sebutkan ke tukang hanya jika pekerjaan benar selesai. Mencegah klaim selesai palsu.</p></div>`:'';
+
+  const tukangInfo=o.tukang_nama?`<div class="card" style="padding:14px;margin-top:12px;cursor:pointer" onclick="openTukangProfil('${o.tukang_id}')"><div style="display:flex;align-items:center;gap:12px"><div class="profav" style="width:42px;height:42px;font-size:15px">${esc(o.tukang_inisial||initial(o.tukang_nama))}</div><div style="flex:1"><h4 style="font-size:14.5px;font-weight:700">${esc(o.tukang_nama)} <span style="color:var(--ok)">✔</span></h4><div class="meta">⭐ ${o.tukang_rating||'5.0'}</div></div><span style="color:#0D5953;font-size:12px;font-weight:700;white-space:nowrap">Lihat profil ›</span></div></div>`:'';
+
+  const feeBlock=amPemilik
+    ?`<div class="fee">${harian?`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow"><span>Biaya layanan</span><span>${rp(b.layanan)}</span></div>`:`<div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Biaya layanan <span class="sub">(5%)</span></span><span>${rp(b.layanan)}</span></div>`}<div class="feerow tot"><span>Total escrow</span><span>${rp(b.escrow)}</span></div></div>`
+    :`<div class="fee">${harian?`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div>`:`<div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Komisi <span class="sub">(6%)</span></span><span style="color:var(--bad)">−${rp(b.komisi)}</span></div><div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div>`}</div>`;
+
+  const showChat=o.tukang_id&&['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status);
+
+  sc.innerHTML=`${banner}
+    <div class="card ocard" style="margin-top:12px"><div class="top"><div class="othumb">${k.ic}</div>
+      <div style="flex:1"><h4>${esc(o.judul)}</h4><div class="meta">📍 ${esc(o.lokasi||'-')} <span class="dot"></span>${o.jarak_km||'-'} km</div></div>
+      <span class="badge ${s.c}">${s.l}</span></div>
+      <div class="divider"></div><p style="font-size:13.5px;color:#37514d">${esc(o.desk||'')}</p></div>
+    ${tukangInfo}
+    ${fotoView(o)}
+    <div class="sec-title">Rincian ${amPemilik?'Pembayaran':'Bayaran Anda'}</div>${feeBlock}
+    ${absensiSection(o)}
+    ${usulanSection(o,amPemilik)}
+    ${kodeCard}
+    ${showChat?chatBox(o,msgs):''}
+    <div style="margin-top:18px">${actions}</div>
+    ${ratingBlock(o,amPemilik)}
+    <div class="sec-title">Riwayat Aktivitas</div>
+    <div class="card" style="padding:8px 16px">${log.map(r=>`<div class="logitem"><div class="ldot"></div><div><h6>${esc(r.judul)}</h6><p>${esc(r.detail)} · ${timeAgo(r.dibuat)}</p></div></div>`).join('')||'<p style="color:var(--muted);font-size:12.5px;padding:8px 0">Belum ada aktivitas.</p>'}</div>`;
+  const m=$('msgs');if(m)m.scrollTop=m.scrollHeight;
+}
+function chatBox(o,msgs){
+  return `<div class="sec-title">Pesan</div><div class="chatbox"><div class="chat-warn">🛡️ Jaga transaksi di dalam aplikasi.</div>
+    <div class="msgs" id="msgs">${msgs.map(mm=>`<div class="msg ${mm.sender_id===ME.id?'me':'them'}">${esc(mm.isi)}</div>`).join('')||'<p style="color:var(--muted);font-size:12px;text-align:center">Mulai percakapan…</p>'}</div>
+    <div class="chat-in"><input id="chatin" placeholder="Tulis pesan…" onkeydown="if(event.key==='Enter')kirim('${o.id}')"><button onclick="kirim('${o.id}')">➤</button></div></div>`;
 }
 
-/* ---- countdown ---- */
-function startCountdowns(){
-  document.querySelectorAll('.countdown[data-cd]').forEach(el=>{
-    const end=+el.dataset.cd;
-    const tick=()=>{const d=end-Date.now();if(d<=0){el.textContent='0:00:00';return}
-      const h=Math.floor(d/3600000),m=Math.floor(d%3600000/60000),s=Math.floor(d%60000/1000);
-      el.textContent=`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`};
-    tick();clearInterval(el._iv);el._iv=setInterval(tick,1000);
+/* ====== AKSI ESCROW ====== */
+async function bayar(id){
+  const o=ORDERS.find(x=>x.id===id);
+  if(!o.bukti_transfer_url){toast('Unggah bukti transfer dulu ya');return}
+  await sb.from('orders').update({status:'MENUNGGU_VERIFIKASI'}).eq('id',id);
+  await addLog(id,'Pemilik menyatakan sudah transfer','Menunggu verifikasi admin');
+  await refresh();openOrder(id);toast('Terkirim — menunggu admin memverifikasi pembayaran');
+}
+async function ambil(id){
+  if(ME.verif_status!=='terverifikasi'){toast('Selesaikan verifikasi identitas dulu');VIEW.tab='profil';render();return}
+  const {error}=await sb.rpc('ambil_pesanan',{p_order:id});
+  if(error){toast('Gagal: '+error.message);return}
+  VIEW.tab='aktif';await refresh();openOrder(id);toast('Pekerjaan diambil');
+}
+function hariPenuh(o){return (o.absensi||[]).filter(a=>a.masuk&&a.keluar).length}
+function jamID(t){return t?new Date(t).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'—'}
+function tgljamID(t){return new Date(t).toLocaleDateString('id-ID',{day:'numeric',month:'short'})}
+function absensiSection(o){
+  if(o.sistem!=='harian')return '';
+  const list=o.absensi||[];
+  if(!list.length&&!['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))return '';
+  const hp=hariPenuh(o);
+  const rows=list.map(a=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)">
+    <div style="font-size:12px;font-weight:800;width:50px">Hari ${a.hari}</div>
+    <div style="flex:1;font-size:12px;color:#37514d">${tgljamID(a.masuk)} · 🟢 ${jamID(a.masuk)}${a.keluar?' → 🔴 '+jamID(a.keluar):' <span style="color:var(--hold)">· belum keluar</span>'}</div>
+    ${a.jarak!=null?(a.jarak>500?'<span style="font-size:10px;color:var(--bad);font-weight:700">⚠ jauh</span>':'<span style="font-size:10px;color:var(--ok);font-weight:700">✓ GPS</span>'):''}
+  </div>`).join('')||'<p style="font-size:12px;color:var(--muted);padding:6px 0">Belum ada absensi.</p>';
+  return `<div class="sec-title">Absensi Harian · ${hp} hari hadir</div>
+    <div class="card" style="padding:10px 16px">${rows}
+    <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:13.5px;font-weight:800"><span>Bayaran ${hp} hari hadir</span><span style="color:var(--ok)">${rp((o.tarif_harian||0)*hp)}</span></div></div>`;
+}
+async function absenMasuk(id){
+  const o=ORDERS.find(x=>x.id===id);const list=o.absensi||[];
+  if(list.find(a=>a.masuk&&!a.keluar)){toast('Sudah absen masuk — Absen Keluar dulu');return}
+  toast('Mengambil lokasi GPS…');let pos=null;try{pos=await getGPS();}catch(e){}
+  let jarak=null,detail='tanpa GPS';
+  if(pos&&o.lat&&o.lng){jarak=Math.round(haversine(pos.lat,pos.lng,o.lat,o.lng));detail=jarak>500?`⚠ jauh dari lokasi (~${(jarak/1000).toFixed(1)} km)`:`✓ di lokasi (±${jarak} m)`;}
+  else if(pos)detail='GPS aktif (titik lokasi belum ditandai)';
+  const hari=list.length+1;
+  const baru=[...list,{hari,masuk:new Date().toISOString(),lat:pos?pos.lat:null,lng:pos?pos.lng:null,jarak}];
+  const {error}=await sb.from('orders').update({absensi:baru,status:'DIKERJAKAN'}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,`Absen masuk hari ${hari}`,detail);
+  if(jarak!=null&&jarak>500)toast('⚠ Anda tampak jauh dari lokasi — tercatat');
+  await refresh();openOrder(id);toast('🟢 Absen masuk tercatat');
+}
+async function absenKeluar(id){
+  const o=ORDERS.find(x=>x.id===id);const list=(o.absensi||[]).slice();
+  const idx=list.findIndex(a=>a.masuk&&!a.keluar);
+  if(idx<0){toast('Belum absen masuk hari ini');return}
+  list[idx]={...list[idx],keluar:new Date().toISOString()};
+  const {error}=await sb.from('orders').update({absensi:list}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,`Absen keluar hari ${list[idx].hari}`,'Hari kerja selesai');
+  await refresh();openOrder(id);toast('🔴 Absen keluar tercatat');
+}
+async function hentikanHarian(id){
+  const o=ORDERS.find(x=>x.id===id);const hp=hariPenuh(o);
+  if(!confirm(`Hentikan & bayar ${hp} hari yang sudah dihadiri? Sisa dana dikembalikan ke Anda.`))return;
+  await konfirmasi(id);
+}
+async function checkin(id){
+  const o=ORDERS.find(x=>x.id===id);
+  toast('Mengambil lokasi GPS…');
+  let pos=null; try{pos=await getGPS();}catch(e){}
+  const upd={status:'DIKERJAKAN',checkin:true}; let detail;
+  if(pos){
+    upd.checkin_lat=pos.lat; upd.checkin_lng=pos.lng;
+    if(o.lat&&o.lng){
+      const d=Math.round(haversine(pos.lat,pos.lng,o.lat,o.lng)); upd.checkin_jarak=d;
+      if(d>500){detail=`⚠ Check-in JAUH dari lokasi (~${(d/1000).toFixed(1)} km) — ditandai untuk peninjauan`;toast('⚠ Anda tampak jauh dari lokasi — tercatat');}
+      else detail=`Terverifikasi GPS di lokasi (±${d} m)`;
+    } else detail='Check-in GPS (titik lokasi belum ditandai pemilik)';
+  } else detail='Check-in tanpa GPS (izin lokasi tidak aktif)';
+  const {error}=await sb.from('orders').update(upd).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,'Check-in lokasi',detail);
+  await refresh();openOrder(id);toast('📍 Check-in berhasil');
+}
+function getGPS(){return new Promise((res,rej)=>{if(!navigator.geolocation)return rej('no geo');navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy}),e=>rej(e),{enableHighAccuracy:true,timeout:10000,maximumAge:0});});}
+function haversine(a,b,c,d){const R=6371000,r=x=>x*Math.PI/180;const dLat=r(c-a),dLon=r(d-b);const h=Math.sin(dLat/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dLon/2)**2;return R*2*Math.atan2(Math.sqrt(h),Math.sqrt(1-h));}
+async function tandaiLokasi(){
+  const b=$('gpsbtn');b.disabled=true;b.textContent='Mengambil lokasi…';
+  try{const p=await getGPS();draft.lat=p.lat;draft.lng=p.lng;b.textContent='✓ Lokasi ditandai';b.classList.remove('btn-ghost');b.classList.add('btn-brass');}
+  catch(e){b.disabled=false;b.textContent='📍 Coba lagi';toast('Tidak bisa ambil lokasi — pastikan izin lokasi aktif.');}
+}
+
+/* ====== RATING (dua arah) ====== */
+function ratingBlock(o,amPemilik){
+  if(o.status!=='SELESAI')return '';
+  const sudah=amPemilik?o.rating:o.rating_pemilik, target=amPemilik?(o.tukang_nama||'tukang'):(o.pemilik_nama||'pemilik');
+  if(sudah)return `<div class="card" style="padding:14px;text-align:center;margin-top:12px"><p style="font-size:12.5px;color:var(--muted)">Penilaian Anda untuk ${esc(target)}</p><div style="font-size:22px;color:var(--brass);margin-top:4px">${'★'.repeat(sudah)}${'☆'.repeat(5-sudah)}</div></div>`;
+  return `<div class="card" style="padding:16px;text-align:center;margin-top:12px"><p style="font-size:13.5px;font-weight:700">Beri rating untuk ${esc(target)}</p>
+    <div id="ratestars" style="font-size:34px;letter-spacing:6px;margin-top:8px">${[1,2,3,4,5].map(n=>`<span data-n="${n}" onclick="setStar(${n})" style="cursor:pointer;color:#ddd">★</span>`).join('')}</div>
+    ${amPemilik?`<textarea id="ulasanteks" placeholder="Tulis ulasan singkat (opsional) — bisa tampil di Beranda" style="width:100%;margin-top:11px;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;min-height:54px;font-family:inherit"></textarea>`:''}
+    <button class="btn btn-primary" id="ratebtn" disabled style="margin-top:14px" onclick="kirimRating('${o.id}')">Kirim Penilaian</button></div>`;
+}
+let _star=0;
+function setStar(n){_star=n;document.querySelectorAll('#ratestars span').forEach(s=>s.style.color=(+s.dataset.n<=n)?'#E89A2D':'#ddd');const b=$('ratebtn');if(b)b.disabled=false;}
+async function kirimRating(id){
+  if(!_star)return;
+  const {error}=await sb.rpc('nilai_pesanan',{p_order:id,p_bintang:_star});
+  if(error){toast('Gagal: '+error.message);return}
+  const ul=$('ulasanteks');
+  if(ul&&ul.value.trim()){try{await sb.rpc('ulas_pesanan',{p_order:id,p_teks:ul.value.trim()});}catch(e){}}
+  _star=0;await refresh();openOrder(id);toast('Terima kasih atas penilaian Anda');
+}
+function fotoBtn(o,jenis){
+  const url=jenis==='sebelum'?o.foto_sebelum_url:o.foto_sesudah_url;
+  if(url)return `<div style="flex:1"><img src="${url}" onclick="window.open('${url}')" style="width:100%;height:92px;object-fit:cover;border-radius:11px;border:1px solid var(--line)"><div style="font-size:10.5px;color:var(--ok);text-align:center;margin-top:3px;font-weight:600">✓ ${jenis} · ketuk ganti</div><button onclick="pilihFoto('${o.id}','${jenis}')" style="display:none"></button></div>`;
+  return `<button class="uploadbox" style="flex:1;border:1.5px dashed var(--line);border-radius:13px;padding:18px;background:#fff" onclick="pilihFoto('${o.id}','${jenis}')"><div style="font-size:22px">📷</div><div style="font-size:11.5px;font-weight:600;margin-top:3px">Foto ${jenis}</div></button>`;
+}
+function fotoView(o){
+  if(!o.foto_sebelum_url&&!o.foto_sesudah_url)return '';
+  const cell=(url,lbl)=>`<div style="flex:1;text-align:center">${url?`<img src="${url}" onclick="window.open('${url}')" style="width:100%;height:110px;object-fit:cover;border-radius:12px;border:1px solid var(--line)">`:`<div style="height:110px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;color:var(--muted)">—</div>`}<div style="font-size:11px;color:var(--muted);margin-top:3px">${lbl}</div></div>`;
+  return `<div class="sec-title">Bukti Pekerjaan</div><div class="card" style="padding:12px"><div style="display:flex;gap:10px">${cell(o.foto_sebelum_url,'Sebelum')}${cell(o.foto_sesudah_url,'Sesudah')}</div></div>`;
+}
+function pilihBukti(id){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';
+  inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+  inp.onchange=()=>{if(inp.files&&inp.files[0])uploadBukti(id,inp.files[0]);inp.remove();};
+  document.body.appendChild(inp);inp.click();
+}
+async function uploadBukti(id,file){
+  toast('Memproses foto…');
+  try{
+    const dataUrl=await kompresFoto(file);
+    const {error}=await sb.from('orders').update({bukti_transfer_url:dataUrl}).eq('id',id);
+    if(error)throw error;
+    await addLog(id,'Bukti transfer diunggah','Pemilik mengunggah bukti pembayaran');
+    await refresh();openOrder(id);toast('✅ Bukti transfer tersimpan');
+  }catch(e){toast('Gagal: '+(e.message||e))}
+}
+function pilihFoto(id,jenis){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';inp.setAttribute('capture','environment');
+  inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+  inp.onchange=()=>{if(inp.files&&inp.files[0])uploadFoto(id,jenis,inp.files[0]);inp.remove();};
+  document.body.appendChild(inp);inp.click();
+}
+async function uploadFoto(id,jenis,file){
+  toast('Memproses foto…');
+  try{
+    const dataUrl=await kompresFoto(file);
+    const upd=jenis==='sebelum'?{foto_sebelum:true,foto_sebelum_url:dataUrl}:{foto_sesudah:true,foto_sesudah_url:dataUrl};
+    const {error}=await sb.from('orders').update(upd).eq('id',id);
+    if(error)throw error;
+    await addLog(id,'Foto bukti diunggah',`Foto ${jenis} ditambahkan`);
+    await refresh();openOrder(id);toast('✅ Foto '+jenis+' tersimpan');
+  }catch(e){toast('Gagal: '+(e.message||e))}
+}
+function kompresFoto(file){
+  return new Promise((res,rej)=>{
+    const img=new Image(),url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const max=1000;let w=img.width,h=img.height;
+      if(w>h&&w>max){h=Math.round(h*max/w);w=max}else if(h>max){w=Math.round(w*max/h);h=max}
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg',0.6));
+    };
+    img.onerror=()=>rej('gambar gagal dimuat');img.src=url;
   });
 }
-function timeAgo(t){const d=(Date.now()-t)/1000;if(d<60)return'baru saja';if(d<3600)return Math.floor(d/60)+' mnt lalu';if(d<86400)return Math.floor(d/3600)+' jam lalu';return Math.floor(d/86400)+' hari lalu'}
+function inputKode(id){
+  openSheet(`<div style="padding:20px 18px;text-align:center"><div style="font-size:32px">🔑</div>
+    <h3 style="font-size:18px;font-weight:800;margin:6px 0">Kode Selesai</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Minta kode 4 digit ke pelanggan. Mereka beri kode hanya jika puas.</p>
+    <input class="input" id="kodein" inputmode="numeric" maxlength="4" style="text-align:center;font-size:26px;letter-spacing:.3em;font-weight:800" placeholder="••••">
+    <p id="kodeerr" style="color:var(--bad);font-size:12.5px;font-weight:600;height:18px;margin-top:6px"></p>
+    <button class="btn btn-primary" onclick="cekKode('${id}')">Selesaikan Pekerjaan</button></div>`);
+  setTimeout(()=>$('kodein')?.focus(),250);
+}
+async function cekKode(id){
+  const o=ORDERS.find(x=>x.id===id);const v=$('kodein').value.trim();
+  if(v!==o.kode_selesai){$('kodeerr').textContent='Kode salah.';return}
+  await sb.from('orders').update({status:'MENUNGGU_KONFIRMASI'}).eq('id',id);
+  await addLog(id,'Pekerjaan diselesaikan','Kode benar, menunggu konfirmasi pemilik');
+  closeSheet();await refresh();openOrder(id);toast('✅ Menunggu konfirmasi pelanggan');
+}
+function garansiInfo(o){
+  if(o.status!=='SELESAI'||!o.selesai_tgl||o.sistem==='harian')return null;
+  const end=new Date(o.selesai_tgl).getTime()+garansiHariKat(o.kat)*86400000;
+  return {aktif:Date.now()<end,end:end,klaim:!!o.garansi_klaim};
+}
+function tglID(t){return new Date(t).toLocaleDateString('id-ID',{day:'numeric',month:'short'})}
+async function konfirmasi(id){
+  const o=ORDERS.find(x=>x.id===id);
+  const upd={status:'SELESAI',selesai_tgl:new Date().toISOString()};
+  let det='Dana dicairkan ke tukang';
+  if(o&&o.sistem==='harian'){
+    const hp=hariPenuh(o),base=(o.tarif_harian||0)*hp,markup=Math.round(base*(BIZ.markupHarian||0));
+    upd.biaya={harga:base,layanan:markup,komisi:0,escrow:base+markup,payout:base};
+    det=`Dibayar ${hp} hari hadir = ${rp(base)}`;
+  }
+  await sb.from('orders').update(upd).eq('id',id);
+  await addLog(id,'Pemilik konfirmasi',det);
+  await refresh();openOrder(id);toast('Selesai 🎉');
+}
+async function klaimGaransi(id){
+  const o=ORDERS.find(x=>x.id===id);
+  if(!confirm('Laporkan masalah garansi? Tim akan menindaklanjuti agar diperbaiki.'))return;
+  const {error}=await sb.from('orders').update({garansi_klaim:true}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,'Klaim garansi','Pemilik melaporkan masalah hasil kerja');
+  await refresh();openOrder(id);
+  window.open(waLink('Halo '+BIZ.nama+', saya klaim GARANSI untuk pesanan: '+(o?.judul||'')+'. Ada masalah pada hasil kerja.'),'_blank');
+  toast('Laporan garansi terkirim');
+}
+async function sengketa(id){
+  await sb.from('orders').update({status:'SENGKETA'}).eq('id',id);
+  await addLog(id,'Sengketa diajukan','Dana dibekukan, ditinjau tim');
+  await refresh();openOrder(id);toast('Sengketa dikirim, dana dibekukan');
+}
+async function batal(id){
+  const o=ORDERS.find(x=>x.id===id);
+  if(o&&o.tukang_id){toast('Tukang sudah mengambil — hubungi Bantuan untuk membatalkan');return}
+  if(!confirm('Batalkan pesanan ini? Jika sudah dibayar, dana akan dikembalikan.'))return;
+  const {error}=await sb.from('orders').update({status:'DIBATALKAN'}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,'Pesanan dibatalkan','Dibatalkan pemilik sebelum tukang mengambil');
+  await refresh();openOrder(id);toast('Pesanan dibatalkan');
+}
+async function kirim(id){
+  const inp=$('chatin');if(!inp||!inp.value.trim())return;
+  const isi=inp.value.trim();inp.value='';
+  await sb.from('messages').insert({order_id:id,sender_id:ME.id,isi});
+  renderDetail();
+}
 
-/* ---- icons ---- */
-function icHome(){return svg('<path d="M3 11l9-7 9 7M5 10v10h14V10"/>')}
-function icList(){return svg('<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>')}
-function icUser(){return svg('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>')}
-function icSearch(){return svg('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>')}
-function icWallet(){return svg('<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M16 12h3M3 9h18"/>')}
-function svg(p){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`}
-function emptyBox(ic,t,p){return `<div class="empty"><div class="ic">${ic}</div><h4 style="font-size:15px;margin-top:8px">${t}</h4><p>${p}</p></div>`}
+/* ====== PENYESUAIAN HARGA (dua pihak harus setuju) ====== */
+const ALASAN_TUKANG=['Ternyata lebih mudah','Ada pekerjaan tambahan','Butuh material lebih','Lebih rumit dari perkiraan'];
+const ALASAN_PEMILIK=['Lingkup saya tambah','Sebagian saya kerjakan sendiri','Sesuai kondisi lapangan'];
+let usul={};
+function usulanSection(o,amPemilik){
+  if(!o.tukang_id||!['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))return '';
+  const role=amPemilik?'pemilik':'tukang';
+  if(o.usulan)return usulanCard(o,role);
+  return `<button class="btn btn-ghost" style="margin-top:12px" onclick="sheetUsul('${o.id}','${role}')">✎ Usulkan Penyesuaian Harga</button>`;
+}
+function usulanCard(o,role){
+  const u=o.usulan,turun=u.harga_baru<o.harga,selisih=Math.abs(u.harga_baru-o.harga),b=fee(u.harga_baru),besar=selisih/o.harga>0.4,mine=u.oleh===role;
+  if(mine)return `<div class="card" style="padding:16px;margin-top:12px;border:1.5px solid var(--brass)">
+    <span class="badge b-wait">⏳ Menunggu persetujuan ${role==='tukang'?'pemilik':'tukang'}</span>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:15px;font-weight:700"><span style="color:var(--muted);text-decoration:line-through">${rp(o.harga)}</span> → <span>${rp(u.harga_baru)}</span><span class="badge ${turun?'b-done':'b-hold'}" style="margin-left:auto">${turun?'⬇':'⬆'} ${rp(selisih)}</span></div>
+    <p style="font-size:12px;color:var(--muted);margin-top:6px">Alasan: ${esc(u.alasan)}</p>
+    <button class="btn btn-danger" style="margin-top:12px" onclick="batalUsulan('${o.id}')">Batalkan Usulan</button></div>`;
+  return `<div class="card" style="padding:16px;margin-top:12px;border:1.5px solid var(--brass)">
+    <h5 style="font-size:14px;font-weight:800">${u.oleh==='tukang'?'Tukang':'Pemilik'} mengusulkan harga baru</h5>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:17px;font-weight:800"><span style="color:var(--muted);text-decoration:line-through;font-size:14px">${rp(o.harga)}</span> → <span style="color:${turun?'var(--ok)':'var(--hold)'}">${rp(u.harga_baru)}</span><span class="badge ${turun?'b-done':'b-hold'}" style="margin-left:auto">${turun?'⬇ turun':'⬆ naik'} ${rp(selisih)}</span></div>
+    <p style="font-size:12.5px;color:#46605c;margin-top:8px">"${esc(u.alasan)}"</p><div class="divider"></div>
+    <div class="feerow" style="font-size:13px"><span>${role==='tukang'?'Anda terima bersih':'Total escrow Anda'}</span><b>${role==='tukang'?rp(b.payout):rp(b.escrow)}</b></div>
+    <p style="font-size:11.5px;color:${turun?'var(--ok)':'var(--hold)'};margin-top:4px">${turun?'✓ Selisih '+rp(selisih)+' dikembalikan ke pemilik lewat sistem.':'Pemilik menambah '+rp(selisih)+' ke escrow saat menyetujui.'}</p>
+    ${besar?`<div class="infoline" style="margin-top:8px;background:#FBE9E7;border-color:#f3cdc9;color:#a8352a">⚠ <span>Perubahan cukup besar. Pastikan wajar & bukan paksaan — tercatat untuk peninjauan.</span></div>`:''}
+    <div class="infoline" style="margin-top:8px">🛡️ <span>Selesaikan di aplikasi. Jangan bayar selisih tunai di luar agar dana tetap terlindungi & tercatat.</span></div>
+    <div style="display:flex;gap:9px;margin-top:12px"><button class="btn btn-danger" style="flex:1" onclick="tolakUsulan('${o.id}')">Tolak</button><button class="btn btn-primary" style="flex:1" onclick="setujuUsulan('${o.id}')">Setuju</button></div></div>`;
+}
+function sheetUsul(id,role){
+  const o=ORDERS.find(x=>x.id===id),alasan=role==='tukang'?ALASAN_TUKANG:ALASAN_PEMILIK;
+  usul={harga:o.harga,alasan:alasan[0],role};
+  openSheet(`<div style="padding:16px 18px"><h3 style="font-size:18px;font-weight:800;margin-bottom:6px">Sesuaikan Harga</h3>
+    <div class="infoline" style="margin-bottom:14px">🤝 <span>Usulan ini <b>tidak berlaku otomatis</b>. Harga berubah hanya jika ${role==='tukang'?'pemilik':'tukang'} menyetujui.</span></div>
+    <div class="fee" style="margin-bottom:14px"><div class="feerow"><span>Harga sekarang</span><span>${rp(o.harga)}</span></div></div>
+    <div class="field"><label>Alasan penyesuaian</label><div class="chips" id="alasanchips" style="flex-direction:column;align-items:stretch">${alasan.map((a,i)=>`<button class="chip ${i===0?'on':''}" style="text-align:left" onclick="pickAlasan(this,'${esc(a)}')">${a}</button>`).join('')}</div></div>
+    <div class="field"><label>Harga baru yang diusulkan</label><input class="input" id="u_harga" inputmode="numeric" value="${rp(o.harga)}" oninput="usul.harga=+this.value.replace(/\\D/g,'')||0;this.value=usul.harga?rp(usul.harga):'';previewUsul('${id}')"></div>
+    <div class="estbox" id="u_prev" style="margin-bottom:14px"></div>
+    <button class="btn btn-primary" onclick="ajukanUsulan('${id}')">Kirim Usulan ke ${role==='tukang'?'Pemilik':'Tukang'}</button></div>`);
+  previewUsul(id);
+}
+function pickAlasan(el,a){document.querySelectorAll('#alasanchips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');usul.alasan=a}
+function previewUsul(id){
+  const o=ORDERS.find(x=>x.id===id),box=$('u_prev');if(!box)return;
+  const baru=usul.harga||0,b=fee(baru),selisih=baru-o.harga,turun=selisih<0,besar=Math.abs(selisih)/o.harga>0.4;
+  box.style.background=turun?'linear-gradient(135deg,#E7F5EC,#d7efe0)':'linear-gradient(135deg,#FDF4E3,#FBEAC8)';
+  box.style.borderColor=turun?'#bfe0ca':'#f0dca8';
+  box.innerHTML=`<div class="lab" style="color:${turun?'#15875a':'var(--brass-d)'}">${selisih===0?'Belum ada perubahan':(turun?'⬇ Turun ':'⬆ Naik ')+rp(Math.abs(selisih))}</div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:8px"><span>Tukang terima</span><b>${rp(b.payout)}</b></div>
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:3px"><span>Total escrow pemilik</span><b>${rp(b.escrow)}</b></div>
+    <div class="note" style="margin-top:6px">${turun?'Selisih dikembalikan ke pemilik lewat sistem.':(selisih>0?'Pemilik menambah selisih ke escrow saat setuju.':'')}</div>
+    ${besar?'<div style="margin-top:6px;font-size:11.5px;color:#a8352a;font-weight:600">⚠ Perubahan cukup besar — pastikan wajar, akan tercatat untuk peninjauan.</div>':''}`;
+}
+async function ajukanUsulan(id){
+  const o=ORDERS.find(x=>x.id===id),baru=usul.harga||0;
+  if(baru<50000){toast('Masukkan harga yang wajar');return}
+  if(baru===o.harga){toast('Harga belum berubah');return}
+  const u={oleh:usul.role,harga_baru:baru,alasan:usul.alasan,dibuat:new Date().toISOString()};
+  const {error}=await sb.from('orders').update({usulan:u}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,'Usulan penyesuaian harga',`${usul.role==='tukang'?'Tukang':'Pemilik'} usul ${rp(o.harga)} → ${rp(baru)} (${usul.alasan})`);
+  closeSheet();await refresh();openOrder(id);toast(`Usulan dikirim — menunggu persetujuan ${usul.role==='tukang'?'pemilik':'tukang'}`);
+}
+async function setujuUsulan(id){ // <== XENDIT: jika naik buat invoice top-up; jika turun refund parsial
+  const o=ORDERS.find(x=>x.id===id),u=o.usulan,lama=o.harga,b=fee(u.harga_baru);
+  const naik=u.harga_baru>lama,selisih=Math.abs(u.harga_baru-lama);
+  const {error}=await sb.from('orders').update({harga:u.harga_baru,biaya:b,usulan:null}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,'Penyesuaian harga disetujui',`${rp(lama)} → ${rp(u.harga_baru)} disepakati kedua pihak`);
+  await addLog(id,naik?'Top-up escrow':'Refund selisih',`${rp(selisih)} ${naik?'ditambah pemilik ke escrow':'dikembalikan ke pemilik'}`);
+  await refresh();openOrder(id);toast(naik?'Disetujui — pemilik menambah selisih':'Disetujui — selisih dikembalikan ke pemilik');
+}
+async function tolakUsulan(id){
+  await sb.from('orders').update({usulan:null}).eq('id',id);
+  await addLog(id,'Usulan penyesuaian ditolak','Harga tetap');
+  await refresh();openOrder(id);toast('Usulan ditolak, harga tetap');
+}
+async function batalUsulan(id){
+  await sb.from('orders').update({usulan:null}).eq('id',id);
+  await addLog(id,'Usulan dibatalkan','Usulan ditarik');
+  await refresh();openOrder(id);toast('Usulan dibatalkan');
+}
 
-render();
+/* ====== sheet ====== */
+async function openTukangProfil(id){
+  if(!id)return;
+  openSheet(`<div style="padding:32px;text-align:center"><div class="spinner"></div></div>`);
+  const {data,error}=await sb.rpc('tukang_publik',{p_id:id});
+  if(error||!data){closeSheet();toast('Profil belum bisa dimuat');return}
+  const t=data;
+  const keah=(t.keahlian||[]).map(k=>`<span style="font-size:11.5px;background:var(--surface);border:1px solid var(--line);padding:4px 10px;border-radius:999px">${esc(k)}</span>`).join(' ');
+  const foto=(t.foto||[]);
+  const gal=foto.length?`<div class="sec-title">Hasil Kerja</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">${foto.map(u=>`<img src="${u}" onclick="window.open('${u}')" style="width:100%;height:82px;object-fit:cover;border-radius:9px;border:1px solid var(--line)">`).join('')}</div>`:'';
+  openSheet(`<div style="padding:20px 20px 28px">
+    <div style="display:flex;justify-content:flex-end"><button onclick="closeSheet()" style="font-size:22px;background:none;border:none;color:var(--muted)">✕</button></div>
+    <div style="text-align:center">
+      <div class="profav" style="width:64px;height:64px;font-size:24px;margin:0 auto">${esc(t.inisial||initial(t.nama||'T'))}</div>
+      <h3 style="font-size:19px;font-weight:800;margin-top:8px">${esc(t.nama||'Tukang')}</h3>
+      ${t.verif==='terverifikasi'?'<div class="kyc" style="display:inline-block;margin-top:5px">✔ Terverifikasi</div>':''}
+    </div>
+    <div style="display:flex;text-align:center;margin:18px 0">
+      <div style="flex:1"><div style="font-size:20px;font-weight:800">⭐ ${t.rating||'5.0'}</div><div style="font-size:11px;color:var(--muted)">Rating</div></div>
+      <div style="flex:1;border-left:1px solid var(--line)"><div style="font-size:20px;font-weight:800">${t.selesai||0}</div><div style="font-size:11px;color:var(--muted)">Pekerjaan selesai</div></div>
+    </div>
+    ${keah?`<div class="sec-title">Keahlian</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${keah}</div>`:''}
+    ${gal}
+  </div>`);
+}
+function aturanTukangHTML(){
+  const me=(typeof ME!=='undefined')?ME:null;
+  const sudah=me&&me.setuju_aturan;
+  const tukangLogin=me&&me.role==='tukang';
+  let footer;
+  if(sudah){
+    footer=`<div style="text-align:center;font-size:12.5px;color:var(--ok);font-weight:700;margin-bottom:10px">✔ Anda telah menyetujui pada ${new Date(me.setuju_aturan).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</div><button class="btn btn-ghost" onclick="closeSheet()">Tutup</button>`;
+  }else if(tukangLogin){
+    footer=`<button class="btn btn-primary" onclick="setujuAturan()">✔ Saya Setuju & Patuh</button><p style="text-align:center;font-size:10.5px;color:var(--muted);margin-top:8px">Persetujuan Anda akan dicatat beserta tanggalnya.</p>`;
+  }else{
+    footer=`<button class="btn btn-ghost" onclick="closeSheet()">Tutup</button>`;
+  }
+  return `
+  <div style="padding:20px 20px 12px"><h3 style="font-size:18px;font-weight:800">📋 Aturan & Komitmen Tukang</h3>
+  <p style="font-size:12px;color:var(--muted);margin-top:3px">Tukangin — wajib dipatuhi setiap mitra tukang.</p></div>
+  <div style="padding:0 20px 16px;font-size:13.5px;line-height:1.55;color:#2c4642">
+    ${[
+      ['1. Daftar & Verifikasi','Unggah KTP + selfie. Hanya tukang terverifikasi yang bisa mengambil pekerjaan. Data identitas hanya dilihat admin.'],
+      ['2. Mengambil Pekerjaan','Ambil hanya pekerjaan yang benar-benar bisa Anda kerjakan dan datangi. Sekali diambil, Anda bertanggung jawab menyelesaikannya.'],
+      ['3. Pembayaran Aman (Escrow)','Uang pelanggan ditahan Tukangin lebih dulu, lalu dicairkan setelah pekerjaan dikonfirmasi selesai. <b>Dilarang meminta pelanggan membayar di luar app</b> — itu menghilangkan jaminan & garansi, dan bisa kena sanksi.'],
+      ['4. Pekerjaan Borongan','Check-in GPS di lokasi, unggah foto sebelum & sesudah, lalu minta <b>kode selesai</b> dari pelanggan sebagai tanda pekerjaan diterima.'],
+      ['5. Pekerjaan Harian','Wajib <b>Absen Masuk & Absen Keluar (GPS)</b> tiap hari. Hanya hari dengan absen lengkap yang dibayar — tidak absen = hari itu tidak dihitung. Datang tepat waktu; keterlambatan tercatat dan memengaruhi rating.'],
+      ['6. Kualitas & Garansi','Perbaiki keluhan garansi dalam masa garansi <b>tanpa biaya tambahan</b>. Menolak memperbaiki = strike.'],
+      ['7. Perilaku','Jujur, sopan, jaga kebersihan. Dilarang menaikkan harga sepihak atau membawa pelanggan keluar dari app.'],
+      ['8. Sanksi','Pelanggaran = <b>strike</b>. <b>3 strike = akun ditangguhkan (suspend).</b>'],
+      ['9. Hak Anda','Pembayaran terjamin lewat escrow, perlindungan dari pelanggan nakal, penilaian yang adil, dan dukungan admin bila ada masalah.']
+    ].map(([h,b])=>`<div style="margin-bottom:13px"><div style="font-weight:800;color:var(--brand);margin-bottom:2px">${h}</div><div>${b}</div></div>`).join('')}
+  </div>
+  <div style="padding:0 20px 24px">${footer}</div>`;}
+function toggleKeahlian(nm,el){
+  ME.keahlian=ME.keahlian||[];const i=ME.keahlian.indexOf(nm);
+  if(i>=0){ME.keahlian.splice(i,1);el.style.background='#fff';el.style.color='#1b4d47';el.style.borderColor='var(--line)';}
+  else{ME.keahlian.push(nm);el.style.background='var(--brand)';el.style.color='#fff';el.style.borderColor='var(--brand)';}
+}
+async function simpanKeahlian(){
+  const {error}=await sb.from('profiles').update({keahlian:ME.keahlian||[]}).eq('id',ME.id);
+  if(error){toast('Gagal: '+error.message);return}
+  toast('✔ Keahlian disimpan');
+}
+async function setujuAturan(){
+  if(!ME||!ME.id)return;
+  const now=new Date().toISOString();
+  const {error}=await sb.from('profiles').update({setuju_aturan:now}).eq('id',ME.id);
+  if(error){toast('Gagal: '+error.message);return}
+  ME.setuju_aturan=now;
+  closeSheet();render();toast('✔ Persetujuan tercatat. Terima kasih.');
+}
+function openAturanTukang(){openSheet(aturanTukangHTML());}
+async function muatTrust(){
+  try{
+    const {data:st}=await sb.rpc('stats_publik');const box=$('statsbox');
+    if(st&&box){box.style.display='block';box.innerHTML=`<div style="display:flex;text-align:center">
+      <div style="flex:1"><div style="font-size:20px;font-weight:800;color:var(--brand)">${st.selesai||0}</div><div style="font-size:10.5px;color:var(--muted)">Pekerjaan selesai</div></div>
+      <div style="flex:1;border-left:1px solid var(--line)"><div style="font-size:20px;font-weight:800;color:var(--brand)">${st.tukang||0}</div><div style="font-size:10.5px;color:var(--muted)">Tukang terverifikasi</div></div>
+      <div style="flex:1;border-left:1px solid var(--line)"><div style="font-size:20px;font-weight:800;color:var(--brand)">⭐ ${st.rating||'5.0'}</div><div style="font-size:10.5px;color:var(--muted)">Rating</div></div></div>`;}
+  }catch(e){}
+  try{
+    const {data:ts}=await sb.rpc('testimoni_publik');const tb=$('testibox');
+    if(tb){
+      if(ts&&ts.length)tb.innerHTML=ts.map(t=>`<div class="card" style="padding:13px;margin-bottom:9px"><div style="color:var(--brass);font-size:13px">${'★'.repeat(t.bintang||5)}</div><p style="font-size:13px;margin-top:4px;color:#2c4642">"${esc(t.ulasan)}"</p><div class="meta" style="margin-top:5px">— ${esc(t.nama||'Pelanggan')} · ${katOf(t.kat).nm}</div></div>`).join('');
+      else tb.innerHTML=`<div class="card" style="padding:18px;text-align:center;color:var(--muted)"><div style="font-size:24px">💬</div><p style="font-size:12.5px;margin-top:5px">Belum ada ulasan. Jadilah pelanggan pertama yang memberi penilaian!</p></div>`;
+    }
+  }catch(e){}
+}
+function infoSheet(judul,sub,items){return `
+  <div style="padding:20px 20px 12px"><h3 style="font-size:18px;font-weight:800">${judul}</h3>${sub?`<p style="font-size:12px;color:var(--muted);margin-top:3px">${sub}</p>`:''}</div>
+  <div style="padding:0 20px 16px;font-size:13.5px;line-height:1.55;color:#2c4642">
+    ${items.map(([h,b])=>`<div style="margin-bottom:13px"><div style="font-weight:800;color:var(--brand);margin-bottom:2px">${h}</div><div>${b}</div></div>`).join('')}
+  </div>
+  <div style="padding:0 20px 24px"><button class="btn btn-primary" onclick="closeSheet()">Tutup</button></div>`;}
+function openTentang(){openSheet(infoSheet('ℹ️ Tentang Tukangin','Layanan tukang terpercaya di Bali',[
+  ['Dikelola oleh','<b>Guna Merta Home Service</b> (UD Gunamerta) — kontraktor berpengalaman di Canggu, Bali. Di balik Tukangin ada usaha & orang nyata, bukan sekadar aplikasi.'],
+  ['Alamat','Jln Tukad Irawadi No. 44, Bali.'],
+  ['Hubungi kami','WhatsApp 0813-3877-3717 — dibalas cepat pada jam kerja.'],
+  ['Cara kami menjaga Anda','Setiap tukang diverifikasi (KTP + selfie). Pembayaran ditahan aman (escrow) sampai Anda konfirmasi selesai. Pekerjaan bergaransi.'],
+  ['Misi kami','Menghubungkan pemilik rumah & villa dengan tukang terpercaya — harga jelas, pembayaran aman.']
+]));}
+function openKebijakan(){openSheet(infoSheet('📜 Kebijakan Refund & Sengketa','Aturan main yang adil untuk dua pihak',[
+  ['Batal sebelum tukang ambil','Dana dikembalikan <b>100%</b>.'],
+  ['Batal setelah diambil, belum dikerjakan','Dana dikembalikan; potongan hanya sebatas biaya transfer bila ada.'],
+  ['Pekerjaan tidak selesai / tidak sesuai','Laporkan lewat app. Dana tetap ditahan sampai sengketa selesai — tidak langsung cair ke tukang.'],
+  ['Sistem Harian','Anda membayar hanya hari yang benar-benar dihadiri (terbukti absensi GPS). Sisa dana dikembalikan.'],
+  ['Proses sengketa','Admin meninjau bukti: foto sebelum/sesudah, absensi, dan riwayat aktivitas, lalu memutuskan seadil mungkin.'],
+  ['Garansi','Keluhan dalam masa garansi diperbaiki <b>tanpa biaya tambahan</b>. Tukang yang menolak memperbaiki dikenai sanksi.']
+]));}
+function openAturanPelanggan(){openSheet(infoSheet('📋 Aturan & Hak Pelanggan','Hak dan tanggung jawab Anda sebagai pemilik',[
+  ['Hak Anda','Tukang terverifikasi, dana aman lewat escrow, pekerjaan bergaransi, serta perlindungan & dukungan admin bila ada masalah.'],
+  ['Jelaskan pekerjaan dengan benar','Tulis kebutuhan sejelas mungkin (foto sangat membantu) agar tukang & harga sesuai.'],
+  ['Bayar lewat app','Selalu bayar melalui Tukangin. <b>Membayar di luar app menghilangkan jaminan & garansi.</b>'],
+  ['Konfirmasi tepat waktu','Setelah pekerjaan selesai dan benar, segera konfirmasi agar dana cair ke tukang. Jangan menahan tanpa alasan.'],
+  ['Saling menghormati','Perlakukan tukang dengan hormat dan beri akses/lokasi yang benar. Penilaian Anda membantu menjaga kualitas.']
+]));}
+function panduanPakai(){
+  const tk=(typeof ME!=='undefined')&&ME&&ME.role==='tukang';
+  const items=tk?[
+    ['1. Verifikasi dulu','Unggah KTP + selfie di Profil, tunggu disetujui admin. Setujui Aturan, isi Keahlian & Cara Pembayaran.'],
+    ['2. Cari Kerja','Buka tab Cari Kerja, ambil pekerjaan yang sesuai keahlian & lokasi Anda.'],
+    ['3. Mulai kerja','<b>Borongan:</b> Check-in GPS di lokasi → kerjakan → unggah foto sebelum & sesudah. <b>Harian:</b> Absen Masuk & Keluar (GPS) tiap hari.'],
+    ['4. Selesaikan','Minta <b>Kode Selesai</b> dari pelanggan lalu masukkan. Tunggu pelanggan konfirmasi.'],
+    ['5. Dibayar','Setelah dikonfirmasi, bayaran Anda diteruskan. Pantau di Profil → Penghasilan.']
+  ]:[
+    ['1. Buat Pesanan','Pilih kategori, isi detail pekerjaan. Pilih sistem Borongan atau Harian.'],
+    ['2. Bayar & unggah bukti','Transfer ke rekening yang tertera → tekan "Saya sudah transfer" → unggah bukti. Admin memverifikasi pembayaran.'],
+    ['3. Tunggu tukang','Tukang terverifikasi akan mengambil pekerjaan Anda. Pantau statusnya di pesanan.'],
+    ['4. Pekerjaan berjalan','Tukang check-in (GPS) & mengirim foto sebelum/sesudah. Untuk harian, ada absensi tiap hari.'],
+    ['5. Konfirmasi & selesai','Jika puas, berikan <b>Kode Selesai</b> & tekan Konfirmasi — dana baru cair ke tukang. Jangan lupa beri rating.'],
+    ['6. Garansi','Ada masalah dalam masa garansi? Lapor lewat pesanan, diperbaiki tanpa biaya.']
+  ];
+  openSheet(infoSheet(tk?'📖 Cara Kerja sebagai Tukang':'📖 Cara Pakai Tukangin',tk?'Dari daftar sampai dibayar':'Dari pesan sampai selesai',items));
+}
+function openSheet(html){
+  let ov=$('ov');
+  if(!ov){ov=document.createElement('div');ov.id='ov';ov.style.cssText='position:fixed;inset:0;background:rgba(8,30,28,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center';ov.onclick=e=>{if(e.target===ov)closeSheet()};document.body.appendChild(ov)}
+  ov.innerHTML=`<div style="background:var(--surface);width:100%;max-width:440px;max-height:92vh;border-radius:24px 24px 0 0;overflow-y:auto">${html}</div>`;
+  document.body.style.overflow='hidden';
+}
+function closeSheet(){const ov=$('ov');if(ov)ov.remove();document.body.style.overflow=''}
+function emptyBox(ic,t,p){return `<div class="empty"><div class="ic">${ic}</div><h4 style="font-size:15px;margin-top:8px">${t}</h4>${p?`<p>${p}</p>`:''}</div>`}
+function timeAgo(t){const d=(Date.now()-new Date(t).getTime())/1000;if(d<60)return'baru saja';if(d<3600)return Math.floor(d/60)+' mnt lalu';if(d<86400)return Math.floor(d/3600)+' jam lalu';return Math.floor(d/86400)+' hari lalu'}
+
+sb.auth.onAuthStateChange((e,session)=>{if(e==='SIGNED_OUT'){ME=null;renderAuth()}});
+boot();
 </script>
 </body>
 </html>
