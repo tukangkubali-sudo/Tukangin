@@ -203,6 +203,10 @@ function renderAuthForm(){
       <div class="field"><label>No. WhatsApp</label><input class="input" id="a_telp" inputmode="tel" placeholder="08…"></div>
       <div class="field"><label>Email</label><input class="input" id="a_email" inputmode="email" placeholder="email@contoh.com"></div>
       <div class="field"><label>Password</label><input class="input" id="a_pass" type="password" placeholder="Min. 6 karakter"></div>
+      <div style="margin:2px 2px 14px">
+        <label style="display:flex;gap:9px;align-items:flex-start;font-size:12px;color:#46605c;line-height:1.45"><input type="checkbox" id="a_setuju" style="margin-top:2px;width:16px;height:16px;flex-shrink:0"><span>Saya menyetujui Aturan & Komitmen Tukangin.</span></label>
+        <div style="font-size:11.5px;margin-top:5px;margin-left:25px"><b onclick="openAturanTukang()" style="color:var(--brand);text-decoration:underline">Baca aturannya →</b></div>
+      </div>
       <button class="btn btn-primary" id="a_btn" onclick="doDaftar()">Buat Akun</button>`;
   }else{
     $('authform').innerHTML=`
@@ -220,6 +224,7 @@ async function doDaftar(){
   authErr('');
   const nama=$('a_nama').value.trim(),telp=$('a_telp').value.trim(),email=$('a_email').value.trim(),pass=$('a_pass').value;
   if(!nama||!email||pass.length<6){authErr('Lengkapi nama, email, dan password (min. 6 karakter).');return}
+  if(pickedRole==='tukang'&&!($('a_setuju')&&$('a_setuju').checked)){authErr('Centang persetujuan Aturan & Komitmen Tukang dulu.');return}
   busy(true,'Buat Akun');
   const {data,error}=await sb.auth.signUp({email,password:pass});
   if(error){authErr(error.message);busy(false,'Buat Akun');return}
@@ -426,6 +431,9 @@ function profilT(){
       <input class="input" id="bayardetail" style="margin-top:10px;display:${(ME.bayar_metode&&ME.bayar_metode!=='Tunai')?'block':'none'}" placeholder="Nomor e-wallet / rekening + nama" value="${esc(ME.bayar_detail||'')}" oninput="ME.bayar_detail=this.value">
       <button class="btn btn-primary" style="margin-top:12px" onclick="simpanBayar()">Simpan</button>
     </div>
+    <div class="sec-title">Aturan & Komitmen</div>
+    <div class="card" style="padding:14px;cursor:pointer" onclick="openAturanTukang()">
+      <div class="infoline" style="border:none;padding:0">📋 <span style="flex:1">Baca <b>Aturan & Komitmen Tukang</b> — penting dipahami.</span><span style="color:var(--muted);font-size:18px">›</span></div></div>
     <div class="sec-title">Akun</div>
     <div class="card" style="padding:14px"><div class="infoline" style="border:none;padding:0;margin-bottom:12px">📱 <span>WhatsApp: <b>${esc(ME.telp||'-')}</b></span></div>
     <button class="btn btn-ghost" onclick="logout()">Keluar</button></div>`;
@@ -1262,6 +1270,24 @@ async function openTukangProfil(id){
     ${gal}
   </div>`);
 }
+function aturanTukangHTML(){return `
+  <div style="padding:20px 20px 12px"><h3 style="font-size:18px;font-weight:800">📋 Aturan & Komitmen Tukang</h3>
+  <p style="font-size:12px;color:var(--muted);margin-top:3px">Tukangin — wajib dipatuhi setiap mitra tukang.</p></div>
+  <div style="padding:0 20px 16px;font-size:13.5px;line-height:1.55;color:#2c4642">
+    ${[
+      ['1. Daftar & Verifikasi','Unggah KTP + selfie. Hanya tukang terverifikasi yang bisa mengambil pekerjaan. Data identitas hanya dilihat admin.'],
+      ['2. Mengambil Pekerjaan','Ambil hanya pekerjaan yang benar-benar bisa Anda kerjakan dan datangi. Sekali diambil, Anda bertanggung jawab menyelesaikannya.'],
+      ['3. Pembayaran Aman (Escrow)','Uang pelanggan ditahan Tukangin lebih dulu, lalu dicairkan setelah pekerjaan dikonfirmasi selesai. <b>Dilarang meminta pelanggan membayar di luar app</b> — itu menghilangkan jaminan & garansi, dan bisa kena sanksi.'],
+      ['4. Pekerjaan Borongan','Check-in GPS di lokasi, unggah foto sebelum & sesudah, lalu minta <b>kode selesai</b> dari pelanggan sebagai tanda pekerjaan diterima.'],
+      ['5. Pekerjaan Harian','Wajib <b>Absen Masuk & Absen Keluar (GPS)</b> tiap hari. Hanya hari dengan absen lengkap yang dibayar — tidak absen = hari itu tidak dihitung. Datang tepat waktu; keterlambatan tercatat dan memengaruhi rating.'],
+      ['6. Kualitas & Garansi','Perbaiki keluhan garansi dalam masa garansi <b>tanpa biaya tambahan</b>. Menolak memperbaiki = strike.'],
+      ['7. Perilaku','Jujur, sopan, jaga kebersihan. Dilarang menaikkan harga sepihak atau membawa pelanggan keluar dari app.'],
+      ['8. Sanksi','Pelanggaran = <b>strike</b>. <b>3 strike = akun ditangguhkan (suspend).</b>'],
+      ['9. Hak Anda','Pembayaran terjamin lewat escrow, perlindungan dari pelanggan nakal, penilaian yang adil, dan dukungan admin bila ada masalah.']
+    ].map(([h,b])=>`<div style="margin-bottom:13px"><div style="font-weight:800;color:var(--brand);margin-bottom:2px">${h}</div><div>${b}</div></div>`).join('')}
+  </div>
+  <div style="padding:0 20px 24px"><button class="btn btn-primary" onclick="closeSheet()">Saya Mengerti</button></div>`;}
+function openAturanTukang(){openSheet(aturanTukangHTML());}
 function openSheet(html){
   let ov=$('ov');
   if(!ov){ov=document.createElement('div');ov.id='ov';ov.style.cssText='position:fixed;inset:0;background:rgba(8,30,28,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center';ov.onclick=e=>{if(e.target===ov)closeSheet()};document.body.appendChild(ov)}
