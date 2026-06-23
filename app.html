@@ -150,9 +150,9 @@ const FEE={layanan:0.05,komisi:0.06};
 function fee(h){h=+h||0;const layanan=Math.round(h*FEE.layanan),komisi=Math.round(h*FEE.komisi);return{harga:h,layanan,komisi,escrow:h+layanan,payout:h-komisi}}
 const KAT=[{id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa',ic:'🔧'},{id:'ac',nm:'AC',ic:'❄️'},{id:'las',nm:'Las/Pagar',ic:'🔥'},{id:'cat',nm:'Cat',ic:'🎨'},{id:'bocor',nm:'Atap Bocor',ic:'🏠'},{id:'kunci',nm:'Kunci',ic:'🔑'},{id:'umum',nm:'Lainnya',ic:'🛠️'}];
 const katOf=id=>KAT.find(k=>k.id===id)||KAT[7];
-const ST={MENUNGGU_DANA:{l:'Menunggu Pembayaran',c:'b-wait'},DANA_DITAHAN:{l:'Dana Ditahan',c:'b-hold'},DIKERJAKAN:{l:'Dikerjakan',c:'b-work'},MENUNGGU_KONFIRMASI:{l:'Menunggu Konfirmasi',c:'b-confirm'},SELESAI:{l:'Selesai',c:'b-done'},SENGKETA:{l:'Sengketa',c:'b-dispute'},DIBATALKAN:{l:'Dibatalkan',c:'b-dispute'}};
+const ST={MENUNGGU_DANA:{l:'Menunggu Pembayaran',c:'b-wait'},MENUNGGU_VERIFIKASI:{l:'Cek Pembayaran',c:'b-wait'},DANA_DITAHAN:{l:'Dana Ditahan',c:'b-hold'},DIKERJAKAN:{l:'Dikerjakan',c:'b-work'},MENUNGGU_KONFIRMASI:{l:'Menunggu Konfirmasi',c:'b-confirm'},SELESAI:{l:'Selesai',c:'b-done'},SENGKETA:{l:'Sengketa',c:'b-dispute'},DIBATALKAN:{l:'Dibatalkan',c:'b-dispute'}};
 /* Identitas usaha — EDIT di sini bila perlu */
-const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6281338773717',waTampil:'0813-3877-3717',bank:'[BANK]',rek:'[NOMOR REKENING]',rekNama:'Guna Merta Home Service',garansiHari:7,retensiPersen:10,markupHarian:0.15};
+const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6281338773717',waTampil:'0813-3877-3717',bank:'BNI',rek:'1881552632',rekNama:'Putu Helyvia',garansiHari:7,retensiPersen:10,markupHarian:0.15};
 /* Garansi pengerjaan per kategori (hari) — sesuai umumnya di Bali, bisa diubah */
 const GARANSI={listrik:7,pipa:14,ac:14,las:30,cat:14,bocor:30,kunci:7,umum:7};
 function garansiHariKat(kat){return GARANSI[kat]||7}
@@ -513,16 +513,28 @@ async function kirimVerifikasi(){
 }
 
 /* ====== ADMIN: verifikasi tukang ====== */
+let ADMIN_TUKANG=[];
 async function renderAdmin(){
   const sc=$('scroll');sc.innerHTML=`<div class="loadwrap" style="min-height:150px"><div class="spinner"></div></div>`;
-  const [r1,r2]=await Promise.all([
+  const [r1,r3]=await Promise.all([
     sb.from('profiles').select('*').eq('role','tukang').order('dibuat',{ascending:false}),
-    sb.from('orders').select('id,judul,tukang_id,tukang_nama,pemilik_nama').eq('garansi_klaim',true)
+    sb.from('orders').select('*').order('dibuat',{ascending:false})
   ]);
   if(r1.error){sc.innerHTML=`<div class="empty"><p>Gagal memuat: ${esc(r1.error.message)}</p></div>`;return}
   const list=r1.data||[], pending=list.filter(p=>p.verif_status==='menunggu'), done=list.filter(p=>p.verif_status==='terverifikasi'||p.verif_status==='ditolak');
-  const kl=r2.data||[];
+  ADMIN_TUKANG=list;
+  const ords=r3.data||[];
+  const cekBayar=ords.filter(o=>o.status==='MENUNGGU_VERIFIKASI');
+  const belumTukang=ords.filter(o=>o.status==='DANA_DITAHAN'&&!o.tukang_id);
+  const seng=ords.filter(o=>o.status==='SENGKETA');
+  const kl=ords.filter(o=>o.garansi_klaim);
+  const adaTindakan=cekBayar.length||belumTukang.length||seng.length||kl.length||pending.length;
   sc.innerHTML=`
+    <div class="sec-title">⚡ Perlu Tindakan</div>
+    ${cekBayar.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--brass)"><div style="font-weight:800;font-size:13.5px">💵 Verifikasi Pembayaran · ${cekBayar.length}</div>${cekBayar.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp((o.biaya||fee(o.harga)).escrow)}</div><div class="meta">Pemilik: ${esc(o.pemilik_nama||'-')}</div>${o.bukti_transfer_url?`<img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px">`:'<div style="font-size:11px;color:var(--bad);margin-top:4px">⚠ tanpa bukti</div>'}<button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="verifPembayaran('${o.id}')">✔ Konfirmasi Dana Masuk</button></div>`).join('')}</div>`:''}
+    ${belumTukang.length?`<div class="card" style="padding:13px;margin-bottom:8px"><div style="font-weight:800;font-size:13.5px">🔍 Belum Ada Tukang · ${belumTukang.length}</div>${belumTukang.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px;display:flex;align-items:center;gap:8px"><div style="flex:1"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')}</div><div class="meta">${esc(o.lokasi||'-')} · ${esc(o.pemilik_nama||'-')}</div></div><button class="btn btn-primary btn-sm" onclick="openAssign('${o.id}')">Tugaskan</button></div>`).join('')}</div>`:''}
+    ${seng.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--bad)"><div style="font-weight:800;font-size:13.5px">⚠️ Sengketa · ${seng.length}</div>${seng.map(o=>`<div style="border-top:1px solid var(--line);padding-top:8px;margin-top:8px;font-size:12.5px">${esc(o.judul||'Pesanan')} — ${esc(o.pemilik_nama||'-')} & ${esc(o.tukang_nama||'-')}. Hubungi kedua pihak (WA) untuk penyelesaian.</div>`).join('')}</div>`:''}
+    ${!adaTindakan?'<div class="card" style="padding:16px;text-align:center;color:var(--muted)">✅ Tidak ada yang perlu ditindak saat ini.</div>':''}
     <div class="sec-title">💾 Backup Data</div>
     <div class="card" style="padding:14px;margin-bottom:8px">
       <p style="font-size:12.5px;color:#46605c;margin-bottom:11px">Unduh semua pesanan & data pengguna untuk arsip (komplain, refund, garansi). Simpan ke folder Google Drive Anda.</p>
@@ -531,10 +543,30 @@ async function renderAdmin(){
         <button class="btn btn-ghost" style="flex:1" onclick="eksporCSV()">📄 CSV</button>
       </div></div>
     ${kl.length?`<div class="sec-title">🛠️ Klaim Garansi · ${kl.length}</div>${kl.map(o=>`<div class="card" style="padding:14px;margin-bottom:10px;border:1.5px solid var(--brass)"><div style="font-size:13.5px;font-weight:800">${esc(o.judul||'Pesanan')}</div><div class="meta">Tukang: ${esc(o.tukang_nama||'-')} · Pemilik: ${esc(o.pemilik_nama||'-')}</div><div style="display:flex;gap:8px;margin-top:11px"><button class="btn btn-danger btn-sm" style="flex:1" onclick="strikeTukang('${o.tukang_id}','${o.id}')">Tukang menolak (Strike)</button><button class="btn btn-primary btn-sm" style="flex:1" onclick="beresGaransi('${o.id}')">Sudah diperbaiki</button></div></div>`).join('')}`:''}
-    <div class="sec-title">Menunggu Verifikasi${pending.length?` · ${pending.length}`:''}</div>
+    <div class="sec-title">Verifikasi Tukang${pending.length?` · ${pending.length}`:''}</div>
     ${pending.length?pending.map(adminCard).join(''):emptyBox('✅','Tidak ada antrean','Semua tukang sudah ditinjau.')}
     <div class="sec-title">Sudah Ditinjau</div>
     ${done.length?done.map(p=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><div class="tukav" style="width:34px;height:34px;font-size:13px">${esc(p.inisial||initial(p.nama))}</div><div style="flex:1"><b style="font-size:13.5px">${esc(p.nama)}</b><div class="meta" style="font-size:11px">💰 ${p.bayar_metode?esc(p.bayar_metode+(p.bayar_detail?' · '+p.bayar_detail:'')):'—'}${p.strike?` · ⚠️ ${p.strike} strike`:''}</div></div><span class="badge ${p.verif_status==='terverifikasi'?'b-done':'b-dispute'}">${p.verif_status}</span></div>`).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:4px 2px">Belum ada.</p>'}`;
+}
+async function verifPembayaran(id){
+  const {error}=await sb.from('orders').update({status:'DANA_DITAHAN'}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,'Pembayaran diverifikasi','Admin mengonfirmasi dana masuk & ditahan');
+  toast('✅ Dana dikonfirmasi — pesanan dibuka ke tukang');renderAdmin();
+}
+let _assignOrder=null;
+function openAssign(orderId){
+  _assignOrder=orderId;
+  const sub=ADMIN_TUKANG.filter(p=>p.verif_status==='terverifikasi');
+  const items=sub.length?sub.map(p=>`<button class="card" style="width:100%;text-align:left;padding:13px 14px;margin-bottom:8px;display:flex;align-items:center;gap:11px;border:1px solid var(--line);background:#fff" onclick="assignTukang('${p.id}')"><div class="tukav" style="width:38px;height:38px;font-size:14px">${esc(p.inisial||initial(p.nama))}</div><div style="flex:1"><b style="font-size:14px">${esc(p.nama)}</b><div class="meta" style="font-size:11px">${(p.keahlian||[]).slice(0,3).join(', ')||'—'}</div></div><span style="color:var(--brand);font-weight:700;font-size:12px">Pilih ›</span></button>`).join(''):'<p style="font-size:13px;color:var(--muted);text-align:center;padding:20px">Belum ada tukang terverifikasi.</p>';
+  openSheet(`<div style="padding:20px"><h3 style="font-size:17px;font-weight:800;margin-bottom:4px">Tugaskan Tukang</h3><p style="font-size:12px;color:var(--muted);margin-bottom:14px">Pilih tukang terverifikasi untuk pekerjaan ini.</p>${items}<button class="btn btn-ghost" style="margin-top:6px" onclick="closeSheet()">Batal</button></div>`);
+}
+async function assignTukang(tukangId){
+  const p=ADMIN_TUKANG.find(x=>x.id===tukangId);if(!p||!_assignOrder)return;
+  const {error}=await sb.from('orders').update({tukang_id:p.id,tukang_nama:p.nama,tukang_inisial:p.inisial||initial(p.nama)}).eq('id',_assignOrder);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(_assignOrder,'Tukang ditugaskan admin','Ditugaskan ke '+p.nama);
+  closeSheet();toast('✔ Tukang ditugaskan');renderAdmin();
 }
 function tglFile(){return new Date().toISOString().slice(0,10);}
 function unduhBlob(blob,nama){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=nama;a.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(url);},800);}
@@ -673,6 +705,8 @@ function renderBantuan(){
       <a href="${waLink('Halo '+BIZ.nama+', saya butuh bantuan.')}" target="_blank" class="btn btn-primary" style="margin-top:18px;display:block;text-decoration:none;font-size:17px;padding:16px;font-weight:800">💬 Chat WhatsApp</a>
       <p style="font-size:14px;color:var(--muted);margin-top:10px">${BIZ.waTampil}</p>
     </div>
+
+    <button class="btn btn-ghost" style="margin-top:11px;font-size:15px;padding:14px;font-weight:700" onclick="panduanPakai()">📖 Panduan: Cara Pakai Tukangin</button>
 
     <div class="sec-title" style="font-size:15px">Tentang ${BIZ.nama}</div>
     <div class="card" style="padding:20px">
@@ -889,6 +923,7 @@ async function renderDetail(){
       ${o.bukti_transfer_url?`<div style="margin-top:10px;text-align:center"><img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:130px;border-radius:11px;border:1px solid var(--line)"><div style="font-size:11px;color:var(--ok);font-weight:600;margin-top:4px">✓ Bukti transfer terunggah</div></div>`:''}
       <button class="btn btn-ghost" style="margin-top:9px" onclick="pilihBukti('${o.id}')">📷 ${o.bukti_transfer_url?'Ganti':'Unggah'} Bukti Transfer</button>
       <button class="btn btn-ghost" style="margin-top:9px" onclick="batal('${o.id}')">Batalkan Pesanan</button>`;
+    else if(o.status==='MENUNGGU_VERIFIKASI')actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:30px">⏳</div><h5 style="font-weight:800">Menunggu verifikasi pembayaran</h5><p style="font-size:12.5px;color:var(--muted)">Admin ${BIZ.nama} sedang memeriksa pembayaran Anda. Pesanan dibuka ke tukang setelah dana dikonfirmasi.</p></div>${o.bukti_transfer_url?`<div style="margin-top:10px;text-align:center"><img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:120px;border-radius:11px;border:1px solid var(--line)"></div>`:''}<button class="btn btn-ghost" style="margin-top:10px" onclick="batal('${o.id}')">Batalkan Pesanan</button>`;
     else if(o.status==='MENUNGGU_KONFIRMASI')actions=`<div class="infoline" style="margin-bottom:12px">📷 <span>Tukang menyatakan selesai (foto sebelum & sesudah terkirim).</span></div><button class="btn btn-primary" onclick="konfirmasi('${o.id}')">✔ Konfirmasi & Cairkan Dana</button><button class="btn btn-danger" style="margin-top:9px" onclick="sengketa('${o.id}')">⚠ Ada Masalah</button>`;
     else if(o.status==='SELESAI'){const g=garansiInfo(o);
       actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:32px">🎉</div><h5 style="font-weight:800">Selesai</h5><p style="font-size:12.5px;color:var(--muted)">Dana ${rp(b.payout)} diteruskan ke ${esc(o.tukang_nama||'tukang')}.</p></div>`
@@ -955,11 +990,12 @@ function chatBox(o,msgs){
 }
 
 /* ====== AKSI ESCROW ====== */
-async function bayar(id){ // <== XENDIT: di sini buat invoice & tunggu webhook. Demo: langsung tahan.
+async function bayar(id){
   const o=ORDERS.find(x=>x.id===id);
-  await sb.from('orders').update({status:'DANA_DITAHAN'}).eq('id',id);
-  await addLog(id,'Dana masuk penjaminan',rp((o.biaya||fee(o.harga)).escrow)+' ditahan Tukangin');
-  await refresh();openOrder(id);toast('✅ Dana aman di escrow');
+  if(!o.bukti_transfer_url){toast('Unggah bukti transfer dulu ya');return}
+  await sb.from('orders').update({status:'MENUNGGU_VERIFIKASI'}).eq('id',id);
+  await addLog(id,'Pemilik menyatakan sudah transfer','Menunggu verifikasi admin');
+  await refresh();openOrder(id);toast('Terkirim — menunggu admin memverifikasi pembayaran');
 }
 async function ambil(id){
   if(ME.verif_status!=='terverifikasi'){toast('Selesaikan verifikasi identitas dulu');VIEW.tab='profil';render();return}
@@ -1361,7 +1397,7 @@ function infoSheet(judul,sub,items){return `
   </div>
   <div style="padding:0 20px 24px"><button class="btn btn-primary" onclick="closeSheet()">Tutup</button></div>`;}
 function openTentang(){openSheet(infoSheet('ℹ️ Tentang Tukangin','Layanan tukang terpercaya di Bali',[
-  ['Dikelola oleh','<b>Guna Merta Home Service</b> (CV Karya Makmur) — kontraktor berpengalaman di Canggu, Bali. Di balik Tukangin ada usaha & orang nyata, bukan sekadar aplikasi.'],
+  ['Dikelola oleh','<b>Guna Merta Home Service</b> (UD Gunamerta) — kontraktor berpengalaman di Canggu, Bali. Di balik Tukangin ada usaha & orang nyata, bukan sekadar aplikasi.'],
   ['Alamat','Jln Tukad Irawadi No. 44, Bali.'],
   ['Hubungi kami','WhatsApp 0813-3877-3717 — dibalas cepat pada jam kerja.'],
   ['Cara kami menjaga Anda','Setiap tukang diverifikasi (KTP + selfie). Pembayaran ditahan aman (escrow) sampai Anda konfirmasi selesai. Pekerjaan bergaransi.'],
@@ -1382,6 +1418,24 @@ function openAturanPelanggan(){openSheet(infoSheet('📋 Aturan & Hak Pelanggan'
   ['Konfirmasi tepat waktu','Setelah pekerjaan selesai dan benar, segera konfirmasi agar dana cair ke tukang. Jangan menahan tanpa alasan.'],
   ['Saling menghormati','Perlakukan tukang dengan hormat dan beri akses/lokasi yang benar. Penilaian Anda membantu menjaga kualitas.']
 ]));}
+function panduanPakai(){
+  const tk=(typeof ME!=='undefined')&&ME&&ME.role==='tukang';
+  const items=tk?[
+    ['1. Verifikasi dulu','Unggah KTP + selfie di Profil, tunggu disetujui admin. Setujui Aturan, isi Keahlian & Cara Pembayaran.'],
+    ['2. Cari Kerja','Buka tab Cari Kerja, ambil pekerjaan yang sesuai keahlian & lokasi Anda.'],
+    ['3. Mulai kerja','<b>Borongan:</b> Check-in GPS di lokasi → kerjakan → unggah foto sebelum & sesudah. <b>Harian:</b> Absen Masuk & Keluar (GPS) tiap hari.'],
+    ['4. Selesaikan','Minta <b>Kode Selesai</b> dari pelanggan lalu masukkan. Tunggu pelanggan konfirmasi.'],
+    ['5. Dibayar','Setelah dikonfirmasi, bayaran Anda diteruskan. Pantau di Profil → Penghasilan.']
+  ]:[
+    ['1. Buat Pesanan','Pilih kategori, isi detail pekerjaan. Pilih sistem Borongan atau Harian.'],
+    ['2. Bayar & unggah bukti','Transfer ke rekening yang tertera → tekan "Saya sudah transfer" → unggah bukti. Admin memverifikasi pembayaran.'],
+    ['3. Tunggu tukang','Tukang terverifikasi akan mengambil pekerjaan Anda. Pantau statusnya di pesanan.'],
+    ['4. Pekerjaan berjalan','Tukang check-in (GPS) & mengirim foto sebelum/sesudah. Untuk harian, ada absensi tiap hari.'],
+    ['5. Konfirmasi & selesai','Jika puas, berikan <b>Kode Selesai</b> & tekan Konfirmasi — dana baru cair ke tukang. Jangan lupa beri rating.'],
+    ['6. Garansi','Ada masalah dalam masa garansi? Lapor lewat pesanan, diperbaiki tanpa biaya.']
+  ];
+  openSheet(infoSheet(tk?'📖 Cara Kerja sebagai Tukang':'📖 Cara Pakai Tukangin',tk?'Dari daftar sampai dibayar':'Dari pesan sampai selesai',items));
+}
 function openSheet(html){
   let ov=$('ov');
   if(!ov){ov=document.createElement('div');ov.id='ov';ov.style.cssText='position:fixed;inset:0;background:rgba(8,30,28,.55);z-index:100;display:flex;align-items:flex-end;justify-content:center';ov.onclick=e=>{if(e.target===ov)closeSheet()};document.body.appendChild(ov)}
