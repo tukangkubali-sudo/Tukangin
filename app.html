@@ -233,7 +233,7 @@ async function doDaftar(){
     busy(false,'Buat Akun');return;
   }
   const uid=data.user.id;
-  const {error:pe}=await sb.from('profiles').insert({id:uid,nama,telp,role:pickedRole,inisial:initial(nama),kyc:pickedRole==='tukang'});
+  const {error:pe}=await sb.from('profiles').insert({id:uid,nama,telp,role:pickedRole,inisial:initial(nama),kyc:pickedRole==='tukang',setuju_aturan:pickedRole==='tukang'?new Date().toISOString():null});
   if(pe){authErr('Akun dibuat tapi gagal simpan profil: '+pe.message);busy(false,'Buat Akun');return}
   await loadMe();
 }
@@ -433,7 +433,7 @@ function profilT(){
     </div>
     <div class="sec-title">Aturan & Komitmen</div>
     <div class="card" style="padding:14px;cursor:pointer" onclick="openAturanTukang()">
-      <div class="infoline" style="border:none;padding:0">📋 <span style="flex:1">Baca <b>Aturan & Komitmen Tukang</b> — penting dipahami.</span><span style="color:var(--muted);font-size:18px">›</span></div></div>
+      <div class="infoline" style="border:none;padding:0">📋 <span style="flex:1">Baca <b>Aturan & Komitmen Tukang</b>${ME.setuju_aturan?' · <span style="color:var(--ok);font-weight:700">✔ disetujui</span>':' — penting dipahami.'}</span><span style="color:var(--muted);font-size:18px">›</span></div></div>
     <div class="sec-title">Akun</div>
     <div class="card" style="padding:14px"><div class="infoline" style="border:none;padding:0;margin-bottom:12px">📱 <span>WhatsApp: <b>${esc(ME.telp||'-')}</b></span></div>
     <button class="btn btn-ghost" onclick="logout()">Keluar</button></div>`;
@@ -537,7 +537,7 @@ function barisPesanan(o){const b=o.biaya||fee(o.harga);return {
 function barisPengguna(p){return {
   Nama:p.nama||'', Peran:p.role||'', WhatsApp:p.telp||'', Verifikasi:p.verif_status||'belum',
   CaraBayar:p.bayar_metode||'', DetailBayar:p.bayar_detail||'', Strike:p.strike||0,
-  Admin:p.is_admin?'YA':'-', Daftar:p.dibuat?new Date(p.dibuat).toLocaleDateString('id-ID'):''
+  Admin:p.is_admin?'YA':'-', SetujuAturan:p.setuju_aturan?new Date(p.setuju_aturan).toLocaleDateString('id-ID'):'-', Daftar:p.dibuat?new Date(p.dibuat).toLocaleDateString('id-ID'):''
 };}
 async function ambilDataEkspor(){
   const [a,c]=await Promise.all([
@@ -1270,7 +1270,19 @@ async function openTukangProfil(id){
     ${gal}
   </div>`);
 }
-function aturanTukangHTML(){return `
+function aturanTukangHTML(){
+  const me=(typeof ME!=='undefined')?ME:null;
+  const sudah=me&&me.setuju_aturan;
+  const tukangLogin=me&&me.role==='tukang';
+  let footer;
+  if(sudah){
+    footer=`<div style="text-align:center;font-size:12.5px;color:var(--ok);font-weight:700;margin-bottom:10px">✔ Anda telah menyetujui pada ${new Date(me.setuju_aturan).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</div><button class="btn btn-ghost" onclick="closeSheet()">Tutup</button>`;
+  }else if(tukangLogin){
+    footer=`<button class="btn btn-primary" onclick="setujuAturan()">✔ Saya Setuju & Patuh</button><p style="text-align:center;font-size:10.5px;color:var(--muted);margin-top:8px">Persetujuan Anda akan dicatat beserta tanggalnya.</p>`;
+  }else{
+    footer=`<button class="btn btn-ghost" onclick="closeSheet()">Tutup</button>`;
+  }
+  return `
   <div style="padding:20px 20px 12px"><h3 style="font-size:18px;font-weight:800">📋 Aturan & Komitmen Tukang</h3>
   <p style="font-size:12px;color:var(--muted);margin-top:3px">Tukangin — wajib dipatuhi setiap mitra tukang.</p></div>
   <div style="padding:0 20px 16px;font-size:13.5px;line-height:1.55;color:#2c4642">
@@ -1286,7 +1298,15 @@ function aturanTukangHTML(){return `
       ['9. Hak Anda','Pembayaran terjamin lewat escrow, perlindungan dari pelanggan nakal, penilaian yang adil, dan dukungan admin bila ada masalah.']
     ].map(([h,b])=>`<div style="margin-bottom:13px"><div style="font-weight:800;color:var(--brand);margin-bottom:2px">${h}</div><div>${b}</div></div>`).join('')}
   </div>
-  <div style="padding:0 20px 24px"><button class="btn btn-primary" onclick="closeSheet()">Saya Mengerti</button></div>`;}
+  <div style="padding:0 20px 24px">${footer}</div>`;}
+async function setujuAturan(){
+  if(!ME||!ME.id)return;
+  const now=new Date().toISOString();
+  const {error}=await sb.from('profiles').update({setuju_aturan:now}).eq('id',ME.id);
+  if(error){toast('Gagal: '+error.message);return}
+  ME.setuju_aturan=now;
+  closeSheet();render();toast('✔ Persetujuan tercatat. Terima kasih.');
+}
 function openAturanTukang(){openSheet(aturanTukangHTML());}
 function openSheet(html){
   let ov=$('ov');
