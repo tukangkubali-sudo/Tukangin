@@ -332,7 +332,41 @@ function adminPending(){
   if(!ME||!ME.is_admin||!Array.isArray(ORDERS))return 0;
   return ORDERS.filter(o=>o.status==='MENUNGGU_VERIFIKASI'||(o.status==='DANA_DITAHAN'&&!o.tukang_id)||o.garansi_klaim).length;
 }
-function tukangAvailable(){return ORDERS.filter(o=>!o.tukang_id&&o.status==='DANA_DITAHAN')}
+let _myLoc=null,_trackTimer=null,_trackOrder=null;
+function ensureMyLoc(){if(_myLoc||!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(p=>{_myLoc={lat:p.coords.latitude,lng:p.coords.longitude};if(VIEW&&VIEW.tab==='kerja'&&!VIEW.orderId)render();},()=>{},{enableHighAccuracy:false,timeout:8000,maximumAge:60000});}
+function jarakKe(o){return (_myLoc&&o.lat&&o.lng)?haversine(_myLoc.lat,_myLoc.lng,o.lat,o.lng):null;}
+function fmtJarak(m){return m==null?'':(m>1000?(m/1000).toFixed(1)+' km':Math.round(m)+' m');}
+function tukangAvailable(){
+  let arr=ORDERS.filter(o=>!o.tukang_id&&o.status==='DANA_DITAHAN');
+  if(_myLoc)arr=arr.slice().sort((a,b)=>((jarakKe(a)??1e12)-(jarakKe(b)??1e12)));
+  return arr;
+}
+function startTracking(orderId){
+  if(_trackOrder===orderId&&_trackTimer)return;
+  stopTracking();
+  if(!navigator.geolocation)return;
+  _trackOrder=orderId;
+  const send=()=>navigator.geolocation.getCurrentPosition(async pos=>{
+    try{await sb.from('orders').update({tukang_lat:pos.coords.latitude,tukang_lng:pos.coords.longitude,loc_updated:new Date().toISOString()}).eq('id',orderId);}catch(e){}
+  },()=>{},{enableHighAccuracy:true,maximumAge:10000,timeout:15000});
+  send();_trackTimer=setInterval(send,25000);
+}
+function stopTracking(){if(_trackTimer)clearInterval(_trackTimer);_trackTimer=null;_trackOrder=null;}
+function locTukangSection(o){
+  if(!o.tukang_id||o.tukang_lat==null||!o.loc_updated)return '';
+  if(!['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))return '';
+  const amP=o.pemilik_id===ME.id;
+  if(!(amP||ME.is_admin||o.tukang_id===ME.id))return '';
+  let jarak='';
+  if(o.lat&&o.lng){jarak=fmtJarak(haversine(o.tukang_lat,o.tukang_lng,o.lat,o.lng));}
+  return `<div class="sec-title">📍 Lokasi Tukang (langsung)</div>
+    <div class="card" style="padding:14px">
+      <div style="font-size:13.5px">${jarak?`Sekitar <b>${jarak}</b> dari lokasi pekerjaan`:'Lokasi tukang tersedia'}</div>
+      <div class="meta" style="margin-top:2px">Diperbarui ${timeAgo(o.loc_updated)}</div>
+      <button class="btn btn-ghost" style="margin-top:10px" onclick="openPetaLangsung('${o.id}')">🗺️ Lihat Peta Langsung</button>
+      <a href="https://www.google.com/maps?q=${o.tukang_lat},${o.tukang_lng}" target="_blank" style="display:block;text-align:center;font-size:11.5px;color:var(--brand);margin-top:8px;text-decoration:none">Buka di Google Maps ↗</a>
+    </div>`;
+}
 function tukangMine(){return ORDERS.filter(o=>o.tukang_id===ME.id)}
 
 async function addLog(orderId,judul,detail){await sb.from('activity_log').insert({order_id:orderId,judul,detail})}
@@ -377,8 +411,8 @@ function navBar(){
   if(ME.is_admin)tabs.push(['admin','Admin','🛡️']);
   return `<div class="botnav">${tabs.map(([id,nm,ic])=>{const bdg=(id==='admin'&&ME.is_admin)?adminPending():0;return `<button class="navb ${VIEW.tab===id?'on':''}" onclick="go('${id}')" style="position:relative"><span style="font-size:21px">${ic}</span>${nm}${bdg?`<span style="position:absolute;top:3px;right:calc(50% - 22px);min-width:16px;height:16px;background:var(--bad);color:#fff;font-size:10px;font-weight:800;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px">${bdg}</span>`:''}</button>`;}).join('')}</div>`;
 }
-function go(t){VIEW={tab:t,orderId:null};render();const s=$('scroll');if(s)s.scrollTop=0}
-function back(){VIEW.orderId=null;render()}
+function go(t){stopTracking();VIEW={tab:t,orderId:null};render();const s=$('scroll');if(s)s.scrollTop=0}
+function back(){stopTracking();VIEW.orderId=null;render()}
 function openOrder(id){VIEW.orderId=id;render();const s=$('scroll');if(s)s.scrollTop=0}
 
 /* ====== PEMILIK ====== */
@@ -444,6 +478,7 @@ function akun(){
 function renderTukang(){
   const sc=$('scroll');
   if(VIEW.tab==='kerja'){
+    ensureMyLoc();
     const a=tukangAvailable();
     sc.innerHTML=`${verifBanner()}<div class="infoline">💰 <span>Hanya pekerjaan ber-escrow (dana sudah ditahan) yang tampil — pasti dibayar.</span></div>
       <div style="display:flex;justify-content:space-between;align-items:center"><div class="sec-title" style="margin:14px 2px 6px">Pekerjaan Tersedia</div><button class="btn-sm btn-ghost" onclick="refresh()">⟳</button></div>
@@ -460,7 +495,7 @@ function jobCard(o){
   return `<div class="card" style="padding:14px;margin-bottom:11px">
     <div style="display:flex;gap:12px"><div class="othumb">${k.ic}</div>
     <div style="flex:1;min-width:0"><h4 style="font-size:15px;font-weight:700">${esc(o.judul)} ${o.sistem==='harian'?'<span class="badge b-hold" style="font-size:9px;vertical-align:middle">📅 Harian</span>':''}</h4>
-    <div class="meta">📍 ${esc(o.lokasi||'-')}</div></div></div>
+    <div class="meta">📍 ${esc(o.lokasi||'-')}${jarakKe(o)!=null?` · <b>${fmtJarak(jarakKe(o))}</b> dari Anda`:''}</div></div></div>
     <p style="font-size:12.5px;color:#46605c;margin-top:9px">${esc(o.desk||'')}</p>
     <div class="divider"></div>
     <div style="display:flex;align-items:center;justify-content:space-between">
@@ -611,11 +646,14 @@ async function verifPembayaran(id){
   toast('✅ Dana dikonfirmasi — pesanan dibuka ke tukang');renderAdmin();
 }
 let _assignOrder=null;
+function tukangRating(id){const rs=ORDERS.filter(o=>o.tukang_id===id&&o.rating).map(o=>o.rating);return rs.length?(rs.reduce((a,b)=>a+b,0)/rs.length):0;}
+function tukangSelesai(id){return ORDERS.filter(o=>o.tukang_id===id&&o.status==='SELESAI').length;}
 function openAssign(orderId){
   _assignOrder=orderId;
-  const sub=ADMIN_TUKANG.filter(p=>p.verif_status==='terverifikasi');
-  const items=sub.length?sub.map(p=>`<button class="card" style="width:100%;text-align:left;padding:13px 14px;margin-bottom:8px;display:flex;align-items:center;gap:11px;border:1px solid var(--line);background:#fff" onclick="assignTukang('${p.id}')"><div class="tukav" style="width:38px;height:38px;font-size:14px">${esc(p.inisial||initial(p.nama))}</div><div style="flex:1"><b style="font-size:14px">${esc(p.nama)}</b><div class="meta" style="font-size:11px">${(p.keahlian||[]).slice(0,3).join(', ')||'—'}</div></div><span style="color:var(--brand);font-weight:700;font-size:12px">Pilih ›</span></button>`).join(''):'<p style="font-size:13px;color:var(--muted);text-align:center;padding:20px">Belum ada tukang terverifikasi.</p>';
-  openSheet(`<div style="padding:20px"><h3 style="font-size:17px;font-weight:800;margin-bottom:4px">Tugaskan Tukang</h3><p style="font-size:12px;color:var(--muted);margin-bottom:14px">Pilih tukang terverifikasi untuk pekerjaan ini.</p>${items}<button class="btn btn-ghost" style="margin-top:6px" onclick="closeSheet()">Batal</button></div>`);
+  const sub=ADMIN_TUKANG.filter(p=>p.verif_status==='terverifikasi')
+    .sort((a,b)=>(tukangRating(b.id)-tukangRating(a.id))||(tukangSelesai(b.id)-tukangSelesai(a.id)));
+  const items=sub.length?sub.map(p=>{const r=tukangRating(p.id),sel=tukangSelesai(p.id);return `<button class="card" style="width:100%;text-align:left;padding:13px 14px;margin-bottom:8px;display:flex;align-items:center;gap:11px;border:1px solid var(--line);background:#fff" onclick="assignTukang('${p.id}')"><div class="tukav" style="width:38px;height:38px;font-size:14px">${esc(p.inisial||initial(p.nama))}</div><div style="flex:1"><b style="font-size:14px">${esc(p.nama)}</b><div class="meta" style="font-size:11px">⭐ ${r?r.toFixed(1):'baru'} · ${sel} selesai${(p.keahlian||[]).length?' · '+(p.keahlian||[]).slice(0,2).join(', '):''}</div></div><span style="color:var(--brand);font-weight:700;font-size:12px">Pilih ›</span></button>`;}).join(''):'<p style="font-size:13px;color:var(--muted);text-align:center;padding:20px">Belum ada tukang terverifikasi.</p>';
+  openSheet(`<div style="padding:20px"><h3 style="font-size:17px;font-weight:800;margin-bottom:4px">Tugaskan Tukang</h3><p style="font-size:12px;color:var(--muted);margin-bottom:14px">Diurutkan dari rating tertinggi. Pilih untuk pekerjaan ini.</p>${items}<button class="btn btn-ghost" style="margin-top:6px" onclick="closeSheet()">Batal</button></div>`);
 }
 async function assignTukang(tukangId){
   const p=ADMIN_TUKANG.find(x=>x.id===tukangId);if(!p||!_assignOrder)return;
@@ -955,6 +993,7 @@ async function renderDetail(){
   const k=katOf(o.kat),b=o.biaya||fee(o.harga),s=ST[o.status]||ST.MENUNGGU_DANA;
   const harian=o.sistem==='harian';
   const amPemilik=o.pemilik_id===ME.id;
+  if(o.tukang_id===ME.id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))startTracking(o.id);else if(_trackOrder===o.id)stopTracking();
   let banner,actions='';
   // banner
   let bst='Dana ditahan Tukangin',bsub='Aman sampai pemilik konfirmasi.';
@@ -1027,6 +1066,7 @@ async function renderDetail(){
       <span class="badge ${s.c}">${s.l}</span></div>
       <div class="divider"></div><p style="font-size:13.5px;color:#37514d">${esc(o.desk||'')}</p></div>
     ${tukangInfo}
+    ${locTukangSection(o)}
     ${fotoView(o)}
     <div class="sec-title">Rincian ${amPemilik?'Pembayaran':'Bayaran Anda'}</div>${feeBlock}
     ${absensiSection(o)}
@@ -1498,7 +1538,43 @@ function openSheet(html){
   ov.innerHTML=`<div style="background:var(--surface);width:100%;max-width:440px;max-height:92vh;border-radius:24px 24px 0 0;overflow-y:auto">${html}</div>`;
   document.body.style.overflow='hidden';
 }
-function closeSheet(){const ov=$('ov');if(ov)ov.remove();document.body.style.overflow=''}
+let _mapTimer=null,_map=null,_mTukang=null;
+function loadLeaflet(){return new Promise((res,rej)=>{
+  if(window.L)return res(window.L);
+  if(!document.getElementById('leafcss')){const l=document.createElement('link');l.id='leafcss';l.rel='stylesheet';l.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(l);}
+  const s=document.createElement('script');s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';s.onload=()=>window.L?res(window.L):rej('gagal');s.onerror=()=>rej('gagal');document.head.appendChild(s);
+});}
+async function openPetaLangsung(orderId){
+  let L;try{L=await loadLeaflet();}catch(e){toast('Gagal memuat peta — cek internet');return}
+  const o=ORDERS.find(x=>x.id===orderId);if(!o)return;
+  openSheet(`<div style="padding:16px 16px 8px"><h3 style="font-size:16px;font-weight:800;margin-bottom:8px">📍 Lokasi Tukang — Langsung</h3><div id="petamap" style="width:100%;height:60vh;border-radius:14px;overflow:hidden;background:#e8efed"></div><div id="petainfo" style="font-size:12px;color:var(--muted);margin-top:8px;text-align:center"></div><button class="btn btn-ghost" style="margin-top:10px" onclick="closeSheet()">Tutup</button></div>`);
+  setTimeout(()=>{
+    try{
+      const center=[o.tukang_lat||o.lat||-8.65,o.tukang_lng||o.lng||115.13];
+      _map=L.map('petamap').setView(center,15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(_map);
+      if(o.lat&&o.lng)L.marker([o.lat,o.lng]).addTo(_map).bindPopup('📍 Lokasi pekerjaan');
+      if(o.tukang_lat&&o.tukang_lng)_mTukang=L.marker([o.tukang_lat,o.tukang_lng]).addTo(_map).bindPopup('🔧 Tukang');
+      setTimeout(()=>_map&&_map.invalidateSize(),200);
+      updatePetaInfo(o);
+      _mapTimer=setInterval(()=>refreshPeta(orderId),10000);
+    }catch(e){}
+  },150);
+}
+async function refreshPeta(orderId){
+  try{
+    const {data}=await sb.from('orders').select('tukang_lat,tukang_lng,loc_updated,lat,lng').eq('id',orderId).maybeSingle();
+    if(!data||!_map||!window.L)return;
+    if(data.tukang_lat&&data.tukang_lng){const ll=[data.tukang_lat,data.tukang_lng];if(_mTukang)_mTukang.setLatLng(ll);else _mTukang=window.L.marker(ll).addTo(_map).bindPopup('🔧 Tukang');_map.panTo(ll);}
+    updatePetaInfo(data);
+  }catch(e){}
+}
+function updatePetaInfo(o){
+  const el=$('petainfo');if(!el)return;
+  let j='';if(o.lat&&o.lng&&o.tukang_lat&&o.tukang_lng)j='Sekitar '+fmtJarak(haversine(o.tukang_lat,o.tukang_lng,o.lat,o.lng))+' dari lokasi · ';
+  el.innerHTML=o.loc_updated?(j+'diperbarui '+timeAgo(o.loc_updated)):'Menunggu lokasi tukang…';
+}
+function closeSheet(){if(_mapTimer){clearInterval(_mapTimer);_mapTimer=null;}if(_map){try{_map.remove();}catch(e){}_map=null;_mTukang=null;}const ov=$('ov');if(ov)ov.remove();document.body.style.overflow=''}
 function emptyBox(ic,t,p){return `<div class="empty"><div class="ic">${ic}</div><h4 style="font-size:15px;margin-top:8px">${t}</h4>${p?`<p>${p}</p>`:''}</div>`}
 function timeAgo(t){const d=(Date.now()-new Date(t).getTime())/1000;if(d<60)return'baru saja';if(d<3600)return Math.floor(d/60)+' mnt lalu';if(d<86400)return Math.floor(d/3600)+' jam lalu';return Math.floor(d/86400)+' hari lalu'}
 
