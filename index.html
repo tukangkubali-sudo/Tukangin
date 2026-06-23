@@ -164,7 +164,7 @@ let VIEW={tab:'beranda',orderId:null};
 let ORDERS=[];
 
 /* ====== AUTH ====== */
-let authMode='login';
+let authMode='welcome';
 async function boot(){
   const {data:{session}}=await sb.auth.getSession();
   if(!session){renderAuth();return}
@@ -182,7 +182,9 @@ async function loadMe(){
   await refresh();
 }
 function renderAuth(){
+  if(authMode==='welcome'){$('app').innerHTML=welcomeHTML();return;}
   $('app').innerHTML=`<div class="auth">
+    <div style="margin-bottom:6px"><span onclick="setAuth('welcome')" style="color:var(--muted);font-size:13px">‹ Kembali</span></div>
     <div class="logo-lg">🔧</div>
     <h1>Tukangin</h1><p class="sub">Tukang tepercaya, dana aman lewat escrow.</p>
     <div class="seg"><button id="seg-login" class="${authMode==='login'?'on':''}" onclick="setAuth('login')">Masuk</button>
@@ -192,6 +194,21 @@ function renderAuth(){
   </div>`;
   renderAuthForm();
 }
+function welcomeHTML(){return `<div style="min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;background:linear-gradient(160deg,#0D5953,#0b463f)">
+  <div style="flex:1;padding:42px 26px 20px;color:#fff;display:flex;flex-direction:column;justify-content:center">
+    <div style="font-size:52px">🔧</div>
+    <h1 style="font-size:33px;font-weight:800;margin-top:10px;line-height:1.1">Tukangin</h1>
+    <p style="font-size:16px;color:#BFE0DB;margin-top:8px;line-height:1.5">Tukang terpercaya untuk rumah & villa di Bali. Pesan mudah, bayar aman, bergaransi.</p>
+    <div style="margin-top:24px;display:flex;flex-direction:column;gap:11px">
+      ${[['✔️','Tukang terverifikasi','Identitas (KTP & wajah) dicek'],['🔒','Pembayaran aman','Dana ditahan sampai kerja selesai'],['🛡️','Bergaransi','Ada masalah? Diperbaiki tanpa biaya']].map(([i,t,s])=>`<div style="display:flex;align-items:center;gap:13px;background:rgba(255,255,255,.12);border-radius:14px;padding:13px 15px"><div style="font-size:21px">${i}</div><div><div style="font-weight:800;font-size:14.5px">${t}</div><div style="font-size:12px;color:#cfe7e3">${s}</div></div></div>`).join('')}
+    </div>
+  </div>
+  <div style="background:var(--surface);border-radius:26px 26px 0 0;padding:24px 22px 30px">
+    <button class="btn btn-primary" style="font-size:17px;padding:16px" onclick="setAuth('daftar')">Daftar Gratis</button>
+    <button class="btn btn-ghost" style="margin-top:11px" onclick="setAuth('login')">Sudah punya akun? Masuk</button>
+    <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:16px">Dikelola <b>Guna Merta Home Service</b> · Canggu, Bali</p>
+  </div>
+</div>`;}
 function setAuth(m){authMode=m;renderAuth()}
 function renderAuthForm(){
   if(authMode==='daftar'){
@@ -265,7 +282,7 @@ async function saveProfile(uid){
   if(error){authErr(error.message);busy(false,'Simpan');return}
   await loadMe();
 }
-async function logout(){await sb.auth.signOut();ME=null;ORDERS=[];renderAuth()}
+async function logout(){await sb.auth.signOut();ME=null;ORDERS=[];authMode='welcome';renderAuth()}
 
 /* ====== DATA ====== */
 async function refresh(){
