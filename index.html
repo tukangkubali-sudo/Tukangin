@@ -499,7 +499,9 @@ function jobCard(o){
     <p style="font-size:12.5px;color:#46605c;margin-top:9px">${esc(o.desk||'')}</p>
     <div class="divider"></div>
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <div><div style="font-size:11px;color:var(--muted)">Diterima bersih</div><div style="font-size:18px;font-weight:800;color:var(--ok)">${rp(b.payout)}</div></div>
+      <div>${o.sistem==='harian'
+        ? `<div style="font-size:11px;color:var(--muted)">Upah harian</div><div style="font-size:18px;font-weight:800;color:var(--ok)">${rp(o.tarif_harian||b.payout)}<span style="font-size:12px;font-weight:600;color:var(--muted)"> /hari</span></div><div style="font-size:10.5px;color:var(--muted);margin-top:1px">± ${o.hari||1} hari · dibayar sesuai hari hadir</div>`
+        : `<div style="font-size:11px;color:var(--muted)">Diterima bersih (borongan)</div><div style="font-size:18px;font-weight:800;color:var(--ok)">${rp(b.payout)}</div><div style="font-size:10.5px;color:var(--muted);margin-top:1px">harga borongan · seluruh pekerjaan</div>`}</div>
       ${ME.verif_status==='terverifikasi'?`<button class="btn btn-primary btn-sm" onclick="ambil('${o.id}')">Ambil</button>`:`<button class="btn btn-ghost btn-sm" onclick="go('profil')">🔒 Verifikasi dulu</button>`}</div></div>`;
 }
 function orderCardT(o){
@@ -1117,7 +1119,7 @@ async function renderDetail(){
 
   const feeBlock=amPemilik
     ?`<div class="fee">${harian?`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow"><span>Biaya layanan</span><span>${rp(b.layanan)}</span></div>`:`<div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Biaya layanan <span class="sub">(5%)</span></span><span>${rp(b.layanan)}</span></div>`}<div class="feerow tot"><span>Total escrow</span><span>${rp(b.escrow)}</span></div></div>`
-    :`<div class="fee">${harian?`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div>`:`<div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Komisi <span class="sub">(6%)</span></span><span style="color:var(--bad)">−${rp(b.komisi)}</span></div><div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div>`}</div>`;
+    :`<div class="fee">${harian?`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow tot"><span>Estimasi terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div><div class="feerow"><span class="sub">Final = upah harian × jumlah hari hadir (absen)</span><span></span></div>`:`<div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Komisi <span class="sub">(6%)</span></span><span style="color:var(--bad)">−${rp(b.komisi)}</span></div><div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div>`}</div>`;
 
   const showChat=o.tukang_id&&['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status);
 
