@@ -679,7 +679,7 @@ async function verifPembayaran(id){
   toast('✅ Dana dikonfirmasi — pesanan dibuka ke tukang');renderAdmin();
 }
 function p_bayar(o){const t=(ADMIN_TUKANG||[]).find(x=>x.id===o.tukang_id);return t&&t.bayar_metode?esc(t.bayar_metode+(t.bayar_detail?' '+t.bayar_detail:'')):'metode belum diatur';}
-function waLink(telp,msg){let n=(telp||'').replace(/\D/g,'');if(!n)return '';if(n[0]==='0')n='62'+n.slice(1);else if(n[0]==='8')n='62'+n;return `https://wa.me/${n}?text=${encodeURIComponent(msg||'')}`;}
+function waLink(telp,msg){let n=(telp||'').replace(/\D/g,'');if(!n)return '';if(n[0]==='0')n='62'+n.slice(1);else if(n[0]==='8')n='62'+n;return `https://api.whatsapp.com/send?phone=${n}&text=${encodeURIComponent(msg||'')}`;}
 function p_wa(o){const t=(ADMIN_TUKANG||[]).find(x=>x.id===o.tukang_id);const tel=t&&t.telp;if(!tel)return '';const b=o.biaya||fee(o.harga);return waLink(tel,`Halo ${o.tukang_nama||''}, pekerjaan "${o.judul||'-'}" sudah selesai. Bayaran Anda ${rp(b.payout)} akan kami cairkan. Mohon konfirmasi penerimaan. — Tukangin`);}
 async function bayarTukang(id){
   const o=(ORDERS||[]).find(x=>x.id===id)||{};const b=o.biaya||fee(o.harga);
