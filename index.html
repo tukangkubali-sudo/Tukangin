@@ -639,13 +639,21 @@ async function renderAdmin(){
   const belumTukang=ords.filter(o=>o.status==='DANA_DITAHAN'&&!o.tukang_id);
   const seng=ords.filter(o=>o.status==='SENGKETA');
   const kl=ords.filter(o=>o.garansi_klaim);
-  const adaTindakan=cekBayar.length||belumTukang.length||seng.length||kl.length||pending.length;
+  const dikerjakan=ords.filter(o=>o.tukang_id&&['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status));
+  const cair=ords.filter(o=>o.status==='SELESAI'&&!o.tukang_dibayar);
+  const selesai=ords.filter(o=>o.status==='SELESAI');
+  const adaTindakan=cekBayar.length||belumTukang.length||seng.length||kl.length||pending.length||cair.length;
   sc.innerHTML=`
     <div class="sec-title">⚡ Perlu Tindakan</div>
     ${cekBayar.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--brass)"><div style="font-weight:800;font-size:13.5px">💵 Verifikasi Pembayaran · ${cekBayar.length}</div>${cekBayar.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp((o.biaya||fee(o.harga)).escrow)}</div><div class="meta">Pemilik: ${esc(o.pemilik_nama||'-')}</div>${o.bukti_transfer_url?`<img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px">`:'<div style="font-size:11px;color:var(--bad);margin-top:4px">⚠ tanpa bukti</div>'}<button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="verifPembayaran('${o.id}')">✔ Konfirmasi Dana Masuk</button></div>`).join('')}</div>`:''}
     ${belumTukang.length?`<div class="card" style="padding:13px;margin-bottom:8px"><div style="font-weight:800;font-size:13.5px">🔍 Belum Ada Tukang · ${belumTukang.length}</div>${belumTukang.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px;display:flex;align-items:center;gap:8px"><div style="flex:1"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')}</div><div class="meta">${esc(o.lokasi||'-')} · ${esc(o.pemilik_nama||'-')}</div></div><button class="btn btn-primary btn-sm" onclick="openAssign('${o.id}')">Tugaskan</button></div>`).join('')}</div>`:''}
     ${seng.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--bad)"><div style="font-weight:800;font-size:13.5px">⚠️ Sengketa · ${seng.length}</div>${seng.map(o=>`<div style="border-top:1px solid var(--line);padding-top:8px;margin-top:8px;font-size:12.5px">${esc(o.judul||'Pesanan')} — ${esc(o.pemilik_nama||'-')} & ${esc(o.tukang_nama||'-')}. Hubungi kedua pihak (WA) untuk penyelesaian.</div>`).join('')}</div>`:''}
+    ${cair.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--ok)"><div style="font-weight:800;font-size:13.5px">💵 Pencairan ke Tukang · ${cair.length}</div>${cair.map(o=>{const b=o.biaya||fee(o.harga);return `<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px;display:flex;align-items:center;gap:8px"><div style="flex:1"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — <span style="color:var(--ok)">${rp(b.payout)}</span></div><div class="meta">Tukang: ${esc(o.tukang_nama||'-')}${o.sistem==='harian'?` · ${hariPenuh(o)} hari`:''} · 💳 ${p_bayar(o)}</div></div><button class="btn btn-primary btn-sm" onclick="bayarTukang('${o.id}')">Sudah Dibayar</button></div>`;}).join('')}</div>`:''}
     ${!adaTindakan?'<div class="card" style="padding:16px;text-align:center;color:var(--muted)">✅ Tidak ada yang perlu ditindak saat ini.</div>':''}
+    <div class="sec-title">🛠️ Sedang Dikerjakan${dikerjakan.length?` · ${dikerjakan.length}`:''}</div>
+    ${dikerjakan.length?dikerjakan.map(o=>{const s=ST[o.status]||ST.DANA_DITAHAN;return `<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px" onclick="openOrder('${o.id}')"><div class="othumb" style="width:34px;height:34px">${katOf(o.kat).ic}</div><div style="flex:1;min-width:0"><b style="font-size:13.5px">${esc(o.judul||'Pesanan')}</b><div class="meta" style="font-size:11px">👷 ${esc(o.tukang_nama||'-')} · ${esc(o.lokasi||'-')}</div></div><span class="badge ${s.c}">${s.l}</span></div>`;}).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:4px 2px">Belum ada pekerjaan berjalan.</p>'}
+    <div class="sec-title">✅ Riwayat Selesai${selesai.length?` · ${selesai.length}`:''}</div>
+    ${selesai.length?selesai.slice(0,15).map(o=>{const b=o.biaya||fee(o.harga);return `<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px" onclick="openOrder('${o.id}')"><div class="othumb" style="width:34px;height:34px">${katOf(o.kat).ic}</div><div style="flex:1;min-width:0"><b style="font-size:13.5px">${esc(o.judul||'Pesanan')}</b><div class="meta" style="font-size:11px">👷 ${esc(o.tukang_nama||'-')}${o.selesai_tgl?' · '+tgljamID(o.selesai_tgl):''}</div></div><div style="text-align:right"><div style="font-weight:800;color:var(--ok);font-size:13px">${rp(b.payout)}</div>${o.tukang_dibayar?'<span style="font-size:9.5px;color:var(--ok);font-weight:700">✓ dibayar</span>':'<span style="font-size:9.5px;color:var(--hold);font-weight:700">belum dibayar</span>'}</div></div>`;}).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:4px 2px">Belum ada pekerjaan selesai.</p>'}
     <div class="sec-title">💾 Backup Data</div>
     <div class="card" style="padding:14px;margin-bottom:8px">
       <p style="font-size:12.5px;color:#46605c;margin-bottom:11px">Unduh semua pesanan & data pengguna untuk arsip (komplain, refund, garansi). Simpan ke folder Google Drive Anda.</p>
@@ -669,6 +677,15 @@ async function verifPembayaran(id){
   if(error){toast('Gagal: '+error.message);return}
   await addLog(id,'Pembayaran diverifikasi','Admin mengonfirmasi dana masuk & ditahan');
   toast('✅ Dana dikonfirmasi — pesanan dibuka ke tukang');renderAdmin();
+}
+function p_bayar(o){const t=(ADMIN_TUKANG||[]).find(x=>x.id===o.tukang_id);return t&&t.bayar_metode?esc(t.bayar_metode+(t.bayar_detail?' '+t.bayar_detail:'')):'metode belum diatur';}
+async function bayarTukang(id){
+  const o=(ORDERS||[]).find(x=>x.id===id)||{};const b=o.biaya||fee(o.harga);
+  if(!confirm(`Tandai bayaran ${rp(b.payout)} ke ${o.tukang_nama||'tukang'} sudah ditransfer/diberikan?`))return;
+  const {error}=await sb.from('orders').update({tukang_dibayar:true,tukang_dibayar_tgl:new Date().toISOString()}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,'Bayaran tukang dicairkan',`${rp(b.payout)} ke ${o.tukang_nama||'tukang'}`);
+  toast('✅ Ditandai sudah dibayar');renderAdmin();
 }
 let _assignOrder=null;
 function tukangRating(id){const rs=ORDERS.filter(o=>o.tukang_id===id&&o.rating).map(o=>o.rating);return rs.length?(rs.reduce((a,b)=>a+b,0)/rs.length):0;}
