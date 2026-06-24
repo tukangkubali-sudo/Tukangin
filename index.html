@@ -1104,7 +1104,9 @@ async function renderDetail(){
     else if(o.status==='DIKERJAKAN'&&o.tukang_id===ME.id){
       const ok=o.foto_sebelum&&o.foto_sesudah;
       actions=`<div class="card" style="padding:14px;margin-bottom:12px"><h5 style="font-size:14px;font-weight:700;margin-bottom:10px">Bukti Pekerjaan (foto asli)</h5>
-        <div style="display:flex;gap:10px">${fotoBtn(o,'sebelum')}${fotoBtn(o,'sesudah')}</div></div>
+        <div style="display:flex;gap:10px">${fotoBtn(o,'sebelum')}${fotoBtn(o,'sesudah')}</div>
+        <div style="display:flex;gap:10px;margin-top:10px">${videoBtn(o,'sebelum')}${videoBtn(o,'sesudah')}</div>
+        <p style="font-size:10.5px;color:var(--muted);margin-top:8px">Video opsional (maks 30 MB / ±15 dtk). Foto wajib untuk menyelesaikan.</p></div>
         <button class="btn ${ok?'btn-primary':'btn-ghost'}" ${ok?'':'disabled'} onclick="inputKode('${o.id}')">🔑 Selesaikan — Masukkan Kode</button>
         <p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">${ok?'Minta kode 4 digit ke pelanggan.':'Unggah kedua foto dulu.'}</p>`;
     }
@@ -1283,9 +1285,14 @@ function fotoBtn(o,jenis){
   return `<button class="uploadbox" style="flex:1;border:1.5px dashed var(--line);border-radius:13px;padding:18px;background:#fff" onclick="pilihFoto('${o.id}','${jenis}')"><div style="font-size:22px">📷</div><div style="font-size:11.5px;font-weight:600;margin-top:3px">Foto ${jenis}</div></button>`;
 }
 function fotoView(o){
-  if(!o.foto_sebelum_url&&!o.foto_sesudah_url)return '';
+  const hasFoto=o.foto_sebelum_url||o.foto_sesudah_url, hasVid=o.video_sebelum_url||o.video_sesudah_url;
+  if(!hasFoto&&!hasVid)return '';
   const cell=(url,lbl)=>`<div style="flex:1;text-align:center">${url?`<img src="${url}" onclick="window.open('${url}')" style="width:100%;height:110px;object-fit:cover;border-radius:12px;border:1px solid var(--line)">`:`<div style="height:110px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;color:var(--muted)">—</div>`}<div style="font-size:11px;color:var(--muted);margin-top:3px">${lbl}</div></div>`;
-  return `<div class="sec-title">Bukti Pekerjaan</div><div class="card" style="padding:12px"><div style="display:flex;gap:10px">${cell(o.foto_sebelum_url,'Sebelum')}${cell(o.foto_sesudah_url,'Sesudah')}</div></div>`;
+  const vcell=(url,lbl)=>url?`<div style="flex:1;text-align:center"><video src="${url}" controls playsinline style="width:100%;height:140px;border-radius:12px;border:1px solid var(--line);background:#000"></video><div style="font-size:11px;color:var(--muted);margin-top:3px">🎥 ${lbl}</div></div>`:'<div style="flex:1"></div>';
+  let h=`<div class="sec-title">Bukti Pekerjaan</div><div class="card" style="padding:12px">`;
+  if(hasFoto)h+=`<div style="display:flex;gap:10px">${cell(o.foto_sebelum_url,'Sebelum')}${cell(o.foto_sesudah_url,'Sesudah')}</div>`;
+  if(hasVid)h+=`<div style="display:flex;gap:10px;margin-top:10px">${vcell(o.video_sebelum_url,'Sebelum')}${vcell(o.video_sesudah_url,'Sesudah')}</div>`;
+  return h+`</div>`;
 }
 function pilihBukti(id){
   const inp=document.createElement('input');
@@ -1321,6 +1328,34 @@ async function uploadFoto(id,jenis,file){
     await addLog(id,'Foto bukti diunggah',`Foto ${jenis} ditambahkan`);
     await refresh();openOrder(id);toast('✅ Foto '+jenis+' tersimpan');
   }catch(e){toast('Gagal: '+(e.message||e))}
+}
+function videoBtn(o,jenis){
+  const url=jenis==='sebelum'?o.video_sebelum_url:o.video_sesudah_url;
+  if(url)return `<div style="flex:1"><div onclick="window.open('${url}')" style="height:58px;border-radius:11px;border:1px solid var(--line);background:#0D5953;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700;cursor:pointer">▶ Video ${jenis}</div><div onclick="pilihVideo('${o.id}','${jenis}')" style="font-size:10.5px;color:var(--ok);text-align:center;margin-top:3px;font-weight:600">✓ tersimpan · ganti</div></div>`;
+  return `<button class="uploadbox" style="flex:1;border:1.5px dashed var(--line);border-radius:13px;padding:13px;background:#fff" onclick="pilihVideo('${o.id}','${jenis}')"><div style="font-size:20px">🎥</div><div style="font-size:11px;font-weight:600;margin-top:2px">Video ${jenis}</div><div style="font-size:9.5px;color:var(--muted)">opsional</div></button>`;
+}
+function pilihVideo(id,jenis){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='video/*';inp.setAttribute('capture','environment');
+  inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+  inp.onchange=()=>{if(inp.files&&inp.files[0])uploadVideo(id,jenis,inp.files[0]);inp.remove();};
+  document.body.appendChild(inp);inp.click();
+}
+async function uploadVideo(id,jenis,file){
+  if(file.size>30*1024*1024){toast('⚠ Video terlalu besar (maks 30 MB). Rekam ±15 detik saja.');return}
+  toast('Mengunggah video… tunggu sebentar');
+  try{
+    const ext=((file.name||'v').split('.').pop()||'mp4').toLowerCase();
+    const path=`${id}/${jenis}-${Date.now()}.${ext}`;
+    const {error:ue}=await sb.storage.from('bukti').upload(path,file,{upsert:true,contentType:file.type||'video/mp4'});
+    if(ue)throw ue;
+    const url=sb.storage.from('bukti').getPublicUrl(path).data.publicUrl;
+    const upd=jenis==='sebelum'?{video_sebelum_url:url}:{video_sesudah_url:url};
+    const {error}=await sb.from('orders').update(upd).eq('id',id);
+    if(error)throw error;
+    await addLog(id,'Video bukti diunggah',`Video ${jenis} ditambahkan`);
+    await refresh();openOrder(id);toast('✅ Video '+jenis+' tersimpan');
+  }catch(e){toast('Gagal unggah video: '+(e.message||e))}
 }
 function kompresFoto(file){
   return new Promise((res,rej)=>{
