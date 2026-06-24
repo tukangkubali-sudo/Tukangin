@@ -1140,7 +1140,7 @@ async function renderDetail(){
 
   const feeBlock=amPemilik
     ?`<div class="fee">${harian?`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow"><span>Biaya layanan</span><span>${rp(b.layanan)}</span></div>`:`<div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Biaya layanan <span class="sub">(5%)</span></span><span>${rp(b.layanan)}</span></div>`}<div class="feerow tot"><span>Total escrow</span><span>${rp(b.escrow)}</span></div></div>`
-    :`<div class="fee">${harian?`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow tot"><span>Estimasi terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div><div class="feerow"><span class="sub">Final = upah harian × jumlah hari hadir (absen)</span><span></span></div>`:`<div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Komisi <span class="sub">(6%)</span></span><span style="color:var(--bad)">−${rp(b.komisi)}</span></div><div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div>`}</div>`;
+    :`<div class="fee">${harian?`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow tot"><span>Estimasi terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div><div class="feerow"><span class="sub">Final dihitung dari jam kerja 08.00–17.00 (lihat Absensi)</span><span></span></div>`:`<div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Komisi <span class="sub">(6%)</span></span><span style="color:var(--bad)">−${rp(b.komisi)}</span></div><div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div>`}</div>`;
 
   const showChat=o.tukang_id&&['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status);
 
@@ -1206,19 +1206,48 @@ async function surveiLokasi(id){
   if(error){toast('Gagal: '+error.message);return}
   await addLog(id,'Survei lokasi','Tukang telah survei lokasi');toast('✅ Survei tercatat');await refresh();openOrder(id);
 }
+const KERJA={mulai:8,selesai:17,toleransi:15};
+function jamHari(a){
+  if(!a||!a.masuk||!a.keluar)return null;
+  const M=new Date(a.masuk),K=new Date(a.keluar);
+  const start=new Date(M);start.setHours(KERJA.mulai,0,0,0);
+  const end=new Date(M);end.setHours(KERJA.selesai,0,0,0);
+  let masukEf=M>start?M:start;if(M<=new Date(start.getTime()+KERJA.toleransi*60000))masukEf=start;
+  let keluarEf=K<end?K:end;if(K>=new Date(end.getTime()-KERJA.toleransi*60000))keluarEf=end;
+  const totalMs=end-start;let workedMs=keluarEf-masukEf;if(workedMs<0)workedMs=0;
+  const fraksi=Math.max(0,Math.min(1,workedMs/totalMs));
+  const telatMenit=Math.max(0,Math.round((Math.min(M.getTime(),end.getTime())-start.getTime())/60000));
+  const pulangAwalMenit=Math.max(0,Math.round((end.getTime()-Math.max(K.getTime(),start.getTime()))/60000));
+  return {jam:workedMs/3600000,fraksi,telatMenit,pulangAwalMenit};
+}
+function bayarHarian(o){
+  const tarif=+o.tarif_harian||0;let total=0,penuh=0,hadir=0;
+  (o.absensi||[]).forEach(a=>{const h=jamHari(a);if(h){hadir++;total+=tarif*h.fraksi;penuh+=tarif;}});
+  total=Math.round(total);return {hadir,bayar:total,penuh,potongan:Math.max(0,penuh-total)};
+}
 function absensiSection(o){
   if(o.sistem!=='harian')return '';
   const list=o.absensi||[];
   if(!list.length&&!['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))return '';
-  const hp=hariPenuh(o);
-  const rows=list.map(a=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)">
-    <div style="font-size:12px;font-weight:800;width:50px">Hari ${a.hari}</div>
-    <div style="flex:1;font-size:12px;color:#37514d">${tgljamID(a.masuk)} · 🟢 ${jamID(a.masuk)}${a.keluar?' → 🔴 '+jamID(a.keluar):' <span style="color:var(--hold)">· belum keluar</span>'}</div>
-    ${a.jarak!=null?(a.jarak>500?'<span style="font-size:10px;color:var(--bad);font-weight:700">⚠ jauh</span>':'<span style="font-size:10px;color:var(--ok);font-weight:700">✓ GPS</span>'):''}
-  </div>`).join('')||'<p style="font-size:12px;color:var(--muted);padding:6px 0">Belum ada absensi.</p>';
-  return `<div class="sec-title">Absensi Harian · ${hp} hari hadir</div>
+  const tarif=+o.tarif_harian||0;
+  const rows=list.map(a=>{
+    const h=jamHari(a),telat=h&&h.telatMenit>KERJA.toleransi,awal=h&&h.pulangAwalMenit>KERJA.toleransi;
+    const bayarHari=h?Math.round(tarif*h.fraksi):0, jamTxt=h?((Math.round(h.jam*10)/10)+' jam'):'';
+    return `<div style="padding:8px 0;border-bottom:1px solid var(--line)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="font-size:12px;font-weight:800;width:48px">Hari ${a.hari}</div>
+        <div style="flex:1;font-size:12px;color:#37514d">🟢 ${jamID(a.masuk)}${a.keluar?' → 🔴 '+jamID(a.keluar):' <span style="color:var(--hold)">· belum keluar</span>'}</div>
+        ${a.keluar?`<div style="font-size:12.5px;font-weight:800;color:var(--ok)">${rp(bayarHari)}</div>`:''}
+      </div>
+      ${a.keluar?`<div style="font-size:10.5px;color:${telat||awal?'var(--bad)':'var(--muted)'};margin-left:56px;margin-top:2px">${jamTxt}${telat?` · telat ${h.telatMenit} mnt`:''}${awal?` · pulang awal ${h.pulangAwalMenit} mnt`:''}${(telat||awal)?' (upah dipotong)':''}</div>`:''}
+    </div>`;
+  }).join('')||'<p style="font-size:12px;color:var(--muted);padding:6px 0">Belum ada absensi.</p>';
+  const bh=bayarHarian(o);
+  return `<div class="sec-title">Absensi Harian · ${bh.hadir} hari</div>
     <div class="card" style="padding:10px 16px">${rows}
-    <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:13.5px;font-weight:800"><span>Bayaran ${hp} hari hadir</span><span style="color:var(--ok)">${rp((o.tarif_harian||0)*hp)}</span></div></div>`;
+    <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:11.5px;color:var(--muted)"><span>Jam kerja standar</span><span>08.00–17.00 · toleransi ${KERJA.toleransi} mnt</span></div>
+    ${bh.potongan>0?`<div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--bad);margin-top:3px"><span>Potongan telat/pulang awal</span><span>−${rp(bh.potongan)}</span></div>`:''}
+    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:13.5px;font-weight:800"><span>Total bayaran</span><span style="color:var(--ok)">${rp(bh.bayar)}</span></div></div>`;
 }
 async function absenMasuk(id){
   const o=ORDERS.find(x=>x.id===id);const list=o.absensi||[];
@@ -1233,8 +1262,12 @@ async function absenMasuk(id){
   const {error}=await sb.from('orders').update({absensi:baru,status:'DIKERJAKAN'}).eq('id',id);
   if(error){toast('Gagal: '+error.message);return}
   await addLog(id,`Absen masuk hari ${hari}`,detail);
+  const _m=new Date(),_s=new Date();_s.setHours(KERJA.mulai,0,0,0);
+  const telatMnt=Math.round((_m-_s)/60000);
   if(jarak!=null&&jarak>500)toast('⚠ Anda tampak jauh dari lokasi — tercatat');
-  await refresh();openOrder(id);toast('🟢 Absen masuk tercatat');
+  else if(telatMnt>KERJA.toleransi)toast(`⏰ Masuk pukul ${jamID(_m.toISOString())} — lewat 08.00. Upah hari ini dihitung dari jam kerja (08.00–17.00).`);
+  else toast('🟢 Absen masuk tercatat');
+  await refresh();openOrder(id);
 }
 async function absenKeluar(id){
   const o=ORDERS.find(x=>x.id===id);const list=(o.absensi||[]).slice();
@@ -1416,7 +1449,7 @@ async function konfirmasi(id){
   const upd={status:'SELESAI',selesai_tgl:new Date().toISOString()};
   let det='Dana dicairkan ke tukang';
   if(o&&o.sistem==='harian'){
-    const hp=hariPenuh(o),base=(o.tarif_harian||0)*hp,markup=Math.round(base*(BIZ.markupHarian||0));
+    const bh=bayarHarian(o),base=bh.bayar,markup=Math.round(base*(BIZ.markupHarian||0));
     upd.biaya={harga:base,layanan:markup,komisi:0,escrow:base+markup,payout:base};
     det=`Dibayar ${hp} hari hadir = ${rp(base)}`;
   }
