@@ -27,6 +27,7 @@
 <meta name="twitter:image" content="https://tukangkubali-sudo.github.io/Tukangin/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__bip=e;});window.addEventListener('appinstalled',function(){window.__bip=null;});</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
@@ -172,7 +173,7 @@ const KAT=[{id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa',ic:'🔧'},
 const katOf=id=>KAT.find(k=>k.id===id)||KAT[7];
 const ST={MENUNGGU_DANA:{l:'Menunggu Pembayaran',c:'b-wait'},MENUNGGU_VERIFIKASI:{l:'Cek Pembayaran',c:'b-wait'},DANA_DITAHAN:{l:'Dana Ditahan',c:'b-hold'},DIKERJAKAN:{l:'Dikerjakan',c:'b-work'},MENUNGGU_KONFIRMASI:{l:'Menunggu Konfirmasi',c:'b-confirm'},SELESAI:{l:'Selesai',c:'b-done'},SENGKETA:{l:'Sengketa',c:'b-dispute'},DIBATALKAN:{l:'Dibatalkan',c:'b-dispute'}};
 /* Identitas usaha — EDIT di sini bila perlu */
-const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6281338773717',waTampil:'0813-3877-3717',bank:'BNI',rek:'1881552632',rekNama:'Putu Helyvia',garansiHari:7,retensiPersen:10,markupHarian:0.15};
+const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6282233089533',waTampil:'0822-3308-9533',bank:'BNI',rek:'1881552632',rekNama:'Putu Helyvia',garansiHari:7,retensiPersen:10,markupHarian:0.15};
 /* Garansi pengerjaan per kategori (hari) — sesuai umumnya di Bali, bisa diubah */
 const GARANSI={listrik:7,pipa:14,ac:14,las:30,cat:14,bocor:30,kunci:7,umum:7};
 function garansiHariKat(kat){return GARANSI[kat]||7}
@@ -228,11 +229,26 @@ function welcomeHTML(){return `<div style="min-height:100vh;min-height:100dvh;di
   <div style="background:var(--surface);border-radius:26px 26px 0 0;padding:24px 22px 30px">
     <button class="btn btn-primary" style="font-size:17px;padding:16px" onclick="setAuth('daftar')">Daftar Gratis</button>
     <button class="btn btn-ghost" style="margin-top:11px" onclick="setAuth('login')">Sudah punya akun? Masuk</button>
+    ${sudahTerpasang()?'':`<button class="btn btn-ghost" style="margin-top:11px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="pasangApp()">📲 Pasang Aplikasi ke Layar HP</button>`}
     <button class="btn btn-ghost btn-sm" style="margin-top:11px;color:#0D5953;font-weight:800" onclick="openKeamanan()">🔒 Keamanan & Kepercayaan — kenapa aman?</button>
-    <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:16px">Dikelola <b>Guna Merta Home Service</b> · Canggu, Bali</p>
+    <button class="btn btn-ghost btn-sm" style="margin-top:9px;color:#0D5953;font-weight:800" onclick="openBantuan()">🤖 Pusat Bantuan — pertanyaan umum</button>
+    <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:16px">Dikelola <b>Guna Merta Home Service</b></p>
   </div>
 </div>`;}
 function setAuth(m){authMode=m;renderAuth()}
+async function pasangApp(){
+  const bip=window.__bip;
+  if(bip&&bip.prompt){try{bip.prompt();const c=await bip.userChoice;if(c&&c.outcome==='accepted')toast('✅ Aplikasi sedang dipasang');window.__bip=null;return;}catch(e){}}
+  openSheet(panduanPasangHTML());
+}
+function panduanPasangHTML(){
+  const ua=navigator.userAgent||'';const ios=/iphone|ipad|ipod/i.test(ua);
+  const steps=ios
+    ?[['1','Ketuk tombol Bagikan','Ikon kotak dengan panah ke atas di bar bawah Safari.'],['2','Pilih "Add to Home Screen"','Gulir, lalu ketuk "Tambah ke Layar Utama".'],['3','Ketuk "Add / Tambah"','Ikon Tukangin muncul di layar HP.']]
+    :[['1','Ketuk menu ⋮','Tiga titik di kanan atas Chrome.'],['2','Pilih "Tambah ke Layar Utama"','Atau "Install app / Pasang aplikasi".'],['3','Ketuk "Tambah / Pasang"','Ikon Tukangin muncul di layar HP.']];
+  return `<div style="padding:20px"><h3 style="font-size:18px;font-weight:800">📲 Pasang Tukangin</h3><p style="font-size:12px;color:var(--muted);margin:3px 0 14px">Agar muncul seperti aplikasi di layar HP Anda${ios?' (iPhone/Safari)':' (Android/Chrome)'}.</p>${steps.map(([n,h,b])=>`<div style="display:flex;gap:11px;margin-bottom:13px"><div style="flex:0 0 26px;height:26px;border-radius:50%;background:#0D5953;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center">${n}</div><div style="flex:1"><div style="font-weight:800;font-size:13.5px">${h}</div><div style="font-size:12px;color:#5B6B68;margin-top:1px">${b}</div></div></div>`).join('')}<button class="btn btn-primary" onclick="closeSheet()">Mengerti</button></div>`;
+}
+function sudahTerpasang(){return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;}
 function renderAuthForm(){
   if(authMode==='daftar'){
     $('authform').innerHTML=`
@@ -413,7 +429,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v31';
+const APPVER='v35';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -466,6 +482,7 @@ function renderPemilik(){
       </div>
       <div id="statsbox" class="card" style="padding:14px;margin-top:13px;display:none"></div>
       <button class="btn btn-ghost" style="width:100%;margin-top:11px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openKeamanan()">🔒 Keamanan & Kepercayaan — kenapa aman?</button>
+      <button class="btn btn-ghost" style="width:100%;margin-top:9px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openBantuan()">🤖 Pusat Bantuan — pertanyaan umum</button>
       <div style="display:flex;gap:8px;margin-top:11px">
         <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openTentang()">ℹ️ Tentang</button>
         <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openKebijakan()">📜 Kebijakan</button>
@@ -1306,8 +1323,24 @@ async function renderDetail(){
 function chatBox(o,msgs){
   return `<div class="sec-title">Pesan</div><div class="chatbox"><div class="chat-warn">🛡️ Jaga transaksi di dalam aplikasi.</div>
     <div class="msgs" id="msgs">${msgs.map(mm=>`<div class="msg ${mm.sender_id===ME.id?'me':'them'}">${esc(mm.isi)}</div>`).join('')||'<p style="color:var(--muted);font-size:12px;text-align:center">Mulai percakapan…</p>'}</div>
+    ${templateChips(o)}
     <div class="chat-in"><input id="chatin" placeholder="Tulis pesan…" onkeydown="if(event.key==='Enter')kirim('${o.id}')"><button onclick="kirim('${o.id}')">➤</button></div></div>`;
 }
+function templateChips(o){
+  if(!ME||!ME.is_admin)return '';
+  const T=[
+    'Halo, terima kasih sudah menghubungi Tukangin. Ada yang bisa kami bantu?',
+    'Mohon kirimkan foto kondisinya agar kami bisa bantu lebih cepat.',
+    'Dana Anda aman & kami tahan dulu. Kami sedang memediasi, mohon ditunggu.',
+    'Mohon maaf atas ketidaknyamanannya. Kami akan segera menindaklanjuti.',
+    'Tukang akan menuju lokasi. Mohon pastikan ada yang menerima di lokasi.',
+    'Kami jadwalkan ulang. Kapan waktu yang cocok untuk Anda?',
+    'Klaim garansi diterima. Tukang akan memperbaiki tanpa biaya tambahan.',
+    'Terima kasih. Mohon tekan "Selesai" bila hasil sudah sesuai.',
+  ];
+  return `<div style="display:flex;gap:6px;overflow-x:auto;padding:8px 10px;border-top:1px solid var(--line);-webkit-overflow-scrolling:touch">${T.map(t=>`<button data-t="${esc(t)}" onclick="setChat(this.dataset.t)" style="white-space:nowrap;font-size:11px;font-weight:600;background:#E7F2F0;color:#0D5953;border:1px solid #cfe2de;border-radius:999px;padding:6px 11px;flex:none">${esc(t.length>28?t.slice(0,28)+'…':t)}</button>`).join('')}</div>`;
+}
+function setChat(t){const el=$('chatin');if(el){el.value=t;el.focus();}}
 
 /* ====== AKSI ESCROW ====== */
 async function bayar(id){
@@ -1862,19 +1895,49 @@ function infoSheet(judul,sub,items){return `
     ${items.map(([h,b])=>`<div style="margin-bottom:13px"><div style="font-weight:800;color:var(--brand);margin-bottom:2px">${h}</div><div>${b}</div></div>`).join('')}
   </div>
   <div style="padding:0 20px 24px"><button class="btn btn-primary" onclick="closeSheet()">Tutup</button></div>`;}
+function faqHTML(){
+  const groups=[
+    ['💳 Pembayaran & Keamanan',[
+      ['Bagaimana cara membayar?','Setelah pesanan Anda disetujui, transfer ke rekening yang tertera di app lalu unggah bukti transfer. Dana ditahan dulu (escrow) — tukang baru dibayar setelah Anda konfirmasi pekerjaan selesai.'],
+      ['Apakah uang saya aman?','Ya. Dana Anda ditahan dan tidak langsung diberikan ke tukang. Bila pekerjaan bermasalah, dana bisa dikembalikan. App tidak menyimpan saldo, kartu, atau PIN Anda.'],
+      ['Kapan dana cair ke tukang?','Setelah Anda menekan "Selesai". Bila Anda tidak menanggapi, otomatis selesai dalam 2 hari — kecuali Anda menekan "Ada Masalah" lebih dulu.'],
+      ['Apakah ada biaya tersembunyi?','Tidak. Harga yang Anda setujui di awal sudah final.'],
+    ]],
+    ['🛠️ Cara Pesan',[
+      ['Bagaimana cara memesan tukang?','Di Beranda tekan "Buat Pesanan" → pilih kategori (AC, listrik, pipa, dll) → isi detail & lokasi → kirim. Tukang akan menanganinya.'],
+      ['Bisakah saya lihat profil tukang?','Bisa. Di Beranda ada bagian "Tukang Kami" — lihat keahlian, rating, dan contoh hasil kerja mereka.'],
+      ['Berapa lama tukang datang?','Tergantung ketersediaan tukang. Pantau status pesanan langsung di app secara real-time.'],
+    ]],
+    ['🛡️ Garansi & Masalah',[
+      ['Bagaimana klaim garansi?','Buka pesanan yang sudah selesai → ajukan klaim garansi (dalam masa garansi). Tukang wajib memperbaiki tanpa biaya tambahan.'],
+      ['Hasil kerja kurang memuaskan?','Sebelum menekan "Selesai", tekan "Ada Masalah" pada pesanan. Admin akan membantu mediasi sebelum dana cair ke tukang.'],
+      ['Tukang tidak datang atau lama?','Hubungi admin via WhatsApp '+BIZ.waTampil+' dengan menyebutkan nomor pesanan Anda.'],
+    ]],
+    ['👤 Akun',[
+      ['Bagaimana cara menjadi tukang?','Daftar dan pilih peran "Tukang", lalu lengkapi verifikasi KTP + selfie. Setelah disetujui admin, Anda bisa menerima pekerjaan.'],
+      ['Lupa kata sandi?','Hubungi admin via WhatsApp '+BIZ.waTampil+' untuk bantuan pemulihan akun.'],
+    ]],
+  ];
+  const wa='https://wa.me/'+BIZ.wa+'?text='+encodeURIComponent('Halo admin '+BIZ.badan+', saya ada pertanyaan:');
+  return `<div style="padding:20px 20px 10px"><h3 style="font-size:18px;font-weight:800">🤖 Pusat Bantuan</h3><p style="font-size:12px;color:var(--muted);margin-top:3px">Jawaban cepat untuk pertanyaan umum — ketuk untuk membuka.</p></div>
+  <div style="padding:0 16px 8px">${groups.map(([g,items])=>`<div style="font-size:12px;font-weight:800;color:var(--brand);margin:12px 4px 6px">${g}</div>${items.map(([q,a])=>`<details style="border:1px solid var(--line);border-radius:12px;margin-bottom:7px;background:var(--surface);overflow:hidden"><summary style="padding:12px 14px;font-weight:700;font-size:13px;cursor:pointer">${q}</summary><div style="padding:2px 14px 13px;font-size:12.5px;line-height:1.55;color:#2c4642">${a}</div></details>`).join('')}`).join('')}</div>
+  <div style="padding:6px 20px 24px"><div style="background:#E7F2F0;border-radius:14px;padding:15px;text-align:center"><div style="font-size:13px;font-weight:800;margin-bottom:9px">Masih ada pertanyaan?</div><a href="${wa}" target="_blank" class="btn btn-primary" style="text-decoration:none">💬 Chat Admin (WhatsApp)</a><div style="font-size:11px;color:var(--muted);margin-top:7px">Dibalas cepat pada jam kerja · ${BIZ.waTampil}</div></div>
+  <button class="btn btn-ghost" style="margin-top:10px" onclick="closeSheet()">Tutup</button></div>`;
+}
+function openBantuan(){openSheet(faqHTML());}
 function openKeamanan(){openSheet(infoSheet('🔒 Keamanan & Kepercayaan','Kenapa aman bertransaksi di Tukangin',[
   ['Dana ditahan dulu (escrow)','Saat Anda bayar, dana <b>tidak langsung</b> diberikan ke tukang — ditahan dulu sampai Anda menekan "Selesai". Bila pekerjaan bermasalah, dana bisa dikembalikan.'],
   ['Tukang terverifikasi KTP','Setiap tukang wajib unggah <b>KTP + selfie</b> sebelum boleh menerima pekerjaan. Bukan orang anonim — identitasnya tercatat.'],
   ['Bergaransi','Pekerjaan punya masa garansi. Bila ada yang kurang, tukang wajib memperbaiki tanpa biaya tambahan.'],
   ['Semua terekam','Foto sebelum/sesudah, lokasi GPS, dan percakapan tersimpan di app — ada bukti jelas bila terjadi sengketa.'],
-  ['Dikelola usaha & orang nyata','Tukangin dikelola <b>Guna Merta Home Service (UD Gunamerta)</b>, kontraktor di Canggu. Alamat: '+BIZ.alamat+'. WA: '+BIZ.waTampil+'. Kami tidak sembunyi.'],
+  ['Dikelola usaha & orang nyata','Tukangin dikelola <b>Guna Merta Home Service</b>. Office: '+BIZ.alamat+'. WA: '+BIZ.waTampil+'. Kami tidak sembunyi.'],
   ['Uang Anda tidak disimpan di aplikasi','Tukangin <b>tidak</b> menaruh saldo/dompet di app dan <b>tidak</b> menyimpan data kartu atau PIN Anda. Pembayaran lewat transfer ke rekening resmi usaha — jadi tak ada saldo yang bisa "dikuras" dari aplikasi.'],
   ['Ada masalah? Mudah','Tekan "Ada Masalah" pada pesanan, atau hubungi kami via WhatsApp '+BIZ.waTampil+'. Kami bantu mediasi sebelum dana cair ke tukang.'],
 ]));}
 function openTentang(){openSheet(infoSheet('ℹ️ Tentang Tukangin','Layanan tukang terpercaya di Bali',[
-  ['Dikelola oleh','<b>Guna Merta Home Service</b> (UD Gunamerta) — kontraktor berpengalaman di Canggu, Bali. Di balik Tukangin ada usaha & orang nyata, bukan sekadar aplikasi.'],
-  ['Alamat','Jln Tukad Irawadi No. 44, Bali.'],
-  ['Hubungi kami','WhatsApp 0813-3877-3717 — dibalas cepat pada jam kerja.'],
+  ['Dikelola oleh','<b>Guna Merta Home Service</b> — usaha & orang nyata di balik Tukangin, bukan sekadar aplikasi.'],
+  ['Office',''+BIZ.alamat+'.'],
+  ['Hubungi kami','WhatsApp '+BIZ.waTampil+' — dibalas cepat pada jam kerja.'],
   ['Cara kami menjaga Anda','Setiap tukang diverifikasi (KTP + selfie). Pembayaran ditahan aman (escrow) sampai Anda konfirmasi selesai. Pekerjaan bergaransi.'],
   ['Misi kami','Menghubungkan pemilik rumah & villa dengan tukang terpercaya — harga jelas, pembayaran aman.']
 ]));}
