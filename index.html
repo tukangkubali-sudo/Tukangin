@@ -228,6 +228,7 @@ function welcomeHTML(){return `<div style="min-height:100vh;min-height:100dvh;di
   <div style="background:var(--surface);border-radius:26px 26px 0 0;padding:24px 22px 30px">
     <button class="btn btn-primary" style="font-size:17px;padding:16px" onclick="setAuth('daftar')">Daftar Gratis</button>
     <button class="btn btn-ghost" style="margin-top:11px" onclick="setAuth('login')">Sudah punya akun? Masuk</button>
+    <button class="btn btn-ghost btn-sm" style="margin-top:11px;color:#0D5953;font-weight:800" onclick="openKeamanan()">🔒 Keamanan & Kepercayaan — kenapa aman?</button>
     <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:16px">Dikelola <b>Guna Merta Home Service</b> · Canggu, Bali</p>
   </div>
 </div>`;}
@@ -412,7 +413,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v29';
+const APPVER='v31';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -464,6 +465,7 @@ function renderPemilik(){
         <p style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:10px">Pembayaran ditahan ${BIZ.nama} sampai Anda konfirmasi pekerjaan selesai.</p>
       </div>
       <div id="statsbox" class="card" style="padding:14px;margin-top:13px;display:none"></div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:11px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openKeamanan()">🔒 Keamanan & Kepercayaan — kenapa aman?</button>
       <div style="display:flex;gap:8px;margin-top:11px">
         <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openTentang()">ℹ️ Tentang</button>
         <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openKebijakan()">📜 Kebijakan</button>
@@ -1860,6 +1862,15 @@ function infoSheet(judul,sub,items){return `
     ${items.map(([h,b])=>`<div style="margin-bottom:13px"><div style="font-weight:800;color:var(--brand);margin-bottom:2px">${h}</div><div>${b}</div></div>`).join('')}
   </div>
   <div style="padding:0 20px 24px"><button class="btn btn-primary" onclick="closeSheet()">Tutup</button></div>`;}
+function openKeamanan(){openSheet(infoSheet('🔒 Keamanan & Kepercayaan','Kenapa aman bertransaksi di Tukangin',[
+  ['Dana ditahan dulu (escrow)','Saat Anda bayar, dana <b>tidak langsung</b> diberikan ke tukang — ditahan dulu sampai Anda menekan "Selesai". Bila pekerjaan bermasalah, dana bisa dikembalikan.'],
+  ['Tukang terverifikasi KTP','Setiap tukang wajib unggah <b>KTP + selfie</b> sebelum boleh menerima pekerjaan. Bukan orang anonim — identitasnya tercatat.'],
+  ['Bergaransi','Pekerjaan punya masa garansi. Bila ada yang kurang, tukang wajib memperbaiki tanpa biaya tambahan.'],
+  ['Semua terekam','Foto sebelum/sesudah, lokasi GPS, dan percakapan tersimpan di app — ada bukti jelas bila terjadi sengketa.'],
+  ['Dikelola usaha & orang nyata','Tukangin dikelola <b>Guna Merta Home Service (UD Gunamerta)</b>, kontraktor di Canggu. Alamat: '+BIZ.alamat+'. WA: '+BIZ.waTampil+'. Kami tidak sembunyi.'],
+  ['Uang Anda tidak disimpan di aplikasi','Tukangin <b>tidak</b> menaruh saldo/dompet di app dan <b>tidak</b> menyimpan data kartu atau PIN Anda. Pembayaran lewat transfer ke rekening resmi usaha — jadi tak ada saldo yang bisa "dikuras" dari aplikasi.'],
+  ['Ada masalah? Mudah','Tekan "Ada Masalah" pada pesanan, atau hubungi kami via WhatsApp '+BIZ.waTampil+'. Kami bantu mediasi sebelum dana cair ke tukang.'],
+]));}
 function openTentang(){openSheet(infoSheet('ℹ️ Tentang Tukangin','Layanan tukang terpercaya di Bali',[
   ['Dikelola oleh','<b>Guna Merta Home Service</b> (UD Gunamerta) — kontraktor berpengalaman di Canggu, Bali. Di balik Tukangin ada usaha & orang nyata, bukan sekadar aplikasi.'],
   ['Alamat','Jln Tukad Irawadi No. 44, Bali.'],
