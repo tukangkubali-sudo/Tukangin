@@ -27,7 +27,7 @@
 <meta name="twitter:image" content="https://tukangkubali-sudo.github.io/Tukangin/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script>window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__bip=e;});window.addEventListener('appinstalled',function(){window.__bip=null;});</script>
+<script>window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__bip=e;});window.addEventListener('appinstalled',function(){window.__bip=null;});window.__recovery=(location.hash.indexOf('type=recovery')>=0);</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
@@ -187,6 +187,7 @@ let ORDERS=[];
 /* ====== AUTH ====== */
 let authMode='welcome';
 async function boot(){
+  if(window.__recovery){renderResetForm();return;}
   const {data:{session}}=await sb.auth.getSession();
   if(!session){renderAuth();return}
   await loadMe();
@@ -268,7 +269,8 @@ function renderAuthForm(){
     $('authform').innerHTML=`
       <div class="field"><label>Email</label><input class="input" id="a_email" inputmode="email" placeholder="email@contoh.com"></div>
       <div class="field"><label>Password</label><input class="input" id="a_pass" type="password" placeholder="Password"></div>
-      <button class="btn btn-primary" id="a_btn" onclick="doLogin()">Masuk</button>`;
+      <button class="btn btn-primary" id="a_btn" onclick="doLogin()">Masuk</button>
+      <div style="text-align:center;margin-top:13px"><span onclick="lupaSandi()" style="color:var(--brand);font-size:12.5px;font-weight:700;text-decoration:underline">Lupa kata sandi?</span></div>`;
   }
 }
 let pickedRole='pemilik';
@@ -292,6 +294,37 @@ async function doDaftar(){
   const uid=data.user.id;
   const {error:pe}=await sb.from('profiles').insert({id:uid,nama,telp,role:pickedRole,inisial:initial(nama),kyc:pickedRole==='tukang',setuju_aturan:pickedRole==='tukang'?new Date().toISOString():null});
   if(pe){authErr('Akun dibuat tapi gagal simpan profil: '+pe.message);busy(false,'Buat Akun');return}
+  await loadMe();
+}
+async function lupaSandi(){
+  authErr('');
+  const email=(($('a_email')||{}).value||'').trim();
+  if(!email||!email.includes('@')){authErr('Ketik email Anda di kolom Email dulu, lalu tekan "Lupa kata sandi?".');return}
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+  if(error){authErr(error.message);return}
+  toast('✅ Email pemulihan dikirim ke '+email+'. Cek inbox & folder spam.');
+  $('autherr').innerHTML='<div style="background:#E7F2F0;color:#0D5953;border:1px solid #cfe2de;border-radius:10px;padding:11px;font-size:12.5px;font-weight:600">📧 Email pemulihan dikirim ke '+esc(email)+'. Buka link di email itu untuk membuat kata sandi baru. (Cek folder spam bila tak ada.)</div>';
+}
+function renderResetForm(){
+  $('app').innerHTML=`<div style="min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;justify-content:center;padding:26px;background:linear-gradient(160deg,#0D5953,#0b463f)">
+    <div class="card" style="padding:22px">
+      <div style="font-size:34px;text-align:center">🔑</div>
+      <h3 style="font-size:18px;font-weight:800;text-align:center;margin-top:6px">Buat Kata Sandi Baru</h3>
+      <p style="font-size:12.5px;color:var(--muted);text-align:center;margin:4px 0 14px">Masukkan kata sandi baru untuk akun Anda.</p>
+      <div id="autherr"></div>
+      <div class="field"><label>Kata sandi baru</label><input class="input" id="r_pass" type="password" placeholder="Min. 6 karakter"></div>
+      <button class="btn btn-primary" id="r_btn" style="margin-top:8px" onclick="doReset()">Simpan Sandi Baru</button>
+    </div></div>`;
+}
+async function doReset(){
+  const p=(($('r_pass')||{}).value||'');const eb=$('autherr');
+  if(p.length<6){if(eb)eb.innerHTML='<div class="errbox">Kata sandi minimal 6 karakter.</div>';return}
+  const b=$('r_btn');if(b){b.disabled=true;b.textContent='Menyimpan…';}
+  const {error}=await sb.auth.updateUser({password:p});
+  if(error){if(eb)eb.innerHTML='<div class="errbox">'+esc(error.message)+'</div>';if(b){b.disabled=false;b.textContent='Simpan Sandi Baru';}return}
+  window.__recovery=false;
+  try{history.replaceState(null,'',location.pathname);}catch(e){}
+  toast('✅ Kata sandi diperbarui');
   await loadMe();
 }
 async function doLogin(){
@@ -373,8 +406,12 @@ function adminPending(){
   return ORDERS.filter(o=>o.status==='MENUNGGU_VERIFIKASI'||(o.status==='DANA_DITAHAN'&&!o.tukang_id)||o.garansi_klaim).length;
 }
 let _myLoc=null,_trackTimer=null,_trackOrder=null;
+const AREAS=['Denpasar','Kuta','Legian','Seminyak','Kerobokan','Canggu','Jimbaran','Nusa Dua','Sanur','Ubud','Gianyar','Tabanan','Badung','Mengwi','Abiansemal'];
+let _kerjaFilter='semua';
+function setKerjaFilter(v){_kerjaFilter=v;render();}
 function ensureMyLoc(){if(_myLoc||!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(p=>{_myLoc={lat:p.coords.latitude,lng:p.coords.longitude};if(VIEW&&VIEW.tab==='kerja'&&!VIEW.orderId)render();},()=>{},{enableHighAccuracy:false,timeout:8000,maximumAge:60000});}
 function jarakKe(o){return (_myLoc&&o.lat&&o.lng)?haversine(_myLoc.lat,_myLoc.lng,o.lat,o.lng):null;}
+function mintaLokasi(){if(!navigator.geolocation){toast('HP tidak mendukung lokasi');return}toast('Meminta izin lokasi…');navigator.geolocation.getCurrentPosition(p=>{_myLoc={lat:p.coords.latitude,lng:p.coords.longitude};toast('✅ Lokasi aktif');render();},()=>{toast('Izin lokasi ditolak. Aktifkan di pengaturan browser HP.');},{enableHighAccuracy:true,timeout:10000,maximumAge:0});}
 function fmtJarak(m){return m==null?'':(m>1000?(m/1000).toFixed(1)+' km':Math.round(m)+' m');}
 function tukangAvailable(){
   let arr=ORDERS.filter(o=>!o.tukang_id&&o.status==='DANA_DITAHAN');
@@ -429,7 +466,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v35';
+const APPVER='v39';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -493,6 +530,7 @@ function renderPemilik(){
       <div class="sec-title">Pesanan Terbaru</div>
       ${myOrders().slice(0,3).map(orderCard).join('')||emptyBox('📋','Belum ada pesanan')}
       <div class="sec-title">Tukang Kami</div>
+      <select id="areaFilter" onchange="loadTukangList('tukangbox',this.value)" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;background:#fff;margin-bottom:9px">${['<option value="">📍 Semua area</option>'].concat(AREAS.map(x=>`<option value="${x}">${x}</option>`)).join('')}</select>
       <div id="tukangbox"><div class="card" style="padding:18px;text-align:center"><div class="spinner" style="margin:0 auto"></div></div></div>
       <div class="sec-title">Apa Kata Pelanggan</div>
       <div id="testibox"><div class="card" style="padding:18px;text-align:center"><div class="spinner" style="margin:0 auto"></div></div></div>`;
@@ -528,9 +566,13 @@ function renderTukang(){
   const sc=$('scroll');
   if(VIEW.tab==='kerja'){
     ensureMyLoc();
-    const a=tukangAvailable();
+    let a=tukangAvailable();const locOn=!!_myLoc;
+    if(_kerjaFilter==='area'&&ME.area){a=a.filter(o=>(o.lokasi||'').toLowerCase().includes(ME.area.toLowerCase()));}
+    const chip=(v,t)=>`<button onclick="setKerjaFilter('${v}')" style="flex:1;font-size:12px;font-weight:700;padding:8px 10px;border-radius:9px;border:1px solid ${_kerjaFilter===v?'#0D5953':'var(--line)'};background:${_kerjaFilter===v?'#0D5953':'#fff'};color:${_kerjaFilter===v?'#fff':'#46605c'}">${t}</button>`;
     sc.innerHTML=`${verifBanner()}<div class="infoline">💰 <span>Hanya pekerjaan ber-escrow (dana sudah ditahan) yang tampil — pasti dibayar.</span></div>
-      <div style="display:flex;justify-content:space-between;align-items:center"><div class="sec-title" style="margin:14px 2px 6px">Pekerjaan Tersedia</div><button class="btn-sm btn-ghost" onclick="refresh()">⟳</button></div>
+      ${ME.area?`<div style="display:flex;gap:8px;margin:10px 0 2px">${chip('semua','🌐 Semua')}${chip('area','📍 Area Saya · '+esc(ME.area))}</div>`:''}
+      ${locOn?'':`<div class="card" style="padding:13px;margin:10px 0;border:1.5px solid #0D5953;display:flex;gap:10px;align-items:center"><div style="font-size:22px">📍</div><div style="flex:1"><b style="font-size:13px">Aktifkan lokasi Anda</b><div style="font-size:11.5px;color:#46605c;margin-top:1px">Agar pekerjaan <b>terdekat</b> tampil di urutan teratas.</div></div><button class="btn btn-primary btn-sm" onclick="mintaLokasi()">Aktifkan</button></div>`}
+      <div style="display:flex;justify-content:space-between;align-items:center"><div class="sec-title" style="margin:14px 2px 6px">${locOn?'📍 Pekerjaan Terdekat':'Pekerjaan Tersedia'}</div><button class="btn-sm btn-ghost" onclick="refresh()">⟳</button></div>
       ${a.map(jobCard).join('')||emptyBox('🔍','Belum ada pekerjaan','Tarik ⟳ untuk menyegarkan.')}`;
   }else if(VIEW.tab==='aktif'){
     const m=tukangMine();
@@ -576,6 +618,12 @@ function profilT(){
       <input class="input" id="ptelp" inputmode="tel" placeholder="08…" value="${esc(ME.telp||'')}">
       <button class="btn btn-primary" style="margin-top:12px" onclick="simpanTelp()">Simpan Nomor</button>
     </div>
+    <div class="sec-title">Area Layanan</div>
+    <div class="card" style="padding:16px">
+      <p style="font-size:12px;color:#46605c;margin-bottom:9px">Pilih area utama Anda. Ini hanya <b>petunjuk</b> agar pelanggan area itu mudah menemukan Anda — Anda <b>tetap bisa</b> mengambil pekerjaan di luar area, termasuk yang jauh.</p>
+      <select id="parea" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff">${['<option value="">— pilih area —</option>'].concat(AREAS.map(x=>`<option value="${x}"${ME.area===x?' selected':''}>${x}</option>`)).join('')}</select>
+      <button class="btn btn-primary" style="margin-top:12px" onclick="simpanArea()">Simpan Area</button>
+    </div>
     ${vs==='terverifikasi'?kartuPenghasilan():verifSection()}
     <div class="sec-title">Cara Pembayaran</div>
     <div class="card" style="padding:16px">
@@ -610,6 +658,12 @@ async function simpanTelp(){
   const {error}=await sb.from('profiles').update({telp:t}).eq('id',ME.id);
   if(error){toast('Gagal: '+error.message);return}
   ME.telp=t;toast('✅ Nomor tersimpan');render();
+}
+async function simpanArea(){
+  const v=(($('parea')||{}).value||'');
+  const {error}=await sb.from('profiles').update({area:v||null}).eq('id',ME.id);
+  if(error){toast('Gagal: '+error.message);return}
+  ME.area=v||null;toast('✅ Area tersimpan');render();
 }
 async function adminSetTelp(id){
   const t=(($('atelp')||{}).value||'').trim();
@@ -1219,6 +1273,7 @@ async function renderDetail(){
   const harian=o.sistem==='harian';
   const amPemilik=o.pemilik_id===ME.id;
   if(o.tukang_id===ME.id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))startTracking(o.id);else if(_trackOrder===o.id)stopTracking();
+  const lacakNote=(o.tukang_id===ME.id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))?`<div class="card" style="padding:12px 14px;margin-top:12px;background:#FFF7E6;border:1px solid #F0D9A0;display:flex;gap:10px;align-items:center"><div style="font-size:20px">📍</div><div style="font-size:12px;color:#7a5b14;line-height:1.5">Biarkan app <b>tetap terbuka</b> selama perjalanan agar pelanggan dapat melihat <b>posisi Anda secara langsung</b>.</div></div>`:'';
   let banner,actions='';
   // banner
   let bst='Dana ditahan Tukangin',bsub='Aman sampai pemilik konfirmasi.';
@@ -1301,6 +1356,7 @@ async function renderDetail(){
   const showChat=o.tukang_id&&['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status);
 
   sc.innerHTML=`${banner}
+    ${lacakNote}
     <div class="card ocard" style="margin-top:12px"><div class="top"><div class="othumb">${k.ic}</div>
       <div style="flex:1"><h4>${esc(o.judul)}</h4><div class="meta">📍 ${esc(o.lokasi||'-')} <span class="dot"></span>${o.jarak_km||'-'} km</div></div>
       <span class="badge ${s.c}">${s.l}</span></div>
@@ -1797,12 +1853,13 @@ async function openTukangProfil(id){
     ${gal}
   </div>`);
 }
-async function loadTukangList(boxId){
+async function loadTukangList(boxId,area){
   const box=$(boxId);if(!box)return;
   try{
-    const {data}=await sb.rpc('tukang_list_publik');const arr=data||[];
-    if(!arr.length){box.innerHTML='<div class="card" style="padding:16px;text-align:center;color:var(--muted);font-size:12.5px">Belum ada tukang terverifikasi.</div>';return}
-    box.innerHTML=arr.map(t=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:11px;cursor:pointer" onclick="openTukangProfil('${t.id}')"><div class="profav" style="width:42px;height:42px;font-size:15px">${esc(t.inisial||initial(t.nama||'T'))}</div><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(t.nama||'Tukang')} <span style="color:var(--ok)">✔</span></b><div class="meta" style="font-size:11px">⭐ ${t.rating||'5.0'} · ${t.selesai||0} selesai${(t.keahlian||[]).length?' · '+(t.keahlian||[]).slice(0,2).map(esc).join(', '):''}</div></div><span style="color:#0D5953;font-size:12px;font-weight:700">Lihat ›</span></div>`).join('');
+    const {data}=await sb.rpc('tukang_list_publik');let arr=data||[];
+    if(area)arr=arr.filter(t=>(t.area||'')===area);
+    if(!arr.length){box.innerHTML='<div class="card" style="padding:16px;text-align:center;color:var(--muted);font-size:12.5px">'+(area?'Belum ada tukang terverifikasi di area '+esc(area)+'. Coba "Semua area".':'Belum ada tukang terverifikasi.')+'</div>';return}
+    box.innerHTML=arr.map(t=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:11px;cursor:pointer" onclick="openTukangProfil('${t.id}')"><div class="profav" style="width:42px;height:42px;font-size:15px">${esc(t.inisial||initial(t.nama||'T'))}</div><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(t.nama||'Tukang')} <span style="color:var(--ok)">✔</span></b><div class="meta" style="font-size:11px">⭐ ${t.rating||'5.0'} · ${t.selesai||0} selesai${t.area?' · 📍 '+esc(t.area):''}${(t.keahlian||[]).length?' · '+(t.keahlian||[]).slice(0,2).map(esc).join(', '):''}</div></div><span style="color:#0D5953;font-size:12px;font-weight:700">Lihat ›</span></div>`).join('');
   }catch(e){box.innerHTML='<div class="card" style="padding:16px;text-align:center;color:var(--muted);font-size:12px">Gagal memuat tukang.</div>';}
 }
 async function openPantauOperator(){
@@ -2020,7 +2077,7 @@ function closeSheet(){if(_mapTimer){clearInterval(_mapTimer);_mapTimer=null;}if(
 function emptyBox(ic,t,p){return `<div class="empty"><div class="ic">${ic}</div><h4 style="font-size:15px;margin-top:8px">${t}</h4>${p?`<p>${p}</p>`:''}</div>`}
 function timeAgo(t){const d=(Date.now()-new Date(t).getTime())/1000;if(d<60)return'baru saja';if(d<3600)return Math.floor(d/60)+' mnt lalu';if(d<86400)return Math.floor(d/3600)+' jam lalu';return Math.floor(d/86400)+' hari lalu'}
 
-sb.auth.onAuthStateChange((e,session)=>{if(e==='SIGNED_OUT'){ME=null;renderAuth()}});
+sb.auth.onAuthStateChange((e,session)=>{if(e==='SIGNED_OUT'){ME=null;renderAuth()}if(e==='PASSWORD_RECOVERY'){window.__recovery=true;renderResetForm()}});
 boot();
 </script>
 </body>
