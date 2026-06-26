@@ -412,7 +412,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v28';
+const APPVER='v29';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -446,6 +446,10 @@ function renderPemilik(){
     sc.innerHTML=`<div class="hero"><h3>Butuh tukang hari ini?</h3>
       <p>Posting pekerjaan, bayar aman lewat escrow.</p>
       <button onclick="sheetBuat()">＋ Buat Pesanan</button></div>
+      <div style="background:linear-gradient(135deg,#0D5953,#0F766E);color:#fff;border-radius:16px;padding:13px 15px;margin-top:13px;display:flex;align-items:center;gap:11px">
+        <div style="font-size:24px">🎉</div>
+        <div style="flex:1"><b style="font-size:13.5px">Baru Diluncurkan di Bali</b><div style="font-size:11px;opacity:.92;margin-top:2px;line-height:1.45">Jadilah pelanggan pertama — tukang terverifikasi KTP, bayar aman lewat escrow, ada garansi.</div></div>
+      </div>
       <div class="card" style="padding:15px;margin-top:13px">
         <div style="display:flex;gap:6px;text-align:center">
           <div style="flex:1"><div style="font-size:21px">📝</div><div style="font-size:11.5px;font-weight:800;margin-top:2px">1. Pesan</div><div style="font-size:10px;color:var(--muted)">pilih kategori</div></div>
