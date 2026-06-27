@@ -469,7 +469,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v45';
+const APPVER='v46';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -814,6 +814,11 @@ async function renderAdmin(){
     <div class="card" style="padding:14px;margin-bottom:8px">
       <p style="font-size:12.5px;color:#46605c;margin-bottom:11px">Beri/cabut akses admin untuk karyawan. Operator bisa kerja harian, tapi tak bisa kelola daftar hitam, ekspor data, atau lihat ringkasan keuangan owner.</p>
       <div style="display:flex;gap:8px"><button class="btn btn-ghost" style="flex:1" onclick="openKelolaOperator()">Kelola</button><button class="btn btn-primary" style="flex:1" onclick="openPantauOperator()">🔍 Pantau</button></div>
+    </div>
+    <div class="sec-title">👥 Semua Pengguna Terdaftar</div>
+    <div class="card" style="padding:14px;margin-bottom:8px">
+      <p style="font-size:12.5px;color:#46605c;margin-bottom:11px">Lihat SEMUA yang sudah daftar (tukang &amp; pemilik), termasuk yang <b>belum verifikasi</b>, beserta tanggal daftarnya.</p>
+      <button class="btn btn-primary" onclick="openSemuaPengguna()">👥 Lihat Semua Pengguna</button>
     </div>`:''}
     ${kl.length?`<div class="sec-title">🛠️ Klaim Garansi · ${kl.length}</div>${kl.map(o=>`<div class="card" style="padding:14px;margin-bottom:10px;border:1.5px solid var(--brass)"><div style="font-size:13.5px;font-weight:800">${esc(o.judul||'Pesanan')}</div><div class="meta">Tukang: ${esc(o.tukang_nama||'-')} · Pemilik: ${esc(o.pemilik_nama||'-')}</div><div style="display:flex;gap:8px;margin-top:11px"><button class="btn btn-danger btn-sm" style="flex:1" onclick="strikeTukang('${o.tukang_id}','${o.id}')">Tukang menolak (Strike)</button><button class="btn btn-primary btn-sm" style="flex:1" onclick="beresGaransi('${o.id}')">Sudah diperbaiki</button></div></div>`).join('')}`:''}
     <div class="sec-title">Verifikasi Tukang${pending.length?` · ${pending.length}`:''}</div>
@@ -1892,6 +1897,26 @@ async function loadTukangList(boxId,area){
     if(!arr.length){box.innerHTML='<div class="card" style="padding:16px;text-align:center;color:var(--muted);font-size:12.5px">'+(area?'Belum ada tukang terverifikasi di area '+esc(area)+'. Coba "Semua area".':'Belum ada tukang terverifikasi.')+'</div>';return}
     box.innerHTML=arr.map(t=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:11px;cursor:pointer" onclick="openTukangProfil('${t.id}')"><div class="profav" style="width:42px;height:42px;font-size:15px">${esc(t.inisial||initial(t.nama||'T'))}</div><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(t.nama||'Tukang')} <span style="color:var(--ok)">✔</span></b><div class="meta" style="font-size:11px">⭐ ${t.rating||'5.0'} · ${t.selesai||0} selesai${t.area?' · 📍 '+esc(t.area):''}${(t.keahlian||[]).length?' · '+(t.keahlian||[]).slice(0,2).map(esc).join(', '):''}</div></div><span style="color:#0D5953;font-size:12px;font-weight:700">Lihat ›</span></div>`).join('');
   }catch(e){box.innerHTML='<div class="card" style="padding:16px;text-align:center;color:var(--muted);font-size:12px">Gagal memuat tukang.</div>';}
+}
+async function openSemuaPengguna(){
+  if(!ME.is_owner){toast('Khusus Owner');return}
+  openSheet(`<div style="padding:20px"><h3 style="font-size:17px;font-weight:800;margin-bottom:4px">👥 Semua Pengguna Terdaftar</h3><p style="font-size:11.5px;color:var(--muted);margin-bottom:12px">Semua yang sudah daftar, termasuk yang belum verifikasi.</p><div id="spgList"><div class="loadwrap"><div class="spinner"></div></div></div></div>`);
+  const {data,error}=await sb.from('profiles').select('id,nama,role,verif_status,telp,area,dibuat,is_admin,is_owner').order('dibuat',{ascending:false});
+  const box=$('spgList');if(!box)return;
+  if(error){box.innerHTML='<p style="font-size:12.5px;color:var(--bad)">Gagal memuat: '+esc(error.message)+'</p>';return}
+  const list=data||[];
+  const tukang=list.filter(p=>p.role==='tukang'),pemilik=list.filter(p=>p.role!=='tukang');
+  const ver=tukang.filter(p=>p.verif_status==='terverifikasi').length,men=tukang.filter(p=>p.verif_status==='menunggu').length,blm=tukang.filter(p=>!p.verif_status||p.verif_status==='belum').length,tol=tukang.filter(p=>p.verif_status==='ditolak').length;
+  const vbadge=(s)=>({terverifikasi:'<span style="font-size:10px;font-weight:700;color:#1B7A4B;background:#E7F5EC;padding:2px 7px;border-radius:6px">✔ Verified</span>',menunggu:'<span style="font-size:10px;font-weight:700;color:#9a6a14;background:#FEF3E0;padding:2px 7px;border-radius:6px">⏳ Menunggu</span>',ditolak:'<span style="font-size:10px;font-weight:700;color:#9A2D2D;background:#FBE9E7;padding:2px 7px;border-radius:6px">❌ Ditolak</span>'}[s]||'<span style="font-size:10px;font-weight:700;color:#9A2D2D;background:#FBE9E7;padding:2px 7px;border-radius:6px">⚠ Belum</span>');
+  const item=(p)=>`<div style="border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div style="min-width:0"><b style="font-size:13.5px">${esc(p.nama||'(tanpa nama)')}</b><div class="meta" style="font-size:11px">${p.role==='tukang'?'👷 Tukang':'🏠 Pemilik'}${p.is_owner?' · 👑 Owner':p.is_admin?' · ⚙️ Operator':''}${p.telp?' · 📱 '+esc(p.telp):''}${p.area?' · 📍 '+esc(p.area):''}</div><div class="meta" style="font-size:10.5px">Daftar: ${p.dibuat?tgljamID(p.dibuat):'-'}</div></div>${p.role==='tukang'?vbadge(p.verif_status):''}</div></div>`;
+  box.innerHTML=`<div style="display:flex;gap:7px;margin-bottom:12px;font-size:11.5px">
+      <div style="flex:1;background:#0D5953;color:#fff;border-radius:10px;padding:9px;text-align:center"><div style="font-size:18px;font-weight:800">${list.length}</div>Total</div>
+      <div style="flex:1;background:#E7F2F0;border-radius:10px;padding:9px;text-align:center"><div style="font-size:18px;font-weight:800;color:#0D5953">${tukang.length}</div>Tukang</div>
+      <div style="flex:1;background:#E7F2F0;border-radius:10px;padding:9px;text-align:center"><div style="font-size:18px;font-weight:800;color:#0D5953">${pemilik.length}</div>Pemilik</div></div>
+    <div style="font-size:11.5px;color:#46605c;margin-bottom:10px;background:#f5f9f8;border-radius:9px;padding:9px 11px">Tukang: <b style="color:#1B7A4B">${ver} verified</b> · <b style="color:#9a6a14">${men} menunggu</b> · <b style="color:#9A2D2D">${blm} belum</b>${tol?' · '+tol+' ditolak':''}</div>
+    ${men?`<div class="sec-title" style="margin:6px 2px">⏳ Menunggu Verifikasi (${men})</div>`+tukang.filter(p=>p.verif_status==='menunggu').map(item).join(''):''}
+    <div class="sec-title" style="margin:10px 2px">👷 Tukang (${tukang.length})</div>${tukang.map(item).join('')||'<p style="font-size:12px;color:var(--muted)">Belum ada.</p>'}
+    <div class="sec-title" style="margin:10px 2px">🏠 Pemilik (${pemilik.length})</div>${pemilik.map(item).join('')||'<p style="font-size:12px;color:var(--muted)">Belum ada.</p>'}`;
 }
 async function openPantauOperator(){
   openSheet(`<div style="padding:32px;text-align:center"><div class="spinner"></div></div>`);
