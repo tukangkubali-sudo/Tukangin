@@ -469,7 +469,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v41';
+const APPVER='v43';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -523,6 +523,7 @@ function renderPemilik(){
       <div id="statsbox" class="card" style="padding:14px;margin-top:13px;display:none"></div>
       <button class="btn btn-ghost" style="width:100%;margin-top:11px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openKeamanan()">🔒 Keamanan & Kepercayaan — kenapa aman?</button>
       <button class="btn btn-ghost" style="width:100%;margin-top:9px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openBantuan()">🤖 Pusat Bantuan — pertanyaan umum</button>
+      <button class="btn btn-ghost" style="width:100%;margin-top:9px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openKomisi()">💸 Bagaimana biaya & komisi dihitung?</button>
       <div style="display:flex;gap:8px;margin-top:11px">
         <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openTentang()">ℹ️ Tentang</button>
         <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openKebijakan()">📜 Kebijakan</button>
@@ -573,6 +574,7 @@ function renderTukang(){
     if(_kerjaFilter==='area'&&ME.area){a=a.filter(o=>(o.lokasi||'').toLowerCase().includes(ME.area.toLowerCase()));}
     const chip=(v,t)=>`<button onclick="setKerjaFilter('${v}')" style="flex:1;font-size:12px;font-weight:700;padding:8px 10px;border-radius:9px;border:1px solid ${_kerjaFilter===v?'#0D5953':'var(--line)'};background:${_kerjaFilter===v?'#0D5953':'#fff'};color:${_kerjaFilter===v?'#fff':'#46605c'}">${t}</button>`;
     sc.innerHTML=`${verifBanner()}<div class="infoline">💰 <span>Hanya pekerjaan ber-escrow (dana sudah ditahan) yang tampil — pasti dibayar.</span></div>
+      <div style="text-align:center;margin:2px 0 4px"><span onclick="openKomisi()" style="color:var(--brand);font-size:12px;font-weight:700;text-decoration:underline">💸 Bagaimana komisi dihitung? (jauh di bawah ojol)</span></div>
       ${ME.area?`<div style="display:flex;gap:8px;margin:10px 0 2px">${chip('semua','🌐 Semua')}${chip('area','📍 Area Saya · '+esc(ME.area))}</div>`:''}
       ${locOn?'':`<div class="card" style="padding:13px;margin:10px 0;border:1.5px solid #0D5953;display:flex;gap:10px;align-items:center"><div style="font-size:22px">📍</div><div style="flex:1"><b style="font-size:13px">Aktifkan lokasi Anda</b><div style="font-size:11.5px;color:#46605c;margin-top:1px">Agar pekerjaan <b>terdekat</b> tampil di urutan teratas.</div></div><button class="btn btn-primary btn-sm" onclick="mintaLokasi()">Aktifkan</button></div>`}
       <div style="display:flex;justify-content:space-between;align-items:center"><div class="sec-title" style="margin:14px 2px 6px">${locOn?'📍 Pekerjaan Terdekat':'Pekerjaan Tersedia'}</div><button class="btn-sm btn-ghost" onclick="refresh()">⟳</button></div>
@@ -1369,6 +1371,7 @@ async function renderDetail(){
     ${praKerjaSection(o,amPemilik)}
     ${fotoView(o)}
     <div class="sec-title">Rincian ${amPemilik?'Pembayaran':'Bayaran Anda'}</div>${feeBlock}
+    <div style="text-align:center;margin:9px 0 2px"><span onclick="openKomisi()" style="color:var(--brand);font-size:12px;font-weight:700;text-decoration:underline">ℹ️ Bagaimana biaya ini dihitung?</span></div>
     ${absensiSection(o)}
     ${usulanSection(o,amPemilik)}
     ${kodeCard}
@@ -1948,6 +1951,31 @@ async function muatTrust(){
       else tb.innerHTML=`<div class="card" style="padding:18px;text-align:center;color:var(--muted)"><div style="font-size:24px">💬</div><p style="font-size:12.5px;margin-top:5px">Belum ada ulasan. Jadilah pelanggan pertama yang memberi penilaian!</p></div>`;
     }
   }catch(e){}
+}
+function komisiTabelHTML(){
+  const rows=[[500000,'8,0%','5,0%'],[1000000,'8,0%','5,0%'],[3000000,'6,0%','3,7%'],[5000000,'4,8%','3,0%'],[10000000,'3,6%','2,4%']];
+  return `<div style="border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:12px;margin-top:4px">
+    <div style="display:flex;background:var(--brand);color:#fff;font-weight:700"><div style="flex:1;padding:7px 8px">Nilai job</div><div style="width:30%;padding:7px 8px;text-align:right">Komisi tukang</div><div style="width:30%;padding:7px 8px;text-align:right">Biaya layanan</div></div>
+    ${rows.map((r,i)=>`<div style="display:flex;${i%2?'background:#f5f9f8':''}"><div style="flex:1;padding:7px 8px">${rp(r[0])}</div><div style="width:30%;padding:7px 8px;text-align:right;color:#9A2D2D">${r[1]}</div><div style="width:30%;padding:7px 8px;text-align:right">${r[2]}</div></div>`).join('')}
+  </div><div style="font-size:10.5px;color:var(--muted);margin-top:5px">Persen efektif (rata-rata). Komisi &amp; biaya layanan turun untuk job besar.</div>`;
+}
+function openKomisi(){
+  const tukang=ME&&ME.role==='tukang';const t=komisiTabelHTML();
+  const items=tukang?[
+    ['Anda terima = Harga \u2212 Komisi','Tanpa potongan tersembunyi. Contoh: sepakat <b>Rp1.000.000</b>, komisi 8% (<b>Rp80.000</b>) \u2192 Anda terima <b>Rp920.000</b>.'],
+    ['Komisi berjenjang (turun untuk job besar)','Makin besar nilai pekerjaan, makin kecil persen komisinya. Job <b>Rp10 jt</b> hanya dipotong <b>3,6%</b>.'],
+    ['Jauh di bawah ojol','Ojek online memotong hingga <b>20%</b>. Tukangin hanya <b>8%</b> (kecil) sampai <b>2%</b> (job besar).'],
+    ['Tanpa saldo / deposit','Anda <b>tidak perlu</b> isi saldo agar dapat pekerjaan, dan <b>tidak ada</b> potongan dari saldo. Anda dibayar dari dana yang sudah ditahan (escrow).'],
+    ['Untuk apa komisi?','Menjalankan aplikasi, verifikasi tukang, mediasi bila ada sengketa, dan <b>menghadirkan pelanggan</b> untuk Anda.'],
+    ['Tabel komisi & biaya layanan',t],
+  ]:[
+    ['Anda bayar = Pekerjaan + Biaya layanan','Contoh: pekerjaan <b>Rp1.000.000</b> + biaya layanan <b>Rp50.000</b> = <b>Rp1.050.000</b>. Jelas, tanpa biaya tersembunyi.'],
+    ['Biaya layanan berjenjang','Makin besar nilai pekerjaan, makin kecil persennya \u2014 jadi pekerjaan besar tidak terasa mahal.'],
+    ['Untuk apa biaya layanan?','Untuk penahan dana (escrow), verifikasi tukang, mediasi bila ada masalah, dan operasional aplikasi.'],
+    ['Tukang dibayar adil','Tukang menerima harga kesepakatan dikurangi komisi <b>kecil</b> (tidak dipotong besar seperti ojol), jadi kualitas &amp; semangat kerjanya terjaga.'],
+    ['Tabel biaya & komisi',t],
+  ];
+  openSheet(infoSheet('\ud83d\udcb8 Bagaimana Biaya Dihitung',tukang?'Transparan \u2014 agar tidak ada salah paham':'Transparan \u2014 tanpa biaya tersembunyi',items));
 }
 function infoSheet(judul,sub,items){return `
   <div style="padding:20px 20px 12px"><h3 style="font-size:18px;font-weight:800">${judul}</h3>${sub?`<p style="font-size:12px;color:var(--muted);margin-top:3px">${sub}</p>`:''}</div>
