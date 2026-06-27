@@ -469,7 +469,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v44';
+const APPVER='v45';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -967,9 +967,31 @@ function adminCard(p){
     <div style="display:flex;gap:10px;margin-top:12px">
       <div style="flex:1"><div style="font-size:10.5px;color:var(--muted);margin-bottom:3px">KTP</div>${img(p.ktp_url)}</div>
       <div style="flex:1"><div style="font-size:10.5px;color:var(--muted);margin-bottom:3px">Selfie</div>${img(p.wajah_url)}</div></div>
-    <div style="display:flex;gap:9px;margin-top:12px"><button class="btn btn-danger" style="flex:1" onclick="tinjau('${p.id}',false)">Tolak</button><button class="btn btn-primary" style="flex:1" onclick="tinjau('${p.id}',true)">Setujui</button></div>
+    <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:11px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="bandingWajah('${p.id}')">🔍 Perbesar & Bandingkan Wajah</button>
+    <div style="display:flex;gap:9px;margin-top:9px"><button class="btn btn-danger" style="flex:1" onclick="tinjau('${p.id}',false)">Tolak</button><button class="btn btn-primary" style="flex:1" onclick="tinjau('${p.id}',true)">Setujui</button></div>
     <button class="btn btn-ghost btn-sm" style="margin-top:8px;color:var(--bad)" onclick="blokirCepat('${p.id}')">⛔ Tolak & Masukkan Daftar Hitam</button></div>`;
 }
+function cekVerif(){const a=$('c1')&&$('c1').checked,b=$('c2')&&$('c2').checked,c=$('c3')&&$('c3').checked,btn=$('btnSetuju');if(btn){btn.disabled=!(a&&b&&c);btn.style.opacity=(a&&b&&c)?'1':'.5';}}
+function bandingWajah(uid){(async()=>{
+  const {data:p}=await sb.from('profiles').select('id,nama,nik,ktp_url,wajah_url').eq('id',uid).maybeSingle();
+  if(!p){toast('Data tidak ditemukan');return}
+  const big=(url,lbl)=>url?`<div style="flex:1;min-width:0"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:700">${lbl}</div><img src="${url}" onclick="window.open('${url}')" style="width:100%;height:230px;object-fit:contain;background:#0b1f1c;border-radius:12px;border:1px solid var(--line)"></div>`:`<div style="flex:1"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">${lbl}</div><div style="height:230px;background:var(--surface);border-radius:12px;display:grid;place-items:center;color:var(--muted)">—</div></div>`;
+  const chk=(id,t)=>`<label style="display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;font-size:13px"><input type="checkbox" id="${id}" onchange="cekVerif()" style="width:18px;height:18px;flex:none"> <span>${t}</span></label>`;
+  openSheet(`<div style="padding:18px">
+    <h3 style="font-size:17px;font-weight:800">Bandingkan Identitas</h3>
+    <p style="font-size:12.5px;color:var(--muted);margin:2px 0 12px">${esc(p.nama||'')}${p.nik?' · NIK '+esc(p.nik):''}</p>
+    <div style="display:flex;gap:10px;margin-bottom:14px">${big(p.ktp_url,'🪪 Foto KTP')}${big(p.wajah_url,'🤳 Selfie')}</div>
+    <p style="font-size:11.5px;color:var(--muted);margin-bottom:7px">Ketuk gambar untuk memperbesar. Centang setelah memeriksa:</p>
+    ${chk('c1','Wajah di selfie <b>cocok</b> dengan foto KTP')}
+    ${chk('c2','Foto KTP <b>jelas</b> & NIK terbaca')}
+    ${chk('c3','Tidak ada tanda pemalsuan / wajah orang lain')}
+    <div style="display:flex;gap:9px;margin-top:12px">
+      <button class="btn btn-danger" style="flex:1" onclick="tinjau('${p.id}',false);closeSheet()">Tolak</button>
+      <button class="btn btn-primary" id="btnSetuju" style="flex:1;opacity:.5" disabled onclick="tinjau('${p.id}',true);closeSheet()">Setujui</button>
+    </div>
+    <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:9px">Tombol Setujui aktif setelah ketiga poin dicentang.</p>
+  </div>`);
+})();}
 async function tinjau(uid,ok){
   const {error}=await sb.from('profiles').update({verif_status:ok?'terverifikasi':'ditolak',kyc:ok}).eq('id',uid);
   if(error){toast('Gagal: '+error.message);return}
