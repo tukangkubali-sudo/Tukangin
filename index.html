@@ -469,7 +469,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v43';
+const APPVER='v44';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -1162,10 +1162,6 @@ function sheetBuat(kat){
         <input class="input" id="d_panjang" inputmode="decimal" placeholder="Panjang (m)" value="${draft.panjang||''}" oninput="draft.panjang=this.value">
         <input class="input" id="d_tinggi" inputmode="decimal" placeholder="Tinggi (m)" value="${draft.tinggi||''}" oninput="draft.tinggi=this.value">
       </div>
-      <div class="seg" id="matseg" style="margin-top:10px;margin-bottom:0">
-        <button class="${draft.material?'':'on'}" onclick="pickMat(false,this)">🔧 Jasa saja</button>
-        <button class="${draft.material?'on':''}" onclick="pickMat(true,this)">📦 Termasuk material</button>
-      </div>
     </div>
     <div class="field"><label>Sistem kerja</label>
       <div class="seg" id="sysseg" style="margin-bottom:0">
@@ -1178,6 +1174,13 @@ function sheetBuat(kat){
     <div class="field"><label>Titik GPS pekerjaan <span class="hint">opsional — untuk verifikasi check-in tukang</span></label>
       <button class="btn btn-ghost" id="gpsbtn" onclick="tandaiLokasi()">📍 Tandai Lokasi Saat Ini</button></div>
     <div id="borongan">
+    <div class="field"><label>Lingkup pekerjaan</label>
+      <div class="seg" id="matseg" style="margin-bottom:6px">
+        <button class="${draft.material?'':'on'}" onclick="pickMat(false,this)">🔧 Tenaga saja</button>
+        <button class="${draft.material?'on':''}" onclick="pickMat(true,this)">📦 Termasuk material</button>
+      </div>
+      <p class="hint" style="margin:0;line-height:1.5">Tukangin fokus <b>jasa tenaga</b> — material disiapkan konsumen. Pilih "Termasuk material" bila ingin tukang menyediakan bahan (harga jadi lebih tinggi).</p>
+    </div>
     <div class="field"><label>Harga ditaksir AI</label>
       <div class="estbox" id="estbox"><div class="lab">✨ Estimasi</div><div class="rng">Belum ditaksir</div><div class="note">Tekan tombol di bawah.</div></div>
       <button class="btn btn-brass" id="aibtn" style="margin-top:10px" onclick="estimasiAI()">✨ Taksir Harga</button></div>
@@ -1222,7 +1225,7 @@ async function taksir(d){
         const isPintu=/dorong|sliding|geser|pintu|gerbang/i.test(desk);
         prompt=`Anda penaksir harga jasa las/pagar besi di ${d.lokasi||'Bali'}, Bali, memakai harga pasar lokal terkini. Pekerjaan pagar/pintu besi ukuran ${d.panjang}m x ${d.tinggi}m = ${luas.toFixed(1)} m².${isPintu?' Ini PINTU DORONG (sliding) — tambahkan biaya rel, roda, dan rangka penguat.':''} Lingkup: ${d.material?'TERMASUK material (besi hollow, spandek, rel, roda, cat).':'JASA saja (las + pasang, material disediakan pemilik).'} Deskripsi: "${desk}". Hitung per m² lalu total. Balas HANYA JSON {"min":n,"max":n,"rekomendasi":n,"alasan":"maks 12 kata"}`;
       }else{
-        prompt=`Anda penaksir harga JASA tukang di ${d.lokasi||'Bali'}, Bali, memakai harga pasar lokal terkini. Patokan kasar: ganti bohlam/saklar Rp25.000-75.000; keran/pipa kecil Rp75.000-200.000; cuci AC Rp60.000-150.000; listrik kecil Rp150.000-400.000; cat ruangan Rp300.000-800.000. Minimum panggil Rp50.000. Kategori: ${katOf(kat).nm}. Deskripsi: "${desk}". Balas HANYA JSON {"min":n,"max":n,"rekomendasi":n,"alasan":"maks 10 kata"}`;
+        prompt=`Anda penaksir harga JASA tukang di ${d.lokasi||'Bali'}, Bali, memakai harga pasar lokal terkini. Patokan kasar: ganti bohlam/saklar Rp25.000-75.000; keran/pipa kecil Rp75.000-200.000; cuci AC Rp60.000-150.000; listrik kecil Rp150.000-400.000; cat ruangan Rp300.000-800.000. Minimum panggil Rp50.000. Lingkup: ${d.material?'TERMASUK material (perkirakan jasa + bahan).':'JASA tenaga saja (material disediakan pemilik).'} Kategori: ${katOf(kat).nm}. Deskripsi: "${desk}". Balas HANYA JSON {"min":n,"max":n,"rekomendasi":n,"alasan":"maks 10 kata"}`;
       }
       const r=await fetch(AI_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
       const dd=await r.json();const t=(dd.content||[]).map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
@@ -1247,11 +1250,11 @@ function taksirLokal(d){
   let[lo,hi]=base[kat]||base.umum;let f=1;
   if(/ganti|total|semua|banyak|besar|parah/.test(t))f+=0.4;if(/cek|kecil|ringan|mudah/.test(t))f-=0.25;
   f=Math.max(0.6,Math.min(1.6,f));lo=Math.max(50000,Math.round(lo*f/5000)*5000);hi=Math.round(hi*f/5000)*5000;
-  return{min:lo,max:hi,rekomendasi:Math.round((lo+hi)/2/5000)*5000,alasan:'Estimasi kategori'};
+  return{min:lo,max:hi,rekomendasi:Math.round((lo+hi)/2/5000)*5000,alasan:d.material?'Estimasi jasa — tambahkan biaya material':'Estimasi jasa tenaga'};
 }
 async function submitPesanan(){
   if(!draft.judul){toast('Isi judul dulu');return}
-  const dasar={pemilik_id:ME.id,pemilik_nama:ME.nama,kat:draft.kat,judul:draft.judul,desk:draft.desk||'-',
+  const dasar={pemilik_id:ME.id,pemilik_nama:ME.nama,kat:draft.kat,judul:draft.judul,desk:draft.desk||'-',material:!!draft.material,
     lokasi:draft.lokasi,jarak_km:(Math.random()*3+0.5).toFixed(1),lat:draft.lat,lng:draft.lng,status:'MENUNGGU_DANA',kode_selesai:otp()};
   let row;
   if(draft.sistem==='harian'){
@@ -1363,7 +1366,7 @@ async function renderDetail(){
   sc.innerHTML=`${banner}
     ${lacakNote}
     <div class="card ocard" style="margin-top:12px"><div class="top"><div class="othumb">${k.ic}</div>
-      <div style="flex:1"><h4>${esc(o.judul)}</h4><div class="meta">📍 ${esc(o.lokasi||'-')} <span class="dot"></span>${o.jarak_km||'-'} km</div></div>
+      <div style="flex:1"><h4>${esc(o.judul)}</h4><div class="meta">📍 ${esc(o.lokasi||'-')} <span class="dot"></span>${o.jarak_km||'-'} km${harian?'':` <span class="dot"></span>${o.material?'📦 Termasuk material':'🔧 Tenaga saja'}`}</div></div>
       <span class="badge ${s.c}">${s.l}</span></div>
       <div class="divider"></div><p style="font-size:13.5px;color:#37514d">${esc(o.desk||'')}</p></div>
     ${tukangInfo}
@@ -1985,6 +1988,11 @@ function infoSheet(judul,sub,items){return `
   <div style="padding:0 20px 24px"><button class="btn btn-primary" onclick="closeSheet()">Tutup</button></div>`;}
 function faqHTML(){
   const groups=[
+    ['🔧 Material & Lingkup Kerja',[
+      ['Apakah material sudah termasuk?','Tidak secara default. Tukangin fokus pada JASA TENAGA — material (bahan) disiapkan oleh konsumen. Ini membuat harga lebih jelas & adil.'],
+      ['Kalau saya mau tukang sekalian beli material?','Saat membuat pesanan, pilih "📦 Termasuk material". Harga jadi lebih tinggi karena mencakup bahan. Bila tidak, pilih "🔧 Tenaga saja".'],
+      ['Kenapa tidak semua termasuk material?','Agar tukang tidak perlu modal talangan & tidak ada DP di luar app. Konsumen menyiapkan bahan, tukang fokus mengerjakan — lebih sederhana dan transparan.'],
+    ]],
     ['💳 Pembayaran & Keamanan',[
       ['Bagaimana cara membayar?','Setelah pesanan Anda disetujui, transfer ke rekening yang tertera di app lalu unggah bukti transfer. Dana ditahan dulu (escrow) — tukang baru dibayar setelah Anda konfirmasi pekerjaan selesai.'],
       ['Apakah uang saya aman?','Ya. Dana Anda ditahan dan tidak langsung diberikan ke tukang. Bila pekerjaan bermasalah, dana bisa dikembalikan. App tidak menyimpan saldo, kartu, atau PIN Anda.'],
