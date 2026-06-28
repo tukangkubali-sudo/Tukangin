@@ -469,7 +469,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v47';
+const APPVER='v49';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -712,11 +712,13 @@ function verifSection(){
   const ok=ME.ktp_url&&ME.wajah_url;
   return `<div class="sec-title">Verifikasi Identitas</div>
     <div class="card" style="padding:16px">
-      <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px">Demi keamanan pelanggan, isi <b>nomor KTP</b>, lalu unggah <b>foto KTP</b> & <b>selfie wajah</b> (selfie diambil langsung dari kamera). Data ini <b>hanya dilihat admin</b>.</p>
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Demi keamanan pelanggan, isi <b>nomor KTP</b>, lalu unggah <b>foto KTP</b> & <b>selfie wajah</b> (selfie diambil langsung dari kamera).</p>
+      <div style="background:#E7F2F0;border:1px solid #cfe2de;border-radius:10px;padding:10px 12px;font-size:11.5px;color:#0D5953;line-height:1.5;margin-bottom:12px">🔒 <b>Data Anda aman.</b> KTP & selfie <b>hanya untuk verifikasi</b>, dilihat khusus admin, <b>tidak disebar</b>, & <b>bukan untuk pinjaman</b>. <b>Foto KTP otomatis dihapus</b> begitu identitas Anda diverifikasi.</div>
       <label style="font-size:11.5px;color:var(--muted);font-weight:700">Nomor KTP (NIK · 16 digit)</label>
       <input id="nikInput" inputmode="numeric" maxlength="16" value="${ME.nik||''}" placeholder="16 angka di KTP" style="width:100%;margin:5px 0 13px;padding:11px 12px;border:1px solid var(--line);border-radius:11px;font-size:14px;letter-spacing:1px">
       <div style="display:flex;gap:10px">${cell(ME.ktp_url,'ktp','Foto KTP','🪪')}${cell(ME.wajah_url,'wajah','Selfie','🤳')}</div>
-      <button class="btn ${ok?'btn-primary':'btn-ghost'}" ${ok?'':'disabled'} style="margin-top:14px" onclick="kirimVerifikasi()">${ok?'Kirim untuk Verifikasi':'Unggah kedua foto dulu'}</button>
+      <label style="display:flex;align-items:flex-start;gap:9px;margin-top:13px;font-size:12px;color:#2c4642;line-height:1.45"><input type="checkbox" id="setujuData" style="width:18px;height:18px;flex:none;margin-top:1px"> <span>Saya setuju data identitas saya digunakan <b>hanya untuk verifikasi</b> di Tukangin.</span></label>
+      <button class="btn ${ok?'btn-primary':'btn-ghost'}" ${ok?'':'disabled'} style="margin-top:13px" onclick="kirimVerifikasi()">${ok?'Kirim untuk Verifikasi':'Unggah kedua foto dulu'}</button>
     </div>`;
 }
 function pilihKyc(jenis){
@@ -748,6 +750,7 @@ function validateNIK(nik){
 }
 async function kirimVerifikasi(){
   if(!ME.ktp_url||!ME.wajah_url){toast('Unggah KTP & selfie dulu');return}
+  if(!($('setujuData')&&$('setujuData').checked)){toast('Centang persetujuan penggunaan data dulu ya');return}
   const nik=($('nikInput')?.value||'').trim();
   const err=validateNIK(nik);
   if(err){toast('⚠️ '+err);return}
@@ -1008,9 +1011,11 @@ function bandingWajah(uid){(async()=>{
   </div>`);
 })();}
 async function tinjau(uid,ok){
-  const {error}=await sb.from('profiles').update({verif_status:ok?'terverifikasi':'ditolak',kyc:ok}).eq('id',uid);
+  const upd={verif_status:ok?'terverifikasi':'ditolak',kyc:ok,ktp_url:null,verif_tgl:new Date().toISOString()};
+  if(!ok)upd.wajah_url=null; // ditolak: selfie juga dihapus (minimalkan data)
+  const {error}=await sb.from('profiles').update(upd).eq('id',uid);
   if(error){toast('Gagal: '+error.message);return}
-  toast(ok?'✅ Tukang diverifikasi':'Ditolak');renderAdmin();
+  toast(ok?'✅ Diverifikasi · foto KTP dihapus demi keamanan':'Ditolak · foto dihapus');renderAdmin();
 }
 async function openDaftarHitam(){
   openSheet(`<div style="padding:20px"><h3 style="font-size:17px;font-weight:800;margin-bottom:4px">⛔ Daftar Hitam</h3>
