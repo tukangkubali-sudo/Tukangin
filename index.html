@@ -236,6 +236,7 @@ function welcomeHTML(){return `<div style="min-height:100vh;min-height:100dvh;di
     ${sudahTerpasang()?'':`<button class="btn btn-ghost" style="margin-top:11px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="pasangApp()">📲 Pasang Aplikasi ke Layar HP</button>`}
     <button class="btn btn-ghost btn-sm" style="margin-top:11px;color:#0D5953;font-weight:800" onclick="openKeamanan()">🔒 Keamanan & Kepercayaan — kenapa aman?</button>
     <button class="btn btn-ghost btn-sm" style="margin-top:9px;color:#0D5953;font-weight:800" onclick="openBantuan()">🤖 Pusat Bantuan — pertanyaan umum</button>
+    <button class="btn btn-ghost btn-sm" style="margin-top:9px;color:#0D5953;font-weight:800" onclick="openTentang()">🏢 Tentang Kami — visi & misi</button>
     <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:16px">Dikelola <b>Guna Merta Home Service</b></p>
   </div>
 </div>`;}
@@ -469,7 +470,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v52';
+const APPVER='v55';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -524,6 +525,7 @@ function renderPemilik(){
       <button class="btn btn-ghost" style="width:100%;margin-top:11px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openKeamanan()">🔒 Keamanan & Kepercayaan — kenapa aman?</button>
       <button class="btn btn-ghost" style="width:100%;margin-top:9px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openBantuan()">🤖 Pusat Bantuan — pertanyaan umum</button>
       <button class="btn btn-ghost" style="width:100%;margin-top:9px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openKomisi()">💸 Bagaimana biaya & komisi dihitung?</button>
+      <button class="btn btn-ghost" style="width:100%;margin-top:9px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openTentang()">🏢 Tentang Kami — visi & misi</button>
       <div style="display:flex;gap:8px;margin-top:11px">
         <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openTentang()">ℹ️ Tentang</button>
         <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openKebijakan()">📜 Kebijakan</button>
@@ -2033,6 +2035,16 @@ async function muatTrust(){
     }
   }catch(e){}
 }
+function openTentang(){
+  openSheet(infoSheet('🏢 Tentang Kami','Tukangin — dikelola Guna Merta Home Service, Bali',[
+    ['Siapa Kami','<b>Tukangin</b> adalah platform jasa tukang berbasis web di Bali, dikelola oleh <b>Guna Merta Home Service</b>. Kami mempertemukan pemilik rumah & usaha dengan tukang terverifikasi untuk perbaikan, renovasi, dan pekerjaan harian.'],
+    ['Visi','Menjadi platform jasa tukang <b>paling terpercaya di Bali</b> — mempertemukan pemilik rumah dengan tukang andal secara <b>mudah, aman, dan adil</b>.'],
+    ['Misi','1. Mempermudah menemukan tukang terverifikasi.<br>2. Memberi <b>semua tukang yang ada di Bali</b> pekerjaan layak dengan <b>komisi adil</b> (jauh di bawah ojol).<br>3. Menjamin transaksi <b>aman</b> lewat sistem escrow.<br>4. Menjaga kualitas lewat <b>verifikasi identitas & garansi</b>.<br>5. <b>Memberdayakan tukang di Bali</b> agar lebih sejahtera & profesional, tanpa memandang asal daerah.'],
+    ['Nilai Kami','🤝 Jujur & transparan · 🔒 Aman · ⚖️ Adil · 🌿 Terbuka untuk semua tukang di Bali'],
+    ['Kenapa Tukangin?','Dana aman (escrow), tukang terverifikasi KTP, komisi adil di bawah ojol, garansi pekerjaan, dan identitas usaha yang jelas & nyata.'],
+    ['Kantor Kami','<b>Guna Merta Home Service</b><br>Jln Tukad Irawadi No. 44, Denpasar, Bali<br>WhatsApp: <b>0822-3308-9533</b><br><span style="color:var(--muted)">Usaha nyata dengan alamat jelas — silakan kunjungi.</span>'],
+  ]));
+}
 function komisiTabelHTML(){
   const rows=[[500000,'8,0%','5,0%'],[1000000,'8,0%','5,0%'],[3000000,'6,0%','3,7%'],[5000000,'4,8%','3,0%'],[10000000,'3,6%','2,4%']];
   return `<div style="border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:12px;margin-top:4px">
@@ -2107,13 +2119,6 @@ function openKeamanan(){openSheet(infoSheet('🔒 Keamanan & Kepercayaan','Kenap
   ['Dikelola usaha & orang nyata','Tukangin dikelola <b>Guna Merta Home Service</b>. Office: '+BIZ.alamat+'. WA: '+BIZ.waTampil+'. Kami tidak sembunyi.'],
   ['Uang Anda tidak disimpan di aplikasi','Tukangin <b>tidak</b> menaruh saldo/dompet di app dan <b>tidak</b> menyimpan data kartu atau PIN Anda. Pembayaran lewat transfer ke rekening resmi usaha — jadi tak ada saldo yang bisa "dikuras" dari aplikasi.'],
   ['Ada masalah? Mudah','Tekan "Ada Masalah" pada pesanan, atau hubungi kami via WhatsApp '+BIZ.waTampil+'. Kami bantu mediasi sebelum dana cair ke tukang.'],
-]));}
-function openTentang(){openSheet(infoSheet('ℹ️ Tentang Tukangin','Layanan tukang terpercaya di Bali',[
-  ['Dikelola oleh','<b>Guna Merta Home Service</b> — usaha & orang nyata di balik Tukangin, bukan sekadar aplikasi.'],
-  ['Office',''+BIZ.alamat+'.'],
-  ['Hubungi kami','WhatsApp '+BIZ.waTampil+' — dibalas cepat pada jam kerja.'],
-  ['Cara kami menjaga Anda','Setiap tukang diverifikasi (KTP + selfie). Pembayaran ditahan aman (escrow) sampai Anda konfirmasi selesai. Pekerjaan bergaransi.'],
-  ['Misi kami','Menghubungkan pemilik rumah & villa dengan tukang terpercaya — harga jelas, pembayaran aman.']
 ]));}
 function openKebijakan(){openSheet(infoSheet('📜 Kebijakan Refund & Sengketa','Aturan main yang adil untuk dua pihak',[
   ['Batal sebelum tukang ambil','Dana dikembalikan <b>100%</b>.'],
