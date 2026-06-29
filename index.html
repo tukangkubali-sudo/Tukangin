@@ -469,7 +469,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v49';
+const APPVER='v52';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -1324,6 +1324,7 @@ async function renderDetail(){
   const amPemilik=o.pemilik_id===ME.id;
   if(o.tukang_id===ME.id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))startTracking(o.id);else if(_trackOrder===o.id)stopTracking();
   const lacakNote=(o.tukang_id===ME.id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))?`<div class="card" style="padding:12px 14px;margin-top:12px;background:#FFF7E6;border:1px solid #F0D9A0;display:flex;gap:10px;align-items:center"><div style="font-size:20px">📍</div><div style="font-size:12px;color:#7a5b14;line-height:1.5">Biarkan app <b>tetap terbuka</b> selama perjalanan agar pelanggan dapat melihat <b>posisi Anda secara langsung</b>.</div></div>`:'';
+  const adminCtrl=(ME.is_admin&&o.tukang_id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))?`<div class="card" style="padding:13px;margin-top:10px;border:1px solid #F0D9A0;background:#FFFDF7"><div style="font-size:12px;font-weight:800;color:#9a6a14;margin-bottom:9px">🛡️ Kontrol Admin</div><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" style="flex:1" onclick="openAssign('${o.id}')">🔁 Ganti Tukang</button><button class="btn btn-ghost btn-sm" style="flex:1;color:#9A2D2D" onclick="lepasTukangAdmin('${o.id}')">↩️ Lepas Tukang</button></div><p style="font-size:10.5px;color:var(--muted);margin-top:7px">Untuk kasus tukang salah ambil / tak bisa lanjut. Pekerjaan kembali tersedia.</p></div>`:'';
   let banner,actions='';
   // banner
   let bst='Dana ditahan Tukangin',bsub='Aman sampai pemilik konfirmasi.';
@@ -1412,6 +1413,7 @@ async function renderDetail(){
       <span class="badge ${s.c}">${s.l}</span></div>
       <div class="divider"></div><p style="font-size:13.5px;color:#37514d">${esc(o.desk||'')}</p></div>
     ${tukangInfo}
+    ${adminCtrl}
     ${locTukangSection(o)}
     ${praKerjaSection(o,amPemilik)}
     ${fotoView(o)}
@@ -1462,6 +1464,17 @@ async function ambil(id){
   const {error}=await sb.rpc('ambil_pesanan',{p_order:id});
   if(error){toast('Gagal: '+error.message);return}
   VIEW.tab='aktif';await refresh();openOrder(id);toast('Pekerjaan diambil');
+}
+async function lepasTukangAdmin(id){
+  if(!ME.is_admin){toast('Khusus admin');return}
+  const o=ORDERS.find(x=>x.id===id);if(!o||!o.tukang_id){toast('Tidak ada tukang untuk dilepas');return}
+  if(!confirm('Lepas tukang dari pekerjaan ini? Pekerjaan kembali tersedia & bisa ditugaskan ulang.'))return;
+  const upd={tukang_id:null,tukang_nama:null};
+  if(o.status==='DIKERJAKAN')upd.status='DANA_DITAHAN';
+  const {error}=await sb.from('orders').update(upd).eq('id',id);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(id,'Tukang dilepas admin','Admin melepas tukang dari pekerjaan');
+  await refresh();openOrder(id);toast('Tukang dilepas · pekerjaan tersedia lagi');
 }
 function hariPenuh(o){return (o.absensi||[]).filter(a=>a.masuk&&a.keluar).length}
 function jamID(t){return t?new Date(t).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'—'}
