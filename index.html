@@ -176,7 +176,7 @@ const KAT=[{id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa',ic:'🔧'},
 const katOf=id=>KAT.find(k=>k.id===id)||KAT[7];
 const ST={MENUNGGU_DANA:{l:'Menunggu Pembayaran',c:'b-wait'},MENUNGGU_VERIFIKASI:{l:'Cek Pembayaran',c:'b-wait'},DANA_DITAHAN:{l:'Dana Ditahan',c:'b-hold'},DIKERJAKAN:{l:'Dikerjakan',c:'b-work'},MENUNGGU_KONFIRMASI:{l:'Menunggu Konfirmasi',c:'b-confirm'},SELESAI:{l:'Selesai',c:'b-done'},SENGKETA:{l:'Sengketa',c:'b-dispute'},DIBATALKAN:{l:'Dibatalkan',c:'b-dispute'}};
 /* Identitas usaha — EDIT di sini bila perlu */
-const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6282233089533',waTampil:'0822-3308-9533',bank:'BNI',rek:'1881552632',rekNama:'Putu Helyvia',garansiHari:7,retensiPersen:10,markupHarian:0.15};
+const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6282233089533',waTampil:'0822-3308-9533',bank:'BNI',rek:'1881552632',rekNama:'Putu Helyvia',garansiHari:7,retensiPersen:10,markupHarian:0.07};
 /* Garansi pengerjaan per kategori (hari) — sesuai umumnya di Bali, bisa diubah */
 const GARANSI={listrik:7,pipa:14,ac:14,las:30,cat:14,bocor:30,kunci:7,umum:7};
 function garansiHariKat(kat){return GARANSI[kat]||7}
@@ -470,7 +470,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v55';
+const APPVER='v56';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
