@@ -470,7 +470,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v56';
+const APPVER='v57';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -1928,6 +1928,17 @@ async function loadTukangList(boxId,area){
     box.innerHTML=arr.map(t=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:11px;cursor:pointer" onclick="openTukangProfil('${t.id}')"><div class="profav" style="width:42px;height:42px;font-size:15px">${esc(t.inisial||initial(t.nama||'T'))}</div><div style="flex:1;min-width:0"><b style="font-size:14px">${esc(t.nama||'Tukang')} <span style="color:var(--ok)">✔</span></b><div class="meta" style="font-size:11px">⭐ ${t.rating||'5.0'} · ${t.selesai||0} selesai${t.area?' · 📍 '+esc(t.area):''}${(t.keahlian||[]).length?' · '+(t.keahlian||[]).slice(0,2).map(esc).join(', '):''}</div></div><span style="color:#0D5953;font-size:12px;font-weight:700">Lihat ›</span></div>`).join('');
   }catch(e){box.innerHTML='<div class="card" style="padding:16px;text-align:center;color:var(--muted);font-size:12px">Gagal memuat tukang.</div>';}
 }
+async function ubahNamaAdmin(uid,namaLama){
+  if(!ME.is_owner&&!ME.is_admin){toast('Khusus admin/owner');return}
+  const baru=prompt('Ubah nama menjadi:',namaLama||'');
+  if(baru===null)return;
+  const trimmed=baru.trim();
+  if(!trimmed){toast('Nama tidak boleh kosong');return}
+  const {error}=await sb.from('profiles').update({nama:trimmed}).eq('id',uid);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(null,'Nama diubah admin','"'+namaLama+'" → "'+trimmed+'"');
+  toast('✅ Nama diperbarui');openSemuaPengguna();
+}
 async function openSemuaPengguna(){
   if(!ME.is_owner){toast('Khusus Owner');return}
   openSheet(`<div style="padding:20px"><h3 style="font-size:17px;font-weight:800;margin-bottom:4px">👥 Semua Pengguna Terdaftar</h3><p style="font-size:11.5px;color:var(--muted);margin-bottom:12px">Semua yang sudah daftar, termasuk yang belum verifikasi.</p><div id="spgList"><div class="loadwrap"><div class="spinner"></div></div></div></div>`);
@@ -1941,7 +1952,7 @@ async function openSemuaPengguna(){
   const waLink=(telp,msg)=>{let d=(telp||'').replace(/\D/g,'');if(!d)return'';if(d[0]==='0')d='62'+d.slice(1);else if(d.slice(0,2)!=='62')d='62'+d;return'https://wa.me/'+d+'?text='+encodeURIComponent(msg);};
   const appUrl=location.origin+location.pathname;
   const ingatBtn=(p)=>{const need=p.role==='tukang'&&(!p.verif_status||p.verif_status==='belum'||p.verif_status==='ditolak');if(!need||!p.telp)return'';const msg='Halo '+(p.nama||'')+', pendaftaran Anda di Tukangin sudah masuk. Tinggal unggah foto KTP & selfie di app agar bisa mulai dapat pekerjaan. Buka: '+appUrl+' Terima kasih, Tukangin.';return`<a href="${waLink(p.telp,msg)}" target="_blank" style="display:inline-block;margin-top:9px;text-decoration:none;font-size:11px;font-weight:700;color:#128C3E;border:1px solid #25D366;border-radius:8px;padding:5px 11px">💬 Ingatkan via WA</a>`;};
-  const item=(p)=>`<div style="border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div style="min-width:0"><b style="font-size:13.5px">${esc(p.nama||'(tanpa nama)')}</b><div class="meta" style="font-size:11px">${p.role==='tukang'?'👷 Tukang':'🏠 Pemilik'}${p.is_owner?' · 👑 Owner':p.is_admin?' · ⚙️ Operator':''}${p.telp?' · 📱 '+esc(p.telp):''}${p.area?' · 📍 '+esc(p.area):''}</div><div class="meta" style="font-size:10.5px">Daftar: ${p.dibuat?tgljamID(p.dibuat):'-'}</div></div>${p.role==='tukang'?vbadge(p.verif_status):''}</div>${ingatBtn(p)}</div>`;
+  const item=(p)=>`<div style="border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div style="min-width:0"><b style="font-size:13.5px">${esc(p.nama||'(tanpa nama)')}</b><div class="meta" style="font-size:11px">${p.role==='tukang'?'👷 Tukang':'🏠 Pemilik'}${p.is_owner?' · 👑 Owner':p.is_admin?' · ⚙️ Operator':''}${p.telp?' · 📱 '+esc(p.telp):''}${p.area?' · 📍 '+esc(p.area):''}</div><div class="meta" style="font-size:10.5px">Daftar: ${p.dibuat?tgljamID(p.dibuat):'-'}</div></div>${p.role==='tukang'?vbadge(p.verif_status):''}</div>${ingatBtn(p)}<button onclick="ubahNamaAdmin('${p.id}','${esc(p.nama||'').replace(/'/g,"\\'")}')" style="display:inline-block;margin-top:9px;margin-left:8px;text-decoration:none;font-size:11px;font-weight:700;color:#0D5953;background:#fff;border:1px solid #0D5953;border-radius:8px;padding:5px 11px">✏️ Ubah Nama</button></div>`;
   box.innerHTML=`<div style="display:flex;gap:7px;margin-bottom:12px;font-size:11.5px">
       <div style="flex:1;background:#0D5953;color:#fff;border-radius:10px;padding:9px;text-align:center"><div style="font-size:18px;font-weight:800">${list.length}</div>Total</div>
       <div style="flex:1;background:#E7F2F0;border-radius:10px;padding:9px;text-align:center"><div style="font-size:18px;font-weight:800;color:#0D5953">${tukang.length}</div>Tukang</div>
