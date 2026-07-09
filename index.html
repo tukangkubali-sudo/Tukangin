@@ -413,7 +413,7 @@ function notifBrowser(text){
 }
 function adminPending(){
   if(!ME||!ME.is_admin||!Array.isArray(ORDERS))return 0;
-  return ORDERS.filter(o=>o.status==='MENUNGGU_VERIFIKASI'||(o.status==='DANA_DITAHAN'&&!o.tukang_id)||o.garansi_klaim).length;
+  return ORDERS.filter(o=>o.status==='MENUNGGU_VERIFIKASI'||(o.status==='MENUNGGU_DANA'&&o.bukti_transfer_url)||o.pelunasan_status==='verifikasi'||(o.status==='DANA_DITAHAN'&&!o.tukang_id)||o.garansi_klaim).length;
 }
 let _myLoc=null,_trackTimer=null,_trackOrder=null;
 const AREAS=['Denpasar','Kuta','Legian','Seminyak','Kerobokan','Canggu','Jimbaran','Nusa Dua','Sanur','Ubud','Gianyar','Tabanan','Badung','Mengwi','Abiansemal'];
@@ -476,7 +476,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v58';
+const APPVER='v60';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -785,6 +785,7 @@ async function renderAdmin(){
   const ords=r3.data||[];
   const cekBayar=ords.filter(o=>o.status==='MENUNGGU_VERIFIKASI');
   const cekPelunasan=ords.filter(o=>o.pelunasan_status==='verifikasi');
+  const belumBayar=ords.filter(o=>o.status==='MENUNGGU_DANA');
   const belumTukang=ords.filter(o=>o.status==='DANA_DITAHAN'&&!o.tukang_id);
   const seng=ords.filter(o=>o.status==='SENGKETA');
   const kl=ords.filter(o=>o.garansi_klaim);
@@ -796,7 +797,7 @@ async function renderAdmin(){
   const uangMasuk=ords.filter(o=>['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI','SELESAI'].includes(o.status)).reduce((s,o)=>s+((o.biaya||fee(o.harga)).escrow||0),0);
   const uangKeluar=ords.filter(o=>o.tukang_dibayar).reduce((s,o)=>s+((o.biaya||fee(o.harga)).payout||0),0);
   const tertahan=ords.filter(o=>['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status)).reduce((s,o)=>s+((o.biaya||fee(o.harga)).escrow||0),0);
-  const adaTindakan=cekBayar.length||cekPelunasan.length||belumTukang.length||seng.length||kl.length||pending.length||cair.length||belumKonfirmasi.length;
+  const adaTindakan=cekBayar.length||cekPelunasan.length||belumBayar.filter(o=>o.bukti_transfer_url).length||belumTukang.length||seng.length||kl.length||pending.length||cair.length||belumKonfirmasi.length;
   const _now=new Date(),_hari=_now.toDateString();
   const daftarHariIni=list.filter(p=>p.dibuat&&new Date(p.dibuat).toDateString()===_hari).length;
   const belumVerif=list.filter(p=>!p.verif_status||p.verif_status==='belum').length;
@@ -809,6 +810,7 @@ async function renderAdmin(){
       ${isOwner?`<div style="margin-top:10px;padding-top:9px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center"><span style="font-size:11.5px;color:#46605c">💰 Pendapatan bulan ini</span><b style="font-size:14px;color:#0D5953">${rp(pendapatanBulan)}</b></div>`:''}
     </div>
     <div class="sec-title">⚡ Perlu Tindakan</div>
+    ${belumBayar.length?`<div class="card" style="padding:13px;margin-bottom:8px"><div style="font-weight:800;font-size:13.5px">📝 Menunggu Pembayaran · ${belumBayar.length}</div><p style="font-size:10.5px;color:var(--muted);margin-top:2px">Pesanan baru, konsumen belum transfer/belum upload bukti.</p>${belumBayar.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp(o.termin?o.dp_nominal:(o.biaya||fee(o.harga)).escrow)}</div><div class="meta">${esc(o.lokasi||'-')} · ${esc(o.pemilik_nama||'-')} · ${tgljamID(o.dibuat)}</div>${o.bukti_transfer_url?`<img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px"><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="verifPembayaran('${o.id}')">✔ Konfirmasi Dana Masuk</button>`:'<div style="font-size:11px;color:var(--muted);margin-top:4px">⏳ Belum ada bukti transfer</div>'}</div>`).join('')}</div>`:''}
     ${cekBayar.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--brass)"><div style="font-weight:800;font-size:13.5px">💵 Verifikasi Pembayaran · ${cekBayar.length}</div>${cekBayar.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp(o.termin?o.dp_nominal:(o.biaya||fee(o.harga)).escrow)}${o.termin?' <span style="font-size:9.5px;font-weight:700;background:#E7F2F0;color:#0D5953;padding:2px 6px;border-radius:6px">DP</span>':''}</div><div class="meta">Pemilik: ${esc(o.pemilik_nama||'-')}</div>${o.bukti_transfer_url?`<img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px">`:'<div style="font-size:11px;color:var(--bad);margin-top:4px">⚠ tanpa bukti</div>'}<button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="verifPembayaran('${o.id}')">✔ Konfirmasi Dana Masuk</button></div>`).join('')}</div>`:''}
     ${cekPelunasan.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--brass)"><div style="font-weight:800;font-size:13.5px">💰 Verifikasi Pelunasan · ${cekPelunasan.length}</div>${cekPelunasan.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp(o.pelunasan_nominal)} <span style="font-size:9.5px;font-weight:700;background:#FEF3E0;color:#9a6a14;padding:2px 6px;border-radius:6px">PELUNASAN</span></div><div class="meta">Pemilik: ${esc(o.pemilik_nama||'-')}</div>${o.bukti_pelunasan_url?`<img src="${o.bukti_pelunasan_url}" onclick="window.open('${o.bukti_pelunasan_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px">`:'<div style="font-size:11px;color:var(--bad);margin-top:4px">⚠ tanpa bukti</div>'}<button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="verifPelunasan('${o.id}')">✔ Konfirmasi Pelunasan</button></div>`).join('')}</div>`:''}
     ${belumTukang.length?`<div class="card" style="padding:13px;margin-bottom:8px"><div style="font-weight:800;font-size:13.5px">🔍 Belum Ada Tukang · ${belumTukang.length}</div>${belumTukang.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px;display:flex;align-items:center;gap:8px"><div style="flex:1"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')}</div><div class="meta">${esc(o.lokasi||'-')} · ${esc(o.pemilik_nama||'-')}</div></div><button class="btn btn-primary btn-sm" onclick="openAssign('${o.id}')">Tugaskan</button></div>`).join('')}</div>`:''}
@@ -1409,17 +1411,22 @@ async function renderDetail(){
       const open=(o.absensi||[]).find(a=>a.masuk&&!a.keluar),hp=hariPenuh(o);
       actions=`${open?`<button class="btn btn-primary" onclick="absenKeluar('${o.id}')">🏁 Absen Keluar (selesai hari ini)</button>`:`<button class="btn btn-primary" onclick="absenMasuk('${o.id}')">📍 Absen Masuk (GPS)</button>`}
         <button class="btn btn-ghost" ${hp>=1&&!open?'':'disabled'} style="margin-top:9px" onclick="inputKode('${o.id}')">🔑 Selesaikan Semua — Masukkan Kode</button>
-        <p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">${open?'Jangan lupa Absen Keluar saat pulang.':hp>=1?'Sudah '+hp+' hari hadir. Selesaikan jika pekerjaan rampung.':'Absen masuk untuk mulai hari kerja.'}</p>`;
+        <p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">${open?'Jangan lupa Absen Keluar saat pulang.':hp>=1?'Sudah '+hp+' hari hadir. Selesaikan jika pekerjaan rampung.':'Absen masuk untuk mulai hari kerja.'}</p>
+        <div class="card" style="padding:14px;margin-top:12px"><h5 style="font-size:13px;font-weight:700;margin-bottom:9px">📷 Foto Pekerjaan (opsional)</h5>
+          <p style="font-size:10.5px;color:var(--muted);margin-bottom:9px">Bukti tambahan jika ada sengketa — tidak wajib untuk harian.</p>
+          <div style="display:flex;gap:10px">${fotoBtn(o,'sebelum')}${fotoBtn(o,'sesudah')}</div></div>`;
     }
-    else if(o.status==='DANA_DITAHAN'&&o.tukang_id===ME.id)actions=`<button class="btn btn-primary" onclick="checkin('${o.id}')">📍 Check-in di Lokasi (GPS)</button>`;
-    else if(o.status==='DIKERJAKAN'&&o.tukang_id===ME.id){
+    else if(!harian&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status)&&o.tukang_id===ME.id){
       const ok=o.foto_sebelum&&o.foto_sesudah;
+      const sudahCheckin=o.status==='DIKERJAKAN';
       actions=`<div class="card" style="padding:14px;margin-bottom:12px"><h5 style="font-size:14px;font-weight:700;margin-bottom:10px">Bukti Pekerjaan (foto asli)</h5>
+        <p style="font-size:11px;color:var(--muted);margin-bottom:9px">Unggah foto <b>sebelum</b> mulai kerja (kondisi awal), lalu foto <b>sesudah</b> saat rampung.</p>
         <div style="display:flex;gap:10px">${fotoBtn(o,'sebelum')}${fotoBtn(o,'sesudah')}</div>
         <div style="display:flex;gap:10px;margin-top:10px">${videoBtn(o,'sebelum')}${videoBtn(o,'sesudah')}</div>
         <p style="font-size:10.5px;color:var(--muted);margin-top:8px">Video opsional (maks 30 MB / ±15 dtk). Foto wajib untuk menyelesaikan.</p></div>
-        <button class="btn ${ok?'btn-primary':'btn-ghost'}" ${ok?'':'disabled'} onclick="inputKode('${o.id}')">🔑 Selesaikan — Masukkan Kode</button>
-        <p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">${ok?'Minta kode 4 digit ke pelanggan.':'Unggah kedua foto dulu.'}</p>`;
+        ${!sudahCheckin?`<button class="btn btn-primary" onclick="checkin('${o.id}')">📍 Check-in di Lokasi (GPS)</button>`:''}
+        <button class="btn ${ok&&sudahCheckin?'btn-primary':'btn-ghost'}" ${ok&&sudahCheckin?'':'disabled'} style="${!sudahCheckin?'margin-top:9px':''}" onclick="inputKode('${o.id}')">🔑 Selesaikan — Masukkan Kode</button>
+        <p style="text-align:center;font-size:11.5px;color:var(--muted);margin-top:9px">${!sudahCheckin?'Check-in dulu di lokasi untuk bisa menyelesaikan.':ok?'Minta kode 4 digit ke pelanggan.':'Unggah kedua foto dulu.'}</p>`;
     }
     else if(o.status==='MENUNGGU_KONFIRMASI')actions=`<div class="card" style="padding:16px;text-align:center"><div style="font-size:30px">⏳</div><h5 style="font-weight:800">Menunggu konfirmasi pelanggan</h5><p style="font-size:12.5px;color:var(--muted)">Dana ${rp(b.payout)} cair setelah dikonfirmasi.</p><p style="font-size:11.5px;color:var(--ok);font-weight:700;margin-top:6px">Otomatis cair dalam ${fmtSisa(sisaKonfirmasiMs(o))} jika pelanggan diam.</p></div>`;
     else if(o.status==='SELESAI'){
@@ -1726,10 +1733,13 @@ async function uploadBukti(id,file){
   toast('Memproses foto…');
   try{
     const dataUrl=await kompresFoto(file);
-    const {error}=await sb.from('orders').update({bukti_transfer_url:dataUrl}).eq('id',id);
+    const o=ORDERS.find(x=>x.id===id);
+    const upd={bukti_transfer_url:dataUrl};
+    if(o&&o.status==='MENUNGGU_DANA')upd.status='MENUNGGU_VERIFIKASI';
+    const {error}=await sb.from('orders').update(upd).eq('id',id);
     if(error)throw error;
-    await addLog(id,'Bukti transfer diunggah','Pemilik mengunggah bukti pembayaran');
-    await refresh();openOrder(id);toast('✅ Bukti transfer tersimpan');
+    await addLog(id,'Bukti transfer diunggah','Pemilik mengunggah bukti pembayaran — menunggu verifikasi admin');
+    await refresh();openOrder(id);toast('✅ Bukti tersimpan — menunggu verifikasi admin');
   }catch(e){toast('Gagal: '+(e.message||e))}
 }
 function pilihFoto(id,jenis){
@@ -1803,6 +1813,7 @@ function inputKode(id){
 async function cekKode(id){
   const o=ORDERS.find(x=>x.id===id);const v=$('kodein').value.trim();
   if(v!==o.kode_selesai){$('kodeerr').textContent='Kode salah.';return}
+  if(o.sistem!=='harian'&&!o.checkin){$('kodeerr').textContent='Check-in di lokasi dulu sebelum menyelesaikan.';return}
   if(o.termin&&o.pelunasan_status!=='lunas'){$('kodeerr').textContent='Pelunasan belum diterima — minta pelunasan dulu sebelum menyelesaikan.';return}
   await sb.from('orders').update({status:'MENUNGGU_KONFIRMASI',minta_konfirmasi_tgl:new Date().toISOString()}).eq('id',id);
   await addLog(id,'Pekerjaan diselesaikan','Kode benar, menunggu konfirmasi pemilik');
