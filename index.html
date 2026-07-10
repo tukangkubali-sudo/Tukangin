@@ -476,7 +476,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v62';
+const APPVER='v63';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -1353,6 +1353,7 @@ async function renderDetail(){
   if(o.tukang_id===ME.id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))startTracking(o.id);else if(_trackOrder===o.id)stopTracking();
   const lacakNote=(o.tukang_id===ME.id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))?`<div class="card" style="padding:12px 14px;margin-top:12px;background:#FFF7E6;border:1px solid #F0D9A0;display:flex;gap:10px;align-items:center"><div style="font-size:20px">📍</div><div style="font-size:12px;color:#7a5b14;line-height:1.5">Biarkan app <b>tetap terbuka</b> selama perjalanan agar pelanggan dapat melihat <b>posisi Anda secara langsung</b>.</div></div>`:'';
   const adminCtrl=(ME.is_admin&&o.tukang_id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))?`<div class="card" style="padding:13px;margin-top:10px;border:1px solid #F0D9A0;background:#FFFDF7"><div style="font-size:12px;font-weight:800;color:#9a6a14;margin-bottom:9px">🛡️ Kontrol Admin</div><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" style="flex:1" onclick="openAssign('${o.id}')">🔁 Ganti Tukang</button><button class="btn btn-ghost btn-sm" style="flex:1;color:#9A2D2D" onclick="lepasTukangAdmin('${o.id}')">↩️ Lepas Tukang</button></div><p style="font-size:10.5px;color:var(--muted);margin-top:7px">Untuk kasus tukang salah ambil / tak bisa lanjut. Pekerjaan kembali tersedia.</p></div>`:'';
+  const adminFotoCard=((ME.is_admin||ME.is_owner)&&!harian&&o.tukang_id&&o.tukang_id!==ME.id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))?`<div class="card" style="padding:13px;margin-top:10px;border:1px solid #F0D9A0;background:#FFFDF7"><div style="font-size:12px;font-weight:800;color:#9a6a14;margin-bottom:9px">🛡️ Kelola Foto (Admin)</div><p style="font-size:10.5px;color:var(--muted);margin-bottom:9px">Boleh ambil kamera atau pilih dari galeri — tanggal foto asli tetap tercatat.</p><div style="display:flex;gap:10px">${fotoBtn(o,'sebelum')}${fotoBtn(o,'sesudah')}</div></div>`:'';
   let terminCard='';
   if(o.termin){
     if(o.tukang_id===ME.id&&(!o.pelunasan_status||o.pelunasan_status==='belum')&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status)){
@@ -1469,6 +1470,7 @@ async function renderDetail(){
       <div class="divider"></div><p style="font-size:13.5px;color:#37514d">${esc(o.desk||'')}</p></div>
     ${tukangInfo}
     ${adminCtrl}
+    ${adminFotoCard}
     ${terminCard}
     ${locTukangSection(o)}
     ${praKerjaSection(o,amPemilik)}
