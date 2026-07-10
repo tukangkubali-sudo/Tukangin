@@ -476,7 +476,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v61';
+const APPVER='v62';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -1681,16 +1681,17 @@ async function kirimRating(id){
 }
 function fotoBtn(o,jenis){
   const url=jenis==='sebelum'?o.foto_sebelum_url:o.foto_sesudah_url;
-  if(url)return `<div style="flex:1"><img src="${url}" onclick="window.open('${url}')" style="width:100%;height:92px;object-fit:cover;border-radius:11px;border:1px solid var(--line)"><div style="font-size:10.5px;color:var(--ok);text-align:center;margin-top:3px;font-weight:600">✓ ${jenis} · ketuk ganti</div><button onclick="pilihFoto('${o.id}','${jenis}')" style="display:none"></button></div>`;
+  const tgl=jenis==='sebelum'?o.foto_sebelum_tgl:o.foto_sesudah_tgl;
+  if(url)return `<div style="flex:1"><img src="${url}" onclick="window.open('${url}')" style="width:100%;height:92px;object-fit:cover;border-radius:11px;border:1px solid var(--line)"><div style="font-size:10.5px;color:var(--ok);text-align:center;margin-top:3px;font-weight:600">✓ ${jenis} · ketuk ganti</div>${tgl?`<div style="font-size:9.5px;color:var(--muted);text-align:center">📅 ${tgljamID(tgl)} ${jamID(tgl)}</div>`:''}<button onclick="pilihFoto('${o.id}','${jenis}')" style="display:none"></button></div>`;
   return `<button class="uploadbox" style="flex:1;border:1.5px dashed var(--line);border-radius:13px;padding:18px;background:#fff" onclick="pilihFoto('${o.id}','${jenis}')"><div style="font-size:22px">📷</div><div style="font-size:11.5px;font-weight:600;margin-top:3px">Foto ${jenis}</div></button>`;
 }
 function fotoView(o){
   const hasFoto=o.foto_sebelum_url||o.foto_sesudah_url, hasVid=o.video_sebelum_url||o.video_sesudah_url;
   if(!hasFoto&&!hasVid)return '';
-  const cell=(url,lbl)=>`<div style="flex:1;text-align:center">${url?`<img src="${url}" onclick="window.open('${url}')" style="width:100%;height:110px;object-fit:cover;border-radius:12px;border:1px solid var(--line)">`:`<div style="height:110px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;color:var(--muted)">—</div>`}<div style="font-size:11px;color:var(--muted);margin-top:3px">${lbl}</div></div>`;
+  const cell=(url,lbl,tgl)=>`<div style="flex:1;text-align:center">${url?`<img src="${url}" onclick="window.open('${url}')" style="width:100%;height:110px;object-fit:cover;border-radius:12px;border:1px solid var(--line)">`:`<div style="height:110px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;color:var(--muted)">—</div>`}<div style="font-size:11px;color:var(--muted);margin-top:3px">${lbl}</div>${tgl?`<div style="font-size:9.5px;color:var(--muted)">📅 ${tgljamID(tgl)} ${jamID(tgl)}</div>`:''}</div>`;
   const vcell=(url,lbl)=>url?`<div style="flex:1;text-align:center"><video src="${url}" controls playsinline style="width:100%;height:140px;border-radius:12px;border:1px solid var(--line);background:#000"></video><div style="font-size:11px;color:var(--muted);margin-top:3px">🎥 ${lbl}</div></div>`:'<div style="flex:1"></div>';
   let h=`<div class="sec-title">Bukti Pekerjaan</div><div class="card" style="padding:12px">`;
-  if(hasFoto)h+=`<div style="display:flex;gap:10px">${cell(o.foto_sebelum_url,'Sebelum')}${cell(o.foto_sesudah_url,'Sesudah')}</div>`;
+  if(hasFoto)h+=`<div style="display:flex;gap:10px">${cell(o.foto_sebelum_url,'Sebelum',o.foto_sebelum_tgl)}${cell(o.foto_sesudah_url,'Sesudah',o.foto_sesudah_tgl)}</div>`;
   if(hasVid)h+=`<div style="display:flex;gap:10px;margin-top:10px">${vcell(o.video_sebelum_url,'Sebelum')}${vcell(o.video_sesudah_url,'Sesudah')}</div>`;
   return h+`</div>`;
 }
@@ -1748,7 +1749,8 @@ async function uploadBukti(id,file){
 }
 function pilihFoto(id,jenis){
   const inp=document.createElement('input');
-  inp.type='file';inp.accept='image/*';inp.setAttribute('capture','environment');
+  inp.type='file';inp.accept='image/*';
+  if(!(ME.is_admin||ME.is_owner))inp.setAttribute('capture','environment');
   inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
   inp.onchange=()=>{if(inp.files&&inp.files[0])uploadFoto(id,jenis,inp.files[0]);inp.remove();};
   document.body.appendChild(inp);inp.click();
@@ -1757,10 +1759,12 @@ async function uploadFoto(id,jenis,file){
   toast('Memproses foto…');
   try{
     const dataUrl=await kompresFoto(file);
-    const upd=jenis==='sebelum'?{foto_sebelum:true,foto_sebelum_url:dataUrl}:{foto_sesudah:true,foto_sesudah_url:dataUrl};
+    const tglFoto=file.lastModified?new Date(file.lastModified).toISOString():new Date().toISOString();
+    const upd=jenis==='sebelum'?{foto_sebelum:true,foto_sebelum_url:dataUrl,foto_sebelum_tgl:tglFoto}:{foto_sesudah:true,foto_sesudah_url:dataUrl,foto_sesudah_tgl:tglFoto};
     const {error}=await sb.from('orders').update(upd).eq('id',id);
     if(error)throw error;
-    await addLog(id,'Foto bukti diunggah',`Foto ${jenis} ditambahkan`);
+    const olehAdmin=ME.is_admin||ME.is_owner;
+    await addLog(id,'Foto bukti diunggah',`Foto ${jenis} ditambahkan${olehAdmin?' oleh admin (dari galeri)':''} · tanggal foto: ${tgljamID(tglFoto)} ${jamID(tglFoto)}`);
     await refresh();openOrder(id);toast('✅ Foto '+jenis+' tersimpan');
   }catch(e){toast('Gagal: '+(e.message||e))}
 }
