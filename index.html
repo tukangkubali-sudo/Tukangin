@@ -476,7 +476,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v65';
+const APPVER='v66';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -755,6 +755,59 @@ function validateNIK(nik){
   if(dd>40)dd-=40;
   if(mm<1||mm>12||dd<1||dd>31)return 'NIK tidak valid (cek angka tanggal lahir).';
   return '';
+}
+let _bv={uid:null,nama:'',nik:'',ktp_url:null,wajah_url:null};
+function openBantuVerifikasi(uid,nama,nik){
+  _bv={uid,nama:nama||'',nik:nik||'',ktp_url:null,wajah_url:null};
+  openSheet(renderBantuVerifSheet());
+}
+function renderBantuVerifSheet(){
+  const cell=(url,jenis,lbl,ic)=>url
+    ?`<div style="flex:1"><img src="${url}" style="width:100%;height:90px;object-fit:cover;border-radius:11px;border:1px solid var(--line)"><div onclick="pilihFotoVerifAdmin('${jenis}')" style="font-size:10.5px;color:var(--ok);text-align:center;margin-top:3px;font-weight:600">✓ ${lbl} · ketuk ganti</div></div>`
+    :`<button class="uploadbox" style="flex:1;border:1.5px dashed var(--line);border-radius:13px;padding:16px;background:#fff" onclick="pilihFotoVerifAdmin('${jenis}')"><div style="font-size:22px">${ic}</div><div style="font-size:11px;font-weight:600;margin-top:3px">${lbl}</div></button>`;
+  const ok=_bv.ktp_url&&_bv.wajah_url;
+  return `<div style="padding:20px">
+    <h3 style="font-size:16px;font-weight:800;margin-bottom:4px">📷 Bantu Verifikasi — ${esc(_bv.nama)}</h3>
+    <p style="font-size:11.5px;color:var(--muted);margin-bottom:12px">Untuk tukang yang kameranya bermasalah. Admin boleh pilih dari galeri atau kamera.</p>
+    <div style="background:#FFF7E8;border:1px solid #F0D9A0;border-radius:10px;padding:10px 12px;font-size:11.5px;color:#7a5b14;line-height:1.5;margin-bottom:12px">⚠️ Pastikan tukang sudah <b>setuju secara lisan</b> data identitasnya diunggah untuk verifikasi.</div>
+    <label style="font-size:11.5px;color:var(--muted);font-weight:700">Nomor KTP (NIK · 16 digit)</label>
+    <input id="nikInputAdmin" inputmode="numeric" maxlength="16" value="${esc(_bv.nik)}" placeholder="16 angka di KTP" style="width:100%;margin:5px 0 13px;padding:11px 12px;border:1px solid var(--line);border-radius:11px;font-size:14px;letter-spacing:1px">
+    <div style="display:flex;gap:10px">${cell(_bv.ktp_url,'ktp','Foto KTP','🪪')}${cell(_bv.wajah_url,'wajah','Selfie','🤳')}</div>
+    <button class="btn ${ok?'btn-primary':'btn-ghost'}" ${ok?'':'disabled'} style="margin-top:14px" onclick="kirimVerifikasiAdmin()">${ok?'Kirim untuk Verifikasi':'Unggah kedua foto dulu'}</button>
+    <button class="btn btn-ghost" style="margin-top:9px" onclick="closeSheet()">Batal</button>
+  </div>`;
+}
+function pilihFotoVerifAdmin(jenis){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';
+  inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
+  inp.onchange=()=>{if(inp.files&&inp.files[0])uploadFotoVerifAdmin(jenis,inp.files[0]);inp.remove();};
+  document.body.appendChild(inp);inp.click();
+}
+async function uploadFotoVerifAdmin(jenis,file){
+  toast('Memproses…');
+  try{
+    const dataUrl=await kompresFoto(file);
+    const col=jenis==='ktp'?'ktp_url':'wajah_url';
+    const {error}=await sb.from('profiles').update({[col]:dataUrl}).eq('id',_bv.uid);
+    if(error)throw error;
+    _bv[col]=dataUrl;
+    openSheet(renderBantuVerifSheet());
+    toast('✅ Foto tersimpan');
+  }catch(e){toast('Gagal: '+(e.message||e))}
+}
+async function kirimVerifikasiAdmin(){
+  if(!_bv.ktp_url||!_bv.wajah_url){toast('Unggah kedua foto dulu');return}
+  const nik=($('nikInputAdmin')?.value||'').trim();
+  const err=validateNIK(nik);
+  if(err){toast('⚠️ '+err);return}
+  toast('Memeriksa…');
+  try{const {data:dup}=await sb.rpc('nik_terpakai',{p_nik:nik});if(dup){toast('❌ KTP ini sudah dipakai akun lain.');return}}catch(e){}
+  try{const {data:blk}=await sb.rpc('cek_blokir',{p_nik:nik,p_telp:null});if(blk){toast('❌ Pendaftaran tidak dapat dilanjutkan.');return}}catch(e){}
+  const {error}=await sb.from('profiles').update({nik,verif_status:'menunggu'}).eq('id',_bv.uid);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(null,'Dibantu verifikasi admin','Foto KTP+selfie diunggahkan admin untuk tukang: '+(_bv.nama||_bv.uid));
+  closeSheet();toast('✅ Terkirim — cek daftar "Verifikasi Tukang" untuk menyetujui');openSemuaPengguna();
 }
 async function kirimVerifikasi(){
   if(!ME.ktp_url||!ME.wajah_url){toast('Unggah KTP & selfie dulu');return}
@@ -2055,7 +2108,7 @@ async function ubahPeranAdmin(uid,peranLama){
 async function openSemuaPengguna(){
   if(!ME.is_owner){toast('Khusus Owner');return}
   openSheet(`<div style="padding:20px"><h3 style="font-size:17px;font-weight:800;margin-bottom:4px">👥 Semua Pengguna Terdaftar</h3><p style="font-size:11.5px;color:var(--muted);margin-bottom:12px">Semua yang sudah daftar, termasuk yang belum verifikasi.</p><div id="spgList"><div class="loadwrap"><div class="spinner"></div></div></div></div>`);
-  const {data,error}=await sb.from('profiles').select('id,nama,role,verif_status,telp,area,dibuat,is_admin,is_owner').order('dibuat',{ascending:false});
+  const {data,error}=await sb.from('profiles').select('id,nama,role,verif_status,telp,area,dibuat,is_admin,is_owner,nik,ktp_url,wajah_url').order('dibuat',{ascending:false});
   const box=$('spgList');if(!box)return;
   if(error){box.innerHTML='<p style="font-size:12.5px;color:var(--bad)">Gagal memuat: '+esc(error.message)+'</p>';return}
   const list=data||[];
@@ -2065,7 +2118,7 @@ async function openSemuaPengguna(){
   const waLink=(telp,msg)=>{let d=(telp||'').replace(/\D/g,'');if(!d)return'';if(d[0]==='0')d='62'+d.slice(1);else if(d.slice(0,2)!=='62')d='62'+d;return'https://wa.me/'+d+'?text='+encodeURIComponent(msg);};
   const appUrl=location.origin+location.pathname;
   const ingatBtn=(p)=>{const need=p.role==='tukang'&&(!p.verif_status||p.verif_status==='belum'||p.verif_status==='ditolak');if(!need||!p.telp)return'';const msg='Halo '+(p.nama||'')+', pendaftaran Anda di Tukangin sudah masuk. Tinggal unggah foto KTP & selfie di app agar bisa mulai dapat pekerjaan. Buka: '+appUrl+' Terima kasih, Tukangin.';return`<a href="${waLink(p.telp,msg)}" target="_blank" style="display:inline-block;margin-top:9px;text-decoration:none;font-size:11px;font-weight:700;color:#128C3E;border:1px solid #25D366;border-radius:8px;padding:5px 11px">💬 Ingatkan via WA</a>`;};
-  const item=(p)=>`<div style="border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div style="min-width:0"><b style="font-size:13.5px">${esc(p.nama||'(tanpa nama)')}</b><div class="meta" style="font-size:11px">${p.role==='tukang'?'👷 Tukang':'🏠 Pemilik'}${p.is_owner?' · 👑 Owner':p.is_admin?' · ⚙️ Operator':''}${p.telp?' · 📱 '+esc(p.telp):''}${p.area?' · 📍 '+esc(p.area):''}</div><div class="meta" style="font-size:10.5px">Daftar: ${p.dibuat?tgljamID(p.dibuat):'-'}</div></div>${p.role==='tukang'?vbadge(p.verif_status):''}</div>${ingatBtn(p)}<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap"><button onclick="ubahNamaAdmin('${p.id}','${esc(p.nama||'').replace(/'/g,"\\'")}')" style="text-decoration:none;font-size:11px;font-weight:700;color:#0D5953;background:#fff;border:1px solid #0D5953;border-radius:8px;padding:5px 11px">✏️ Ubah Nama</button><button onclick="ubahPeranAdmin('${p.id}','${p.role}')" style="text-decoration:none;font-size:11px;font-weight:700;color:#9a6a14;background:#fff;border:1px solid #9a6a14;border-radius:8px;padding:5px 11px">🔄 Jadikan ${p.role==='tukang'?'Pemilik':'Tukang'}</button></div></div>`;
+  const item=(p)=>`<div style="border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div style="min-width:0"><b style="font-size:13.5px">${esc(p.nama||'(tanpa nama)')}</b><div class="meta" style="font-size:11px">${p.role==='tukang'?'👷 Tukang':'🏠 Pemilik'}${p.is_owner?' · 👑 Owner':p.is_admin?' · ⚙️ Operator':''}${p.telp?' · 📱 '+esc(p.telp):''}${p.area?' · 📍 '+esc(p.area):''}</div><div class="meta" style="font-size:10.5px">Daftar: ${p.dibuat?tgljamID(p.dibuat):'-'}</div></div>${p.role==='tukang'?vbadge(p.verif_status):''}</div>${ingatBtn(p)}<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap"><button onclick="ubahNamaAdmin('${p.id}','${esc(p.nama||'').replace(/'/g,"\\'")}')" style="text-decoration:none;font-size:11px;font-weight:700;color:#0D5953;background:#fff;border:1px solid #0D5953;border-radius:8px;padding:5px 11px">✏️ Ubah Nama</button><button onclick="ubahPeranAdmin('${p.id}','${p.role}')" style="text-decoration:none;font-size:11px;font-weight:700;color:#9a6a14;background:#fff;border:1px solid #9a6a14;border-radius:8px;padding:5px 11px">🔄 Jadikan ${p.role==='tukang'?'Pemilik':'Tukang'}</button>${(p.role==='tukang'&&p.verif_status!=='terverifikasi')?`<button onclick='openBantuVerifikasi(${JSON.stringify(p.id)},${JSON.stringify(p.nama||"")},${JSON.stringify(p.nik||"")})' style="text-decoration:none;font-size:11px;font-weight:700;color:#1a6b3c;background:#fff;border:1px solid #1a6b3c;border-radius:8px;padding:5px 11px">📷 Bantu Verifikasi</button>`:''}</div></div>`;
   box.innerHTML=`<div style="display:flex;gap:7px;margin-bottom:12px;font-size:11.5px">
       <div style="flex:1;background:#0D5953;color:#fff;border-radius:10px;padding:9px;text-align:center"><div style="font-size:18px;font-weight:800">${list.length}</div>Total</div>
       <div style="flex:1;background:#E7F2F0;border-radius:10px;padding:9px;text-align:center"><div style="font-size:18px;font-weight:800;color:#0D5953">${tukang.length}</div>Tukang</div>
