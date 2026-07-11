@@ -476,7 +476,7 @@ function render(){
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
 }
-const APPVER='v63';
+const APPVER='v65';
 function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
@@ -1121,7 +1121,7 @@ function kartuPenghasilan(){
 /* ====== HALAMAN TENTANG & BANTUAN ====== */
 function openPage(p){VIEW.page=p;render();const s=$('scroll');if(s)s.scrollTop=0}
 function closePage(){VIEW.page=null;render()}
-function waLink(pesan){return `https://wa.me/${BIZ.wa}?text=${encodeURIComponent(pesan||'')}`}
+function waBiz(pesan){return `https://wa.me/${BIZ.wa}?text=${encodeURIComponent(pesan||'')}`}
 function menuItem(ic,judul,sub,onclick){
   return `<button class="card" style="width:100%;padding:14px;display:flex;align-items:center;gap:13px;text-align:left;margin-bottom:10px;background:#fff;border:1px solid var(--line)" onclick="${onclick}">
     <div style="font-size:20px">${ic}</div><div style="flex:1"><div style="font-size:14.5px;font-weight:700">${judul}</div><div style="font-size:12px;color:var(--muted)">${sub}</div></div>
@@ -1144,7 +1144,7 @@ function renderBantuan(){
       <div style="font-size:38px">🛟</div>
       <h3 style="font-size:21px;font-weight:800;margin-top:8px">Butuh bantuan?</h3>
       <p style="font-size:15px;color:#46605c;margin-top:6px;line-height:1.55">Tim ${BIZ.nama} siap membantu Anda lewat WhatsApp.</p>
-      <a href="${waLink('Halo '+BIZ.nama+', saya butuh bantuan.')}" target="_blank" class="btn btn-primary" style="margin-top:18px;display:block;text-decoration:none;font-size:17px;padding:16px;font-weight:800">💬 Chat WhatsApp</a>
+      <a href="${waBiz('Halo '+BIZ.nama+', saya butuh bantuan.')}" target="_blank" class="btn btn-primary" style="margin-top:18px;display:block;text-decoration:none;font-size:17px;padding:16px;font-weight:800">💬 Chat WhatsApp</a>
       <p style="font-size:14px;color:var(--muted);margin-top:10px">${BIZ.waTampil}</p>
     </div>
 
@@ -1171,7 +1171,7 @@ function renderBantuan(){
     <div class="sec-title" style="font-size:15px">Pertanyaan umum</div>
     ${faq.map(([q,a])=>`<div class="card" style="padding:18px;margin-bottom:11px"><div style="font-size:15.5px;font-weight:800">${q}</div><p style="font-size:14.5px;color:#46605c;margin-top:7px;line-height:1.6">${a}</p></div>`).join('')}
 
-    <a href="${waLink('Halo '+BIZ.nama+', saya butuh bantuan.')}" target="_blank" class="btn btn-primary" style="display:block;text-decoration:none;font-size:16px;padding:15px;font-weight:800;margin-top:4px">💬 Masih bingung? Chat kami</a>
+    <a href="${waBiz('Halo '+BIZ.nama+', saya butuh bantuan.')}" target="_blank" class="btn btn-primary" style="display:block;text-decoration:none;font-size:16px;padding:15px;font-weight:800;margin-top:4px">💬 Masih bingung? Chat kami</a>
     <p style="text-align:center;font-size:12.5px;color:var(--muted);margin:16px 0">${BIZ.nama} · ${BIZ.badan} · ${BIZ.kota}</p>`;
 }
 function pageTentang(){
@@ -1185,7 +1185,7 @@ function pageTentang(){
     <div class="card" style="padding:16px">
       <div style="font-size:14.5px;font-weight:700">${BIZ.badan}</div>
       <div style="font-size:12.5px;color:var(--muted);margin-top:4px">📍 ${BIZ.alamat}, ${BIZ.kota}</div>
-      <a href="${waLink('Halo '+BIZ.nama+', saya mau bertanya.')}" target="_blank" class="btn btn-primary" style="margin-top:14px;display:block;text-align:center;text-decoration:none">💬 Hubungi via WhatsApp</a>
+      <a href="${waBiz('Halo '+BIZ.nama+', saya mau bertanya.')}" target="_blank" class="btn btn-primary" style="margin-top:14px;display:block;text-align:center;text-decoration:none">💬 Hubungi via WhatsApp</a>
     </div>
     <div class="sec-title">Bagaimana pembayaran dilindungi</div>
     <div class="card" style="padding:16px">
@@ -1206,7 +1206,7 @@ function pageBantuan(){
       <div style="font-size:30px">🛟</div>
       <h3 style="font-size:18px;font-weight:800;margin-top:4px">Butuh bantuan?</h3>
       <p style="font-size:12.5px;color:var(--muted);margin-top:3px">Tim ${BIZ.nama} siap membantu lewat WhatsApp.</p>
-      <a href="${waLink('Halo '+BIZ.nama+', saya butuh bantuan dengan pesanan saya.')}" target="_blank" class="btn btn-primary" style="margin-top:14px;display:block;text-align:center;text-decoration:none">💬 Chat Bantuan (${BIZ.waTampil})</a>
+      <a href="${waBiz('Halo '+BIZ.nama+', saya butuh bantuan dengan pesanan saya.')}" target="_blank" class="btn btn-primary" style="margin-top:14px;display:block;text-align:center;text-decoration:none">💬 Chat Bantuan (${BIZ.waTampil})</a>
     </div>
     <div class="sec-title">Cara kerja sengketa</div>
     <div class="card" style="padding:16px"><p style="font-size:13px;color:#314b47;line-height:1.6">Jika hasil tidak sesuai, tekan <b>"Ada Masalah"</b> di halaman pesanan. Status berubah jadi <b>Sengketa</b>, dana <b>tetap ditahan</b> ${BIZ.nama}, dan tim menghubungi pemilik & tukang untuk solusi adil (perbaikan, sebagian, atau pengembalian).</p></div>
@@ -1347,13 +1347,17 @@ async function renderDetail(){
   const o=ORDERS.find(x=>x.id===VIEW.orderId);if(!o){back();return}
   const sc=$('scroll');sc.innerHTML=`<div class="loadwrap" style="min-height:200px"><div class="spinner"></div></div>`;
   const [log,msgs]=await Promise.all([getLog(o.id),getMsgs(o.id)]);
+  if((ME.is_admin||ME.is_owner)&&ADMIN_PEMILIK.length===0){
+    const {data}=await sb.from('profiles').select('id,nama,telp').eq('role','pemilik');
+    ADMIN_PEMILIK=data||[];
+  }
   const k=katOf(o.kat),b=o.biaya||fee(o.harga),s=ST[o.status]||ST.MENUNGGU_DANA;
   const harian=o.sistem==='harian';
   const amPemilik=o.pemilik_id===ME.id;
   if(o.tukang_id===ME.id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))startTracking(o.id);else if(_trackOrder===o.id)stopTracking();
   const lacakNote=(o.tukang_id===ME.id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))?`<div class="card" style="padding:12px 14px;margin-top:12px;background:#FFF7E6;border:1px solid #F0D9A0;display:flex;gap:10px;align-items:center"><div style="font-size:20px">📍</div><div style="font-size:12px;color:#7a5b14;line-height:1.5">Biarkan app <b>tetap terbuka</b> selama perjalanan agar pelanggan dapat melihat <b>posisi Anda secara langsung</b>.</div></div>`:'';
   const adminCtrl=(ME.is_admin&&o.tukang_id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))?`<div class="card" style="padding:13px;margin-top:10px;border:1px solid #F0D9A0;background:#FFFDF7"><div style="font-size:12px;font-weight:800;color:#9a6a14;margin-bottom:9px">🛡️ Kontrol Admin</div><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" style="flex:1" onclick="openAssign('${o.id}')">🔁 Ganti Tukang</button><button class="btn btn-ghost btn-sm" style="flex:1;color:#9A2D2D" onclick="lepasTukangAdmin('${o.id}')">↩️ Lepas Tukang</button></div><p style="font-size:10.5px;color:var(--muted);margin-top:7px">Untuk kasus tukang salah ambil / tak bisa lanjut. Pekerjaan kembali tersedia.</p></div>`:'';
-  const adminFotoCard=((ME.is_admin||ME.is_owner)&&!harian&&o.tukang_id&&o.tukang_id!==ME.id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))?`<div class="card" style="padding:13px;margin-top:10px;border:1px solid #F0D9A0;background:#FFFDF7"><div style="font-size:12px;font-weight:800;color:#9a6a14;margin-bottom:9px">🛡️ Kelola Foto (Admin)</div><p style="font-size:10.5px;color:var(--muted);margin-bottom:9px">Boleh ambil kamera atau pilih dari galeri — tanggal foto asli tetap tercatat.</p><div style="display:flex;gap:10px">${fotoBtn(o,'sebelum')}${fotoBtn(o,'sesudah')}</div></div>`:'';
+  const adminFotoCard=((ME.is_admin||ME.is_owner)&&!harian&&o.tukang_id&&o.tukang_id!==ME.id&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status))?`<div class="card" style="padding:13px;margin-top:10px;border:1px solid #F0D9A0;background:#FFFDF7"><div style="font-size:12px;font-weight:800;color:#9a6a14;margin-bottom:9px">🛡️ Kelola Foto (Admin)</div><p style="font-size:10.5px;color:var(--muted);margin-bottom:9px">Boleh ambil kamera atau pilih dari galeri — tanggal foto asli tetap tercatat.</p><div style="display:flex;gap:10px">${fotoBtn(o,'sebelum')}${fotoBtn(o,'sesudah')}</div>${(o.foto_sebelum_url||o.foto_sesudah_url)&&p_tel_pemilik(o)?`<a href="${waLink(p_tel_pemilik(o),'Halo '+(o.pemilik_nama||'')+', foto pekerjaan '+(o.judul||'-')+' sudah kami update. Silakan cek progresnya di aplikasi Tukangin ya. Terima kasih, Tukangin.')}" target="_blank" class="btn btn-ghost btn-sm" style="width:100%;margin-top:10px;text-decoration:none;color:#128C3E;border-color:#25D366">📲 Kirim Update ke Pelanggan (WA)</a>`:''}</div>`:'';
   let terminCard='';
   if(o.termin){
     if(o.tukang_id===ME.id&&(!o.pelunasan_status||o.pelunasan_status==='belum')&&['DANA_DITAHAN','DIKERJAKAN'].includes(o.status)){
@@ -1877,7 +1881,7 @@ async function klaimGaransi(id){
   if(error){toast('Gagal: '+error.message);return}
   await addLog(id,'Klaim garansi','Pemilik melaporkan masalah hasil kerja');
   await refresh();openOrder(id);
-  window.open(waLink('Halo '+BIZ.nama+', saya klaim GARANSI untuk pesanan: '+(o?.judul||'')+'. Ada masalah pada hasil kerja.'),'_blank');
+  window.open(waBiz('Halo '+BIZ.nama+', saya klaim GARANSI untuk pesanan: '+(o?.judul||'')+'. Ada masalah pada hasil kerja.'),'_blank');
   toast('Laporan garansi terkirim');
 }
 async function sengketa(id){
@@ -2036,6 +2040,18 @@ async function ubahNamaAdmin(uid,namaLama){
   await addLog(null,'Nama diubah admin','"'+namaLama+'" → "'+trimmed+'"');
   toast('✅ Nama diperbarui');openSemuaPengguna();
 }
+async function ubahPeranAdmin(uid,peranLama){
+  if(!ME.is_owner&&!ME.is_admin){toast('Khusus admin/owner');return}
+  const peranBaru=peranLama==='tukang'?'pemilik':'tukang';
+  const label=peranBaru==='tukang'?'TUKANG':'PEMILIK';
+  if(!confirm(`Jadikan akun ini ${label}? Kalau jadi Tukang, verifikasi KTP+selfie akan direset (harus diverifikasi ulang dari awal).`))return;
+  const upd={role:peranBaru};
+  if(peranBaru==='tukang'){upd.verif_status=null;upd.kyc=false;upd.ktp_url=null;upd.wajah_url=null;upd.nik=null;upd.setuju_aturan=null;}
+  const {error}=await sb.from('profiles').update(upd).eq('id',uid);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(null,'Peran diubah admin',`Diubah dari ${peranLama} menjadi ${peranBaru}`);
+  toast('✅ Peran diperbarui menjadi '+label);openSemuaPengguna();
+}
 async function openSemuaPengguna(){
   if(!ME.is_owner){toast('Khusus Owner');return}
   openSheet(`<div style="padding:20px"><h3 style="font-size:17px;font-weight:800;margin-bottom:4px">👥 Semua Pengguna Terdaftar</h3><p style="font-size:11.5px;color:var(--muted);margin-bottom:12px">Semua yang sudah daftar, termasuk yang belum verifikasi.</p><div id="spgList"><div class="loadwrap"><div class="spinner"></div></div></div></div>`);
@@ -2049,7 +2065,7 @@ async function openSemuaPengguna(){
   const waLink=(telp,msg)=>{let d=(telp||'').replace(/\D/g,'');if(!d)return'';if(d[0]==='0')d='62'+d.slice(1);else if(d.slice(0,2)!=='62')d='62'+d;return'https://wa.me/'+d+'?text='+encodeURIComponent(msg);};
   const appUrl=location.origin+location.pathname;
   const ingatBtn=(p)=>{const need=p.role==='tukang'&&(!p.verif_status||p.verif_status==='belum'||p.verif_status==='ditolak');if(!need||!p.telp)return'';const msg='Halo '+(p.nama||'')+', pendaftaran Anda di Tukangin sudah masuk. Tinggal unggah foto KTP & selfie di app agar bisa mulai dapat pekerjaan. Buka: '+appUrl+' Terima kasih, Tukangin.';return`<a href="${waLink(p.telp,msg)}" target="_blank" style="display:inline-block;margin-top:9px;text-decoration:none;font-size:11px;font-weight:700;color:#128C3E;border:1px solid #25D366;border-radius:8px;padding:5px 11px">💬 Ingatkan via WA</a>`;};
-  const item=(p)=>`<div style="border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div style="min-width:0"><b style="font-size:13.5px">${esc(p.nama||'(tanpa nama)')}</b><div class="meta" style="font-size:11px">${p.role==='tukang'?'👷 Tukang':'🏠 Pemilik'}${p.is_owner?' · 👑 Owner':p.is_admin?' · ⚙️ Operator':''}${p.telp?' · 📱 '+esc(p.telp):''}${p.area?' · 📍 '+esc(p.area):''}</div><div class="meta" style="font-size:10.5px">Daftar: ${p.dibuat?tgljamID(p.dibuat):'-'}</div></div>${p.role==='tukang'?vbadge(p.verif_status):''}</div>${ingatBtn(p)}<button onclick="ubahNamaAdmin('${p.id}','${esc(p.nama||'').replace(/'/g,"\\'")}')" style="display:inline-block;margin-top:9px;margin-left:8px;text-decoration:none;font-size:11px;font-weight:700;color:#0D5953;background:#fff;border:1px solid #0D5953;border-radius:8px;padding:5px 11px">✏️ Ubah Nama</button></div>`;
+  const item=(p)=>`<div style="border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div style="min-width:0"><b style="font-size:13.5px">${esc(p.nama||'(tanpa nama)')}</b><div class="meta" style="font-size:11px">${p.role==='tukang'?'👷 Tukang':'🏠 Pemilik'}${p.is_owner?' · 👑 Owner':p.is_admin?' · ⚙️ Operator':''}${p.telp?' · 📱 '+esc(p.telp):''}${p.area?' · 📍 '+esc(p.area):''}</div><div class="meta" style="font-size:10.5px">Daftar: ${p.dibuat?tgljamID(p.dibuat):'-'}</div></div>${p.role==='tukang'?vbadge(p.verif_status):''}</div>${ingatBtn(p)}<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap"><button onclick="ubahNamaAdmin('${p.id}','${esc(p.nama||'').replace(/'/g,"\\'")}')" style="text-decoration:none;font-size:11px;font-weight:700;color:#0D5953;background:#fff;border:1px solid #0D5953;border-radius:8px;padding:5px 11px">✏️ Ubah Nama</button><button onclick="ubahPeranAdmin('${p.id}','${p.role}')" style="text-decoration:none;font-size:11px;font-weight:700;color:#9a6a14;background:#fff;border:1px solid #9a6a14;border-radius:8px;padding:5px 11px">🔄 Jadikan ${p.role==='tukang'?'Pemilik':'Tukang'}</button></div></div>`;
   box.innerHTML=`<div style="display:flex;gap:7px;margin-bottom:12px;font-size:11.5px">
       <div style="flex:1;background:#0D5953;color:#fff;border-radius:10px;padding:9px;text-align:center"><div style="font-size:18px;font-weight:800">${list.length}</div>Total</div>
       <div style="flex:1;background:#E7F2F0;border-radius:10px;padding:9px;text-align:center"><div style="font-size:18px;font-weight:800;color:#0D5953">${tukang.length}</div>Tukang</div>
