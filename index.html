@@ -3,6 +3,7 @@
 <head><link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1e293b">
 <link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Tukangin — Jasa Tukang Bali</title>
@@ -212,8 +213,6 @@ function renderAuth(){
     <div style="margin-bottom:6px"><span onclick="setAuth('welcome')" style="color:var(--muted);font-size:13px">‹ Kembali</span></div>
     <div class="logo-lg">🔧</div>
     <h1>Tukangin</h1><p class="sub">Tukang tepercaya, dana aman lewat escrow.</p>
-    <div class="seg"><button id="seg-login" class="${authMode==='login'?'on':''}" onclick="setAuth('login')">Masuk</button>
-      <button id="seg-daftar" class="${authMode==='daftar'?'on':''}" onclick="setAuth('daftar')">Daftar</button></div>
     <div id="autherr"></div>
     <div id="authform"></div>
   </div>`;
@@ -229,7 +228,9 @@ function welcomeHTML(){return `<div style="min-height:100vh;min-height:100dvh;di
     </div>
   </div>
   <div style="background:var(--surface);border-radius:26px 26px 0 0;padding:24px 22px 30px">
-    <button class="btn btn-primary" style="font-size:17px;padding:16px" onclick="setAuth('daftar')">Daftar Gratis</button>
+    <div style="font-size:12.5px;font-weight:700;color:#46605c;text-align:center;margin-bottom:8px">Daftar sebagai:</div>
+    <button class="btn" style="font-size:16px;padding:16px;background:#0D5953;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px" onclick="mulaiDaftar('pemilik')">👤 Saya Pemilik — Cari Tukang</button>
+    <button class="btn" style="font-size:16px;padding:16px;margin-top:10px;background:#C97D17;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px" onclick="mulaiDaftar('tukang')">🛠️ Saya Tukang — Cari Kerja</button>
     <button class="btn btn-ghost" style="margin-top:11px" onclick="setAuth('login')">Sudah punya akun? Masuk</button>
     ${sudahTerpasang()?'':`<button class="btn btn-ghost" style="margin-top:11px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="pasangApp()">📲 Pasang Aplikasi ke Layar HP</button>`}
     <button class="btn btn-ghost btn-sm" style="margin-top:11px;color:#0D5953;font-weight:800" onclick="openKeamanan()">🔒 Keamanan & Kepercayaan — kenapa aman?</button>
@@ -239,6 +240,8 @@ function welcomeHTML(){return `<div style="min-height:100vh;min-height:100dvh;di
   </div>
 </div>`;}
 function setAuth(m){authMode=m;renderAuth()}
+function mulaiDaftar(role){pickedRole=role;setAuth('daftar');}
+function gantiRole(){pickedRole=pickedRole==='tukang'?'pemilik':'tukang';renderAuthForm();}
 async function pasangApp(){
   const bip=window.__bip;
   if(bip&&bip.prompt){try{bip.prompt();const c=await bip.userChoice;if(c&&c.outcome==='accepted')toast('✅ Aplikasi sedang dipasang');window.__bip=null;return;}catch(e){}}
@@ -256,10 +259,13 @@ function renderAuthForm(){
   const googleBtn=`<button class="btn btn-ghost" style="margin-bottom:12px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;gap:9px" onclick="loginGoogle()"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5h-1.9V20H24v8h11.3c-1.6 4.7-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34 5.1 29.3 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.7-.4-4.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34 5.1 29.3 3 24 3 16 3 9 7.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 36.4 26.7 37 24 37c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9 40.6 16 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H24v8h11.3c-.8 2.3-2.2 4.3-4.1 5.6l6.2 5.2C40.8 36.4 44 30.7 44 24c0-1.4-.1-2.7-.4-3.5z"/></svg><span style="font-weight:700;font-size:13.5px">Lanjutkan dengan Google</span></button>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div style="flex:1;height:1px;background:var(--line)"></div><span style="font-size:11px;color:var(--muted)">atau</span><div style="flex:1;height:1px;background:var(--line)"></div></div>`;
   if(authMode==='daftar'){
-    $('authform').innerHTML=`${googleBtn}
-      <div class="field"><label>Saya seorang</label>
-        <div class="seg" id="roleseg"><button class="on" data-r="pemilik" onclick="pickRole(this)">👤 Pemilik (cari tukang)</button>
-        <button data-r="tukang" onclick="pickRole(this)">🛠️ Tukang</button></div></div>
+    const roleBanner=`<div style="display:flex;align-items:center;gap:10px;padding:13px 14px;border-radius:12px;margin-bottom:16px;background:${pickedRole==='tukang'?'#FFF3E0':'#E7F2F0'};border:2px solid ${pickedRole==='tukang'?'#C97D17':'#0D5953'}">
+      <div style="font-size:22px">${pickedRole==='tukang'?'🛠️':'👤'}</div>
+      <div style="flex:1"><div style="font-size:11px;color:#5B6B68;font-weight:700">MENDAFTAR SEBAGAI</div>
+      <div style="font-size:14.5px;font-weight:800;color:${pickedRole==='tukang'?'#8a5a10':'#0D5953'}">${pickedRole==='tukang'?'TUKANG (cari kerja)':'PEMILIK (cari tukang)'}</div></div>
+      <button onclick="gantiRole()" style="font-size:12px;font-weight:700;color:${pickedRole==='tukang'?'#8a5a10':'#0D5953'};background:none;border:1.5px solid currentColor;padding:5px 10px;border-radius:8px">Ubah</button>
+    </div>`;
+    $('authform').innerHTML=`${googleBtn}${roleBanner}
       <div class="field"><label>Nama lengkap</label><input class="input" id="a_nama" placeholder="Nama Anda"></div>
       <div class="field"><label>No. WhatsApp (wajib)</label><input class="input" id="a_telp" inputmode="tel" placeholder="08…"></div>
       <div class="field"><label>Email</label><input class="input" id="a_email" inputmode="email" placeholder="email@contoh.com"></div>
@@ -1513,7 +1519,7 @@ async function renderDetail(){
   const feeBlock=amPemilik
     ?`<div class="fee">${harian?`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow"><span>Biaya layanan</span><span>${rp(b.layanan)}</span></div>`:`<div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Biaya layanan <span class="sub">(${o.harga?(b.layanan/o.harga*100).toFixed(1):0}%)</span></span><span>${rp(b.layanan)}</span></div>`}<div class="feerow tot"><span>Total escrow</span><span>${rp(b.escrow)}</span></div><div class="feerow"><span class="sub">Tanpa biaya tersembunyi.</span><span></span></div></div>
       <div style="background:#E7F2F0;border:1px solid #cfe2de;border-radius:10px;padding:10px 12px;margin-top:9px;font-size:11.5px;color:#0D5953;line-height:1.5">🔒 <b>Uang Anda DITAHAN, bukan diberikan ke tukang.</b> Dana baru diteruskan setelah Anda sendiri yang konfirmasi pekerjaan selesai & memuaskan. Kalau ada masalah, dana bisa dikembalikan.</div>`
-    :`<div class="fee">${harian?`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow tot"><span>Estimasi terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div><div class="feerow"><span class="sub">Final dihitung dari jam kerja 08.00–17.00 (lihat Absensi)</span><span></span></div>`:`<div class="feerow"><span>Harga kesepakatan</span><span>${rp(o.harga)}</span></div>${(PROMO_KOMISI_GRATIS||b.komisi===0)?`<div class="feerow"><span>Komisi</span><span style="color:var(--ok);font-weight:800">GRATIS · promo peluncuran</span></div>`:`<div class="feerow"><span>Komisi <span class="sub">(${o.harga?(b.komisi/o.harga*100).toFixed(1):0}%)</span></span><span style="color:var(--bad)">−${rp(b.komisi)}</span></div>`}<div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div><div class="feerow"><span class="sub">Komisi kami kecil &amp; berjenjang (turun untuk job besar) — jauh di bawah ojol.</span><span></span></div>`}</div>`;
+    :`<div class="fee">${harian?`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow tot"><span>Estimasi terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div><div class="feerow"><span class="sub">Final dihitung dari jam kerja 08.00–17.00 (lihat Absensi)</span><span></span></div>`:`<div class="feerow"><span>Harga kesepakatan</span><span>${rp(o.harga)}</span></div>${(PROMO_KOMISI_GRATIS||b.komisi===0)?`<div class="feerow"><span>Komisi</span><span style="color:var(--ok);font-weight:800">GRATIS · promo peluncuran</span></div>`:`<div class="feerow"><span>Komisi <span class="sub">(${o.harga?(b.komisi/o.harga*100).toFixed(1):0}%)</span></span><span style="color:var(--bad)">−${rp(b.komisi)}</span></div>`}<div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div><div class="feerow"><span class="sub">Komisi kami kecil &amp; berjenjang (turun untuk job besar) — jauh di bawah ojol.</span><span></span></div></div>`;
 
   const showChat=o.tukang_id&&['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status);
 
