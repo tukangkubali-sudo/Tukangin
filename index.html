@@ -855,9 +855,11 @@ async function renderAdmin(){
   const belumKonfirmasi=ords.filter(o=>o.tukang_dibayar&&!o.tukang_konfirmasi_terima);
   const isOwner=ME.is_owner;
   const actualMasuk=o=>{if(o.termin){let t=o.dp_nominal||0;if(o.pelunasan_status==='lunas')t+=(o.pelunasan_nominal||0);return t;}return (o.biaya||fee(o.harga)).escrow||0;};
+  const dpDicairkan=o=>(o.biaya&&o.biaya.dp_dicairkan)||0;
   const uangMasuk=ords.filter(o=>['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI','SELESAI'].includes(o.status)).reduce((s,o)=>s+actualMasuk(o),0);
-  const uangKeluar=ords.filter(o=>o.tukang_dibayar).reduce((s,o)=>s+((o.biaya||fee(o.harga)).payout||0),0);
-  const tertahan=ords.filter(o=>['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status)).reduce((s,o)=>s+actualMasuk(o),0);
+  const uangKeluar=ords.filter(o=>o.tukang_dibayar).reduce((s,o)=>s+((o.biaya||fee(o.harga)).payout||0),0)
+    + ords.filter(o=>!o.tukang_dibayar&&!['SELESAI','DIBATALKAN'].includes(o.status)).reduce((s,o)=>s+dpDicairkan(o),0);
+  const tertahan=ords.filter(o=>['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status)).reduce((s,o)=>s+actualMasuk(o)-dpDicairkan(o),0);
   const adaTindakan=cekBayar.length||cekPelunasan.length||belumBayar.filter(o=>o.bukti_transfer_url).length||belumTukang.length||seng.length||kl.length||pending.length||cair.length||belumKonfirmasi.length;
   const _now=new Date(),_hari=_now.toDateString();
   const daftarHariIni=list.filter(p=>p.dibuat&&new Date(p.dibuat).toDateString()===_hari).length;
@@ -1922,8 +1924,17 @@ function adminPaymentInfo(o,b){
   let inner;
   if(o.termin){
     const pStatus={belum:'⏳ Belum diminta',menunggu:'⏳ Menunggu verifikasi',lunas:'✅ Lunas'}[o.pelunasan_status||'belum']||o.pelunasan_status;
+    const dpCair=(o.biaya&&o.biaya.dp_dicairkan)||0;
+    const dpSisa=Math.max(0,(o.dp_nominal||0)-dpCair);
+    const dpVerified=!['MENUNGGU_DANA','MENUNGGU_VERIFIKASI'].includes(o.status);
+    const bisaCairkan=dpVerified&&!['SELESAI','DIBATALKAN'].includes(o.status)&&dpSisa>0;
     inner=`<div style="display:flex;justify-content:space-between;font-size:13px"><span>DP (50%)</span><b>${rp(o.dp_nominal)}</b></div>
       ${proof(o.bukti_transfer_url,'DP')}
+      ${dpVerified?`<div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12.5px"><span>Sudah dicairkan ke tukang</span><b style="color:var(--ok)">${rp(dpCair)}</b></div>
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-top:3px"><span>Sisa ditahan Tukangin</span><b style="color:var(--hold)">${rp(dpSisa)}</b></div>
+        ${bisaCairkan?`<button class="btn btn-primary btn-sm" style="width:100%;margin-top:10px" onclick="cairkanDPTukang('${o.id}')">💸 Cairkan Sebagian/Semua ke Tukang</button>`:''}
+      </div>`:''}
       <div class="divider"></div>
       <div style="display:flex;justify-content:space-between;font-size:13px"><span>Pelunasan</span><b>${rp(o.pelunasan_nominal)}</b></div>
       <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Status: ${pStatus}</div>
@@ -1933,6 +1944,22 @@ function adminPaymentInfo(o,b){
       ${proof(o.bukti_transfer_url,'transfer')}`;
   }
   return `<div class="sec-title">💳 Info Pembayaran (Admin)</div><div class="card" style="padding:14px">${inner}</div>`;
+}
+async function cairkanDPTukang(orderId){
+  const o=ORDERS.find(x=>x.id===orderId);if(!o){toast('Pesanan tidak ditemukan');return}
+  const dpCair=(o.biaya&&o.biaya.dp_dicairkan)||0;
+  const dpSisa=Math.max(0,(o.dp_nominal||0)-dpCair);
+  const input=prompt(`Sisa DP yang belum dicairkan: ${rp(dpSisa)}\n\nMasukkan jumlah yang mau dicairkan ke tukang sekarang (Rp):`,String(dpSisa));
+  if(input===null)return;
+  const jumlah=Math.round(+String(input).replace(/\D/g,'')||0);
+  if(!jumlah||jumlah<=0){toast('Masukkan jumlah yang valid');return}
+  if(jumlah>dpSisa){toast('Jumlah melebihi sisa DP yang ditahan ('+rp(dpSisa)+')');return}
+  const biayaBaru={...(o.biaya||fee(o.harga)),dp_dicairkan:dpCair+jumlah};
+  const {error}=await sb.from('orders').update({biaya:biayaBaru}).eq('id',orderId);
+  if(error){toast('Gagal: '+error.message);return}
+  await addLog(orderId,'DP dicairkan ke tukang',`${rp(jumlah)} dicairkan untuk ${o.tukang_nama||'tukang'} (modal bahan). Total dicairkan: ${rp(dpCair+jumlah)} dari DP ${rp(o.dp_nominal)}.`);
+  toast('✅ '+rp(jumlah)+' ditandai sudah dicairkan ke tukang');
+  await refresh();openOrder(orderId);
 }
 function garansiInfo(o){
   if(o.status!=='SELESAI'||!o.selesai_tgl||o.sistem==='harian')return null;
