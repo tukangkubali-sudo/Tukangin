@@ -1516,10 +1516,31 @@ async function renderDetail(){
 
   const tukangInfo=o.tukang_nama?`<div class="card" style="padding:14px;margin-top:12px;cursor:pointer" onclick="openTukangProfil('${o.tukang_id}')"><div style="display:flex;align-items:center;gap:12px"><div class="profav" style="width:42px;height:42px;font-size:15px">${esc(o.tukang_inisial||initial(o.tukang_nama))}</div><div style="flex:1"><h4 style="font-size:14.5px;font-weight:700">${esc(o.tukang_nama)} <span style="color:var(--ok)">✔</span></h4><div class="meta">⭐ ${o.tukang_rating||'5.0'}</div></div><span style="color:#0D5953;font-size:12px;font-weight:700;white-space:nowrap">Lihat profil ›</span></div></div>`:'';
 
-  const feeBlock=amPemilik
-    ?`<div class="fee">${harian?`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow"><span>Biaya layanan</span><span>${rp(b.layanan)}</span></div>`:`<div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Biaya layanan <span class="sub">(${o.harga?(b.layanan/o.harga*100).toFixed(1):0}%)</span></span><span>${rp(b.layanan)}</span></div>`}<div class="feerow tot"><span>Total escrow</span><span>${rp(b.escrow)}</span></div><div class="feerow"><span class="sub">Tanpa biaya tersembunyi.</span><span></span></div></div>
-      <div style="background:#E7F2F0;border:1px solid #cfe2de;border-radius:10px;padding:10px 12px;margin-top:9px;font-size:11.5px;color:#0D5953;line-height:1.5">🔒 <b>Uang Anda DITAHAN, bukan diberikan ke tukang.</b> Dana baru diteruskan setelah Anda sendiri yang konfirmasi pekerjaan selesai & memuaskan. Kalau ada masalah, dana bisa dikembalikan.</div>`
-    :`<div class="fee">${harian?`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow tot"><span>Estimasi terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div><div class="feerow"><span class="sub">Final dihitung dari jam kerja 08.00–17.00 (lihat Absensi)</span><span></span></div>`:`<div class="feerow"><span>Harga kesepakatan</span><span>${rp(o.harga)}</span></div>${(PROMO_KOMISI_GRATIS||b.komisi===0)?`<div class="feerow"><span>Komisi</span><span style="color:var(--ok);font-weight:800">GRATIS · promo peluncuran</span></div>`:`<div class="feerow"><span>Komisi <span class="sub">(${o.harga?(b.komisi/o.harga*100).toFixed(1):0}%)</span></span><span style="color:var(--bad)">−${rp(b.komisi)}</span></div>`}<div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div><div class="feerow"><span class="sub">Komisi kami kecil &amp; berjenjang (turun untuk job besar) — jauh di bawah ojol.</span><span></span></div></div>`;
+  let feeBlock;
+  if(amPemilik){
+    let rowsHtml;
+    if(harian){
+      rowsHtml=`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow"><span>Biaya layanan</span><span>${rp(b.layanan)}</span></div>`;
+    }else{
+      rowsHtml=`<div class="feerow"><span>Biaya pekerjaan</span><span>${rp(o.harga)}</span></div><div class="feerow"><span>Biaya layanan <span class="sub">(${o.harga?(b.layanan/o.harga*100).toFixed(1):0}%)</span></span><span>${rp(b.layanan)}</span></div>`;
+    }
+    feeBlock=`<div class="fee">${rowsHtml}<div class="feerow tot"><span>Total escrow</span><span>${rp(b.escrow)}</span></div><div class="feerow"><span class="sub">Tanpa biaya tersembunyi.</span><span></span></div></div>
+      <div style="background:#E7F2F0;border:1px solid #cfe2de;border-radius:10px;padding:10px 12px;margin-top:9px;font-size:11.5px;color:#0D5953;line-height:1.5">🔒 <b>Uang Anda DITAHAN, bukan diberikan ke tukang.</b> Dana baru diteruskan setelah Anda sendiri yang konfirmasi pekerjaan selesai & memuaskan. Kalau ada masalah, dana bisa dikembalikan.</div>`;
+  }else{
+    let rowsHtml;
+    if(harian){
+      rowsHtml=`<div class="feerow"><span>Tarif harian</span><span>${rp(o.tarif_harian||0)} × ${o.hari||0} hari</span></div><div class="feerow tot"><span>Estimasi terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div><div class="feerow"><span class="sub">Final dihitung dari jam kerja 08.00–17.00 (lihat Absensi)</span><span></span></div>`;
+    }else{
+      let komisiHtml;
+      if(PROMO_KOMISI_GRATIS||b.komisi===0){
+        komisiHtml=`<div class="feerow"><span>Komisi</span><span style="color:var(--ok);font-weight:800">GRATIS · promo peluncuran</span></div>`;
+      }else{
+        komisiHtml=`<div class="feerow"><span>Komisi <span class="sub">(${o.harga?(b.komisi/o.harga*100).toFixed(1):0}%)</span></span><span style="color:var(--bad)">−${rp(b.komisi)}</span></div>`;
+      }
+      rowsHtml=`<div class="feerow"><span>Harga kesepakatan</span><span>${rp(o.harga)}</span></div>${komisiHtml}<div class="feerow tot"><span>Anda terima</span><span style="color:var(--ok)">${rp(b.payout)}</span></div><div class="feerow"><span class="sub">Komisi kami kecil &amp; berjenjang (turun untuk job besar) — jauh di bawah ojol.</span><span></span></div>`;
+    }
+    feeBlock=`<div class="fee">${rowsHtml}</div>`;
+  }
 
   const showChat=o.tukang_id&&['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status);
 
