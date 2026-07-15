@@ -854,9 +854,10 @@ async function renderAdmin(){
   const selesai=ords.filter(o=>o.status==='SELESAI');
   const belumKonfirmasi=ords.filter(o=>o.tukang_dibayar&&!o.tukang_konfirmasi_terima);
   const isOwner=ME.is_owner;
-  const uangMasuk=ords.filter(o=>['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI','SELESAI'].includes(o.status)).reduce((s,o)=>s+((o.biaya||fee(o.harga)).escrow||0),0);
+  const actualMasuk=o=>{if(o.termin){let t=o.dp_nominal||0;if(o.pelunasan_status==='lunas')t+=(o.pelunasan_nominal||0);return t;}return (o.biaya||fee(o.harga)).escrow||0;};
+  const uangMasuk=ords.filter(o=>['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI','SELESAI'].includes(o.status)).reduce((s,o)=>s+actualMasuk(o),0);
   const uangKeluar=ords.filter(o=>o.tukang_dibayar).reduce((s,o)=>s+((o.biaya||fee(o.harga)).payout||0),0);
-  const tertahan=ords.filter(o=>['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status)).reduce((s,o)=>s+((o.biaya||fee(o.harga)).escrow||0),0);
+  const tertahan=ords.filter(o=>['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI'].includes(o.status)).reduce((s,o)=>s+actualMasuk(o),0);
   const adaTindakan=cekBayar.length||cekPelunasan.length||belumBayar.filter(o=>o.bukti_transfer_url).length||belumTukang.length||seng.length||kl.length||pending.length||cair.length||belumKonfirmasi.length;
   const _now=new Date(),_hari=_now.toDateString();
   const daftarHariIni=list.filter(p=>p.dibuat&&new Date(p.dibuat).toDateString()===_hari).length;
