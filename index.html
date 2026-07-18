@@ -176,7 +176,7 @@ const KAT=[{id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa',ic:'🔧'},
 const katOf=id=>KAT.find(k=>k.id===id)||KAT[7];
 const ST={MENUNGGU_DANA:{l:'Menunggu Pembayaran',c:'b-wait'},MENUNGGU_VERIFIKASI:{l:'Cek Pembayaran',c:'b-wait'},DANA_DITAHAN:{l:'Dana Ditahan',c:'b-hold'},DIKERJAKAN:{l:'Dikerjakan',c:'b-work'},MENUNGGU_KONFIRMASI:{l:'Menunggu Konfirmasi',c:'b-confirm'},SELESAI:{l:'Selesai',c:'b-done'},SENGKETA:{l:'Sengketa',c:'b-dispute'},DIBATALKAN:{l:'Dibatalkan',c:'b-dispute'}};
 /* Identitas usaha — EDIT di sini bila perlu */
-const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6282233089533',waTampil:'0822-3308-9533',bank:'BNI',rek:'1881552632',rekNama:'Putu Helyvia',garansiHari:7,retensiPersen:10,markupHarian:0.07};
+const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6282233089533',waTampil:'0822-3308-9533',bank:'BNI',rek:'1881552632',rekNama:'Putu Helyvia',garansiHari:7,retensiPersen:10,feeHarianPerHari:10000};
 /* Garansi pengerjaan per kategori (hari) — sesuai umumnya di Bali, bisa diubah */
 const GARANSI={listrik:7,pipa:14,ac:14,las:30,cat:14,bocor:30,kunci:7,umum:7};
 function garansiHariKat(kat){return GARANSI[kat]||7}
@@ -1331,7 +1331,7 @@ function pickSistem(s,el){draft.sistem=s;document.querySelectorAll('#sysseg butt
 function hitungHarian(){
   const t=+draft.tarif||0,h=+draft.hari||0,box=$('harianringkas');if(!box)return;
   if(!t||!h){box.querySelector('.rng').textContent='Isi tarif & jumlah hari';box.querySelector('.note').textContent='Sudah termasuk biaya layanan.';return}
-  const base=t*h,markup=Math.round(base*(BIZ.markupHarian||0)),total=base+markup;
+  const base=t*h,markup=(BIZ.feeHarianPerHari||0)*h,total=base+markup;
   box.querySelector('.rng').textContent=`Total: ${rp(total)}`;
   box.querySelector('.note').textContent=ME.is_admin?`Tukang terima ${rp(base)} · Anda dapat ${rp(markup)}`:'Sudah termasuk biaya layanan Tukangin.';
 }
@@ -1390,7 +1390,7 @@ async function submitPesanan(){
   if(draft.sistem==='harian'){
     const t=+draft.tarif||0,h=+draft.hari||0;
     if(!t||!h){toast('Isi tarif & jumlah hari');return}
-    const base=t*h,markup=Math.round(base*(BIZ.markupHarian||0)),total=base+markup;
+    const base=t*h,markup=(BIZ.feeHarianPerHari||0)*h,total=base+markup;
     row={...dasar,harga:base,biaya:{harga:base,layanan:markup,komisi:0,escrow:total,payout:base},sistem:'harian',tarif_harian:t,hari:h};
   }else{
     if(!draft.harga){toast('Isi harga');return}
@@ -2057,7 +2057,7 @@ async function autoProses(){
       if(o.status==='MENUNGGU_KONFIRMASI'&&!o.minta_konfirmasi_tgl){await sb.from('orders').update({minta_konfirmasi_tgl:new Date().toISOString()}).eq('id',o.id);continue;}
       if(o.status==='MENUNGGU_KONFIRMASI'&&o.minta_konfirmasi_tgl&&(now-new Date(o.minta_konfirmasi_tgl).getTime())>=limit){
         const upd={status:'SELESAI',selesai_tgl:new Date().toISOString(),auto_selesai:true};
-        if(o.sistem==='harian'){const bh=bayarHarian(o),base=bh.bayar,markup=Math.round(base*(BIZ.markupHarian||0));upd.biaya={harga:base,layanan:markup,komisi:0,escrow:base+markup,payout:base};}
+        if(o.sistem==='harian'){const bh=bayarHarian(o),base=bh.bayar,markup=(BIZ.feeHarianPerHari||0)*bh.hadir;upd.biaya={harga:base,layanan:markup,komisi:0,escrow:base+markup,payout:base};}
         await sb.from('orders').update(upd).eq('id',o.id);
         await addLog(o.id,'Otomatis selesai','Pelanggan tidak konfirmasi dalam '+KONFIRMASI_TIMEOUT_HARI+' hari');
       } else if(o.tukang_dibayar&&!o.tukang_konfirmasi_terima&&o.tukang_dibayar_tgl&&(now-new Date(o.tukang_dibayar_tgl).getTime())>=limit){
@@ -2072,9 +2072,9 @@ async function konfirmasi(id){
   const upd={status:'SELESAI',selesai_tgl:new Date().toISOString()};
   let det='Dana dicairkan ke tukang';
   if(o&&o.sistem==='harian'){
-    const bh=bayarHarian(o),base=bh.bayar,markup=Math.round(base*(BIZ.markupHarian||0));
+    const bh=bayarHarian(o),base=bh.bayar,markup=(BIZ.feeHarianPerHari||0)*bh.hadir;
     upd.biaya={harga:base,layanan:markup,komisi:0,escrow:base+markup,payout:base};
-    det=`Dibayar ${hp} hari hadir = ${rp(base)}`;
+    det=`Dibayar ${bh.hadir} hari hadir = ${rp(base)}`;
   }
   await sb.from('orders').update(upd).eq('id',id);
   await addLog(id,'Pemilik konfirmasi',det);
