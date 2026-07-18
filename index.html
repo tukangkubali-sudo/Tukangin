@@ -1008,7 +1008,7 @@ async function cabutOperator(id){
 function openTambahTukangManual(){
   openSheet(`<div style="padding:20px">
     <h3 style="font-size:17px;font-weight:800;margin-bottom:4px">🤝 Daftarkan Tukang Manual</h3>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Untuk tukang yang tidak mau/tidak bisa daftar sendiri lewat app. Dia tidak akan bisa login — semua info kerjaan &amp; pembayaran dikirim lewat WhatsApp oleh admin.</p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Untuk tukang yang tidak mau/tidak bisa daftar sendiri lewat app. Setelah ini Anda akan diminta unggah foto KTP &amp; selfie-nya (boleh dari galeri), lalu masuk antrean verifikasi seperti biasa. Dia tidak akan bisa login — semua info kerjaan &amp; pembayaran dikirim lewat WhatsApp oleh admin.</p>
     <input id="mtNama" placeholder="Nama lengkap" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
     <input id="mtTelp" inputmode="tel" placeholder="No. WhatsApp (mis. 6281234567890)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
     <input id="mtKeahlian" placeholder="Keahlian (opsional, pisah koma: listrik, AC)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:12px">
@@ -1025,8 +1025,8 @@ async function simpanTukangManual(){
   const btn=$('mtBtn');if(btn){btn.disabled=true;btn.textContent='Menyimpan…';}
   const {data,error}=await sb.rpc('daftar_tukang_manual',{p_nama:nama,p_telp:telp,p_keahlian:keahlian});
   if(error){toast('Gagal: '+error.message);if(btn){btn.disabled=false;btn.textContent='Daftarkan';}return}
-  toast('✅ Tukang didaftarkan — hubungi lewat WA untuk kerjaan pertama');
-  closeSheet();renderAdmin();
+  toast('✅ Tukang dibuat — sekarang unggah foto KTP & selfie-nya');
+  openBantuVerifikasi(data,nama,'');
 }
 let _assignOrder=null;
 function tukangRating(id){const rs=ORDERS.filter(o=>o.tukang_id===id&&o.rating).map(o=>o.rating);return rs.length?(rs.reduce((a,b)=>a+b,0)/rs.length):0;}
