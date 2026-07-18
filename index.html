@@ -873,6 +873,15 @@ async function renderAdmin(){
       <div style="display:flex;gap:7px;flex-wrap:wrap">${hiBox('📥',daftarHariIni,'Daftar baru')}${hiBox('💵',cekBayar.length,'Bayar dicek',true)}${hiBox('⏳',pending.length,'Verifikasi',true)}${hiBox('⚠️',seng.length,'Sengketa',true)}${hiBox('🔧',belumVerif,'Belum verif',true)}</div>
       ${isOwner?`<div style="margin-top:10px;padding-top:9px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center"><span style="font-size:11.5px;color:#46605c">💰 Pendapatan bulan ini</span><b style="font-size:14px;color:#0D5953">${rp(pendapatanBulan)}</b></div>`:''}
     </div>
+    <div class="card" style="padding:13px 14px;margin-bottom:12px;border:1.5px solid #0D5953">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:13.5px">🤝 Tukang Malas Pakai App?</div>
+          <p style="font-size:11.5px;color:#46605c;margin-top:2px">Daftarkan langsung — tanpa dia perlu login Google. Cukup nama & WA, urusan selanjutnya lewat WhatsApp.</p>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-sm" style="width:100%;margin-top:10px" onclick="openTambahTukangManual()">➕ Daftarkan Tukang Manual</button>
+    </div>
     <div class="sec-title">⚡ Perlu Tindakan</div>
     ${belumBayar.length?`<div class="card" style="padding:13px;margin-bottom:8px"><div style="font-weight:800;font-size:13.5px">📝 Menunggu Pembayaran · ${belumBayar.length}</div><p style="font-size:10.5px;color:var(--muted);margin-top:2px">Pesanan baru, konsumen belum transfer/belum upload bukti.</p>${belumBayar.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp(o.termin?o.dp_nominal:(o.biaya||fee(o.harga)).escrow)}</div><div class="meta">${esc(o.lokasi||'-')} · ${esc(o.pemilik_nama||'-')} · ${tgljamID(o.dibuat)}</div>${o.bukti_transfer_url?`<img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px"><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="verifPembayaran('${o.id}')">✔ Konfirmasi Dana Masuk</button>`:'<div style="font-size:11px;color:var(--muted);margin-top:4px">⏳ Belum ada bukti transfer</div>'}</div>`).join('')}</div>`:''}
     ${cekBayar.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--brass)"><div style="font-weight:800;font-size:13.5px">💵 Verifikasi Pembayaran · ${cekBayar.length}</div>${cekBayar.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp(o.termin?o.dp_nominal:(o.biaya||fee(o.harga)).escrow)}${o.termin?' <span style="font-size:9.5px;font-weight:700;background:#E7F2F0;color:#0D5953;padding:2px 6px;border-radius:6px">DP</span>':''}</div><div class="meta">Pemilik: ${esc(o.pemilik_nama||'-')}</div>${o.bukti_transfer_url?`<img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px">`:'<div style="font-size:11px;color:var(--bad);margin-top:4px">⚠ tanpa bukti</div>'}<button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="verifPembayaran('${o.id}')">✔ Konfirmasi Dana Masuk</button></div>`).join('')}</div>`:''}
@@ -913,7 +922,7 @@ async function renderAdmin(){
     <div class="sec-title">Verifikasi Tukang${pending.length?` · ${pending.length}`:''}</div>
     ${pending.length?pending.map(adminCard).join(''):emptyBox('✅','Tidak ada antrean','Semua tukang sudah ditinjau.')}
     <div class="sec-title">Sudah Ditinjau</div>
-    ${done.length?done.map(p=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><div class="tukav" style="width:34px;height:34px;font-size:13px">${esc(p.inisial||initial(p.nama))}</div><div style="flex:1"><b style="font-size:13.5px">${esc(p.nama)}</b><div class="meta" style="font-size:11px">💰 ${p.bayar_metode?esc(p.bayar_metode+(p.bayar_detail?' · '+p.bayar_detail:'')):'—'}${p.strike?` · ⚠️ ${p.strike} strike`:''}</div></div><span class="badge ${p.verif_status==='terverifikasi'?'b-done':'b-dispute'}">${p.verif_status}</span></div>`).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:4px 2px">Belum ada.</p>'}
+    ${done.length?done.map(p=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><div class="tukav" style="width:34px;height:34px;font-size:13px">${esc(p.inisial||initial(p.nama))}</div><div style="flex:1"><b style="font-size:13.5px">${esc(p.nama)}</b>${p.daftar_manual?' <span class="badge b-hold" style="font-size:9px">🤝 Manual</span>':''}<div class="meta" style="font-size:11px">💰 ${p.bayar_metode?esc(p.bayar_metode+(p.bayar_detail?' · '+p.bayar_detail:'')):'—'}${p.strike?` · ⚠️ ${p.strike} strike`:''}</div></div><span class="badge ${p.verif_status==='terverifikasi'?'b-done':'b-dispute'}">${p.verif_status}</span></div>`).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:4px 2px">Belum ada.</p>'}
     <div class="sec-title">👷 Tukang Terdaftar</div>
     <div id="tukangboxAdmin"><div class="card" style="padding:16px;text-align:center"><div class="spinner" style="margin:0 auto"></div></div></div>`;
   loadTukangList('tukangboxAdmin');
@@ -995,6 +1004,29 @@ async function cabutOperator(id){
   const {error}=await sb.rpc('cabut_operator',{p_id:id});
   if(error){toast('Gagal: '+error.message);return}
   toast('✅ Akses dicabut');openKelolaOperator();
+}
+function openTambahTukangManual(){
+  openSheet(`<div style="padding:20px">
+    <h3 style="font-size:17px;font-weight:800;margin-bottom:4px">🤝 Daftarkan Tukang Manual</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Untuk tukang yang tidak mau/tidak bisa daftar sendiri lewat app. Dia tidak akan bisa login — semua info kerjaan &amp; pembayaran dikirim lewat WhatsApp oleh admin.</p>
+    <input id="mtNama" placeholder="Nama lengkap" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
+    <input id="mtTelp" inputmode="tel" placeholder="No. WhatsApp (mis. 6281234567890)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
+    <input id="mtKeahlian" placeholder="Keahlian (opsional, pisah koma: listrik, AC)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:12px">
+    <button class="btn btn-primary" id="mtBtn" onclick="simpanTukangManual()">Daftarkan</button>
+    <button class="btn btn-ghost" style="margin-top:10px" onclick="closeSheet()">Batal</button>
+  </div>`);
+}
+async function simpanTukangManual(){
+  const nama=(($('mtNama')||{}).value||'').trim();
+  const telp=(($('mtTelp')||{}).value||'').trim();
+  const keahlianRaw=(($('mtKeahlian')||{}).value||'').trim();
+  if(!nama||!telp){toast('Isi nama & no. WhatsApp dulu');return}
+  const keahlian=keahlianRaw?keahlianRaw.split(',').map(s=>s.trim()).filter(Boolean):[];
+  const btn=$('mtBtn');if(btn){btn.disabled=true;btn.textContent='Menyimpan…';}
+  const {data,error}=await sb.rpc('daftar_tukang_manual',{p_nama:nama,p_telp:telp,p_keahlian:keahlian});
+  if(error){toast('Gagal: '+error.message);if(btn){btn.disabled=false;btn.textContent='Daftarkan';}return}
+  toast('✅ Tukang didaftarkan — hubungi lewat WA untuk kerjaan pertama');
+  closeSheet();renderAdmin();
 }
 let _assignOrder=null;
 function tukangRating(id){const rs=ORDERS.filter(o=>o.tukang_id===id&&o.rating).map(o=>o.rating);return rs.length?(rs.reduce((a,b)=>a+b,0)/rs.length):0;}
