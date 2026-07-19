@@ -171,6 +171,15 @@ const FEE_KOM=[[1000000,0.08],[3000000,0.05],[7000000,0.03],[Infinity,0.02]]; /*
 const FEE_LAY=[[1000000,0.05],[3000000,0.03],[7000000,0.02],[Infinity,0.015]]; /* biaya layanan konsumen (berjenjang) */
 function tierFee(h,br){let f=0,last=0;for(const t of br){const cap=t[0],rate=t[1];if(h>last){f+=(Math.min(h,cap)-last)*rate;last=cap;}else break;}return Math.round(f);}
 function fee(h){h=+h||0;const layanan=tierFee(h,FEE_LAY);const komisi=PROMO_KOMISI_GRATIS?0:tierFee(h,FEE_KOM);return{harga:h,layanan,komisi,escrow:h+layanan,payout:h-komisi}}
+function hargaDariTotal(target){
+  target=+target||0;if(!target)return 0;
+  let lo=0,hi=target;
+  for(let i=0;i<40;i++){
+    const mid=(lo+hi)/2;
+    if(fee(mid).escrow>target)hi=mid;else lo=mid;
+  }
+  return Math.round(lo);
+}
 function sisaPayout(o,b){const dpCair=(o.biaya&&o.biaya.dp_dicairkan)||0;return Math.max(0,(b.payout||0)-dpCair);}
 const KAT=[{id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa',ic:'🔧'},{id:'ac',nm:'AC',ic:'❄️'},{id:'las',nm:'Las/Pagar',ic:'🔥'},{id:'cat',nm:'Cat',ic:'🎨'},{id:'bocor',nm:'Atap Bocor',ic:'🏠'},{id:'kunci',nm:'Kunci',ic:'🔑'},{id:'umum',nm:'Lainnya',ic:'🛠️'}];
 const katOf=id=>KAT.find(k=>k.id===id)||KAT[7];
@@ -1098,7 +1107,8 @@ function openBuatPesananManual(){
       <button onclick="pmPickSistem('harian',this)">📅 Harian</button>
     </div>
     <div id="pmBorongan">
-      <input id="pmHarga" inputmode="numeric" placeholder="Harga total (Rp)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
+      <input id="pmHarga" inputmode="numeric" placeholder="Total yang dibayar konsumen (Rp)" oninput="pmPreviewHarga()" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:6px">
+      <p id="pmHargaNote" style="font-size:11px;color:var(--muted);margin-bottom:8px">Ketik angka yang benar-benar disepakati dengan konsumen — biaya layanan sudah dihitung otomatis di dalamnya, tidak ditambah lagi.</p>
     </div>
     <div id="pmHarian" style="display:none">
       <input id="pmTarif" inputmode="numeric" placeholder="Tarif per hari (Rp)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
@@ -1107,6 +1117,12 @@ function openBuatPesananManual(){
     <button class="btn btn-primary" id="pmBtn" style="margin-top:6px" onclick="submitPesananManual()">Buat Pesanan</button>
     <button class="btn btn-ghost" style="margin-top:10px" onclick="closeSheet()">Batal</button>
   </div>`);
+}
+function pmPreviewHarga(){
+  const v=+(($('pmHarga')||{}).value)||0,note=$('pmHargaNote');if(!note)return;
+  if(!v){note.textContent='Ketik angka yang benar-benar disepakati dengan konsumen — biaya layanan sudah dihitung otomatis di dalamnya, tidak ditambah lagi.';return}
+  const h=hargaDariTotal(v),b=fee(h);
+  note.textContent=`Tukang terima ${rp(b.payout)} · biaya layanan ${rp(b.layanan+b.komisi)} · total konsumen tetap ${rp(b.escrow)}`;
 }
 function pmPickSistem(s,el){
   draft.pmSistem=s;
@@ -1133,8 +1149,9 @@ async function submitPesananManual(){
     params={p_pemilik_id:pemilikId,p_kat:kat,p_judul:judul,p_desk:desk,p_material:false,p_lokasi:lokasi,p_jarak_km:jarakKm,p_lat:null,p_lng:null,
       p_kode_selesai:otp(),p_sistem:'harian',p_harga:base,p_biaya:{harga:base,layanan:markup,komisi:0,escrow:total,payout:base},p_tarif_harian:t,p_hari:h};
   }else{
-    const harga=+(($('pmHarga')||{}).value)||0;
-    if(!harga){toast('Isi harga');if(btn){btn.disabled=false;btn.textContent='Buat Pesanan';}return}
+    const totalKonsumen=+(($('pmHarga')||{}).value)||0;
+    if(!totalKonsumen){toast('Isi total yang dibayar konsumen');if(btn){btn.disabled=false;btn.textContent='Buat Pesanan';}return}
+    const harga=hargaDariTotal(totalKonsumen);
     const biaya=fee(harga);
     params={p_pemilik_id:pemilikId,p_kat:kat,p_judul:judul,p_desk:desk,p_material:false,p_lokasi:lokasi,p_jarak_km:jarakKm,p_lat:null,p_lng:null,
       p_kode_selesai:otp(),p_sistem:'borongan',p_harga:harga,p_biaya:biaya};
