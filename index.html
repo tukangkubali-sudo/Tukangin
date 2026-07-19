@@ -914,7 +914,7 @@ async function renderAdmin(){
       <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" onclick="openBuatPesananManual()">🧾 Buatkan Pesanan untuk Konsumen Manual</button>
     </div>
     <div class="sec-title">⚡ Perlu Tindakan</div>
-    ${belumBayar.length?`<div class="card" style="padding:13px;margin-bottom:8px"><div style="font-weight:800;font-size:13.5px">📝 Menunggu Pembayaran · ${belumBayar.length}</div><p style="font-size:10.5px;color:var(--muted);margin-top:2px">Pesanan baru, konsumen belum transfer/belum upload bukti.</p>${belumBayar.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp(o.termin?o.dp_nominal:(o.biaya||fee(o.harga)).escrow)}</div><div class="meta">${esc(o.lokasi||'-')} · ${esc(o.pemilik_nama||'-')} · ${tgljamID(o.dibuat)}</div>${o.bukti_transfer_url?`<img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px"><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="verifPembayaran('${o.id}')">✔ Konfirmasi Dana Masuk</button>`:'<div style="font-size:11px;color:var(--muted);margin-top:4px">⏳ Belum ada bukti transfer</div>'}<button class="btn btn-ghost btn-sm" style="margin-top:6px;color:var(--bad);border-color:var(--bad)" onclick="batalkanAdmin('${o.id}')">🗑️ Batalkan Pesanan</button></div>`).join('')}</div>`:''}
+    ${belumBayar.length?`<div class="card" style="padding:13px;margin-bottom:8px"><div style="font-weight:800;font-size:13.5px">📝 Menunggu Pembayaran · ${belumBayar.length}</div><p style="font-size:10.5px;color:var(--muted);margin-top:2px">Pesanan baru, konsumen belum transfer/belum upload bukti.</p>${belumBayar.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp(o.termin?o.dp_nominal:(o.biaya||fee(o.harga)).escrow)}</div><div class="meta">${esc(o.lokasi||'-')} · ${esc(o.pemilik_nama||'-')} · ${tgljamID(o.dibuat)}</div>${o.bukti_transfer_url?`<img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px">`:'<div style="font-size:11px;color:var(--muted);margin-top:4px">⏳ Belum ada bukti transfer</div>'}<button class="btn btn-primary btn-sm" style="margin-top:8px;width:100%" onclick="verifPembayaran('${o.id}')">✔ Konfirmasi Dana Masuk</button><button class="btn btn-ghost btn-sm" style="margin-top:6px;color:var(--bad);border-color:var(--bad)" onclick="batalkanAdmin('${o.id}')">🗑️ Batalkan Pesanan</button></div>`).join('')}</div>`:''}
     ${cekBayar.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--brass)"><div style="font-weight:800;font-size:13.5px">💵 Verifikasi Pembayaran · ${cekBayar.length}</div>${cekBayar.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp(o.termin?o.dp_nominal:(o.biaya||fee(o.harga)).escrow)}${o.termin?' <span style="font-size:9.5px;font-weight:700;background:#E7F2F0;color:#0D5953;padding:2px 6px;border-radius:6px">DP</span>':''}</div><div class="meta">Pemilik: ${esc(o.pemilik_nama||'-')}</div>${o.bukti_transfer_url?`<img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px">`:'<div style="font-size:11px;color:var(--bad);margin-top:4px">⚠ tanpa bukti</div>'}<button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="verifPembayaran('${o.id}')">✔ Konfirmasi Dana Masuk</button></div>`).join('')}</div>`:''}
     ${cekPelunasan.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--brass)"><div style="font-weight:800;font-size:13.5px">💰 Verifikasi Pelunasan · ${cekPelunasan.length}</div>${cekPelunasan.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp(o.pelunasan_nominal)} <span style="font-size:9.5px;font-weight:700;background:#FEF3E0;color:#9a6a14;padding:2px 6px;border-radius:6px">PELUNASAN</span></div><div class="meta">Pemilik: ${esc(o.pemilik_nama||'-')}</div>${o.bukti_pelunasan_url?`<img src="${o.bukti_pelunasan_url}" onclick="window.open('${o.bukti_pelunasan_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px">`:'<div style="font-size:11px;color:var(--bad);margin-top:4px">⚠ tanpa bukti</div>'}<button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="verifPelunasan('${o.id}')">✔ Konfirmasi Pelunasan</button></div>`).join('')}</div>`:''}
     ${belumTukang.length?`<div class="card" style="padding:13px;margin-bottom:8px"><div style="font-weight:800;font-size:13.5px">🔍 Belum Ada Tukang · ${belumTukang.length}</div>${belumTukang.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px;display:flex;align-items:center;gap:8px"><div style="flex:1"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')}</div><div class="meta">${esc(o.lokasi||'-')} · ${esc(o.pemilik_nama||'-')}</div></div><button class="btn btn-primary btn-sm" onclick="openAssign('${o.id}')">Tugaskan</button></div>`).join('')}</div>`:''}
@@ -1086,6 +1086,7 @@ async function simpanKonsumenManual(){
   </div>`);
 }
 function openBuatPesananManual(){
+  draft.pmTermin=false;
   const manual=(ADMIN_PEMILIK||[]).filter(p=>p.daftar_manual);
   if(!manual.length){toast('Belum ada konsumen manual — daftarkan dulu');return}
   openSheet(`<div style="padding:20px;max-height:82vh;overflow:auto">
@@ -1109,6 +1110,7 @@ function openBuatPesananManual(){
     <div id="pmBorongan">
       <input id="pmHarga" inputmode="numeric" placeholder="Total yang dibayar konsumen (Rp)" oninput="pmPreviewHarga()" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:6px">
       <p id="pmHargaNote" style="font-size:11px;color:var(--muted);margin-bottom:8px">Ketik angka yang benar-benar disepakati dengan konsumen — biaya layanan sudah dihitung otomatis di dalamnya, tidak ditambah lagi.</p>
+      <label style="display:flex;align-items:flex-start;gap:9px;margin:2px 2px 10px;font-size:12px;color:#2c4642;line-height:1.45;border:1px solid var(--line);border-radius:10px;padding:10px 11px"><input type="checkbox" id="pmTermin" onchange="draft.pmTermin=this.checked;pmPreviewHarga()" style="width:18px;height:18px;flex:none;margin-top:1px"> <span><b>Bayar bertahap</b> — DP 50% di awal, sisanya saat pekerjaan mendekati selesai.</span></label>
     </div>
     <div id="pmHarian" style="display:none">
       <input id="pmTarif" inputmode="numeric" placeholder="Tarif per hari (Rp)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
@@ -1122,7 +1124,12 @@ function pmPreviewHarga(){
   const v=+(($('pmHarga')||{}).value)||0,note=$('pmHargaNote');if(!note)return;
   if(!v){note.textContent='Ketik angka yang benar-benar disepakati dengan konsumen — biaya layanan sudah dihitung otomatis di dalamnya, tidak ditambah lagi.';return}
   const h=hargaDariTotal(v),b=fee(h);
-  note.textContent=`Tukang terima ${rp(b.payout)} · biaya layanan ${rp(b.layanan+b.komisi)} · total konsumen tetap ${rp(b.escrow)}`;
+  if(draft.pmTermin){
+    const dp=Math.round(b.escrow*0.5/1000)*1000;
+    note.textContent=`Tukang terima ${rp(b.payout)} · DP ${rp(dp)} di awal, pelunasan ${rp(b.escrow-dp)} · total tetap ${rp(b.escrow)}`;
+  }else{
+    note.textContent=`Tukang terima ${rp(b.payout)} · biaya layanan ${rp(b.layanan+b.komisi)} · total konsumen tetap ${rp(b.escrow)}`;
+  }
 }
 function pmPickSistem(s,el){
   draft.pmSistem=s;
@@ -1155,6 +1162,10 @@ async function submitPesananManual(){
     const biaya=fee(harga);
     params={p_pemilik_id:pemilikId,p_kat:kat,p_judul:judul,p_desk:desk,p_material:false,p_lokasi:lokasi,p_jarak_km:jarakKm,p_lat:null,p_lng:null,
       p_kode_selesai:otp(),p_sistem:'borongan',p_harga:harga,p_biaya:biaya};
+    if(draft.pmTermin){
+      const dp=Math.round(biaya.escrow*0.5/1000)*1000;
+      params.p_termin=true;params.p_dp_nominal=dp;params.p_pelunasan_nominal=biaya.escrow-dp;
+    }
   }
   const {data,error}=await sb.rpc('buat_pesanan_manual',params);
   if(error){toast('Gagal: '+error.message);if(btn){btn.disabled=false;btn.textContent='Buat Pesanan';}return}
