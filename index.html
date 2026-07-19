@@ -191,9 +191,20 @@ let ORDERS=[];
 let authMode='welcome';
 async function boot(){
   if(window.__recovery){renderResetForm();return;}
+  const wantPasang=new URLSearchParams(location.search).get('pasang')==='1';
+  if(wantPasang&&!sudahTerpasang()){renderPasangLanding();return;}
   const {data:{session}}=await sb.auth.getSession();
   if(!session){renderAuth();return}
   await loadMe();
+}
+function renderPasangLanding(){
+  $('app').innerHTML=`<div class="auth" style="display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:center;min-height:80vh">
+    <div class="logo-lg">🔧</div>
+    <h1>Selamat Datang di Tukangin</h1>
+    <p class="sub" style="margin-bottom:26px">Pasang di layar HP Anda sekali ini — lain kali tinggal buka seperti aplikasi biasa, tidak perlu cari-cari lagi.</p>
+    <button class="btn btn-primary" style="width:100%;max-width:320px" onclick="pasangApp().then(()=>{setAuth('welcome');renderAuth()})">📲 Pasang Sekarang</button>
+    <button class="btn btn-ghost btn-sm" style="margin-top:14px" onclick="setAuth('welcome');renderAuth()">Lanjut tanpa pasang →</button>
+  </div>`;
 }
 async function loadMe(){
   const {data:{user}}=await sb.auth.getUser();
