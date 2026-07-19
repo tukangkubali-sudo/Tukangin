@@ -1124,7 +1124,7 @@ async function submitPesananManual(){
   const sistem=draft.pmSistem||'borongan';
   if(!judul){toast('Isi judul dulu');return}
   const btn=$('pmBtn');if(btn){btn.disabled=true;btn.textContent='Menyimpan…';}
-  const jarakKm=(Math.random()*3+0.5).toFixed(1);
+  const jarakKm=+((Math.random()*3+0.5).toFixed(1));
   let params;
   if(sistem==='harian'){
     const t=+(($('pmTarif')||{}).value)||0,h=+(($('pmHari')||{}).value)||0;
