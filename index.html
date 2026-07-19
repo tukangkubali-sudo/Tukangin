@@ -548,6 +548,7 @@ function renderPemilik(){
       <button class="btn btn-ghost" style="width:100%;margin-top:9px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openBantuan()">🤖 Pusat Bantuan — pertanyaan umum</button>
       <button class="btn btn-ghost" style="width:100%;margin-top:9px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openKomisi()">💸 Bagaimana biaya & komisi dihitung?</button>
       <button class="btn btn-ghost" style="width:100%;margin-top:9px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openTentang()">🏢 Tentang Kami — visi & misi</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:9px;color:var(--muted)" onclick="openKlaimAkun()">🔑 Punya kode klaim dari admin?</button>
       <div style="display:flex;gap:8px;margin-top:11px">
         <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openTentang()">ℹ️ Tentang</button>
         <button class="btn btn-ghost btn-sm" style="flex:1" onclick="openKebijakan()">📜 Kebijakan</button>
@@ -847,7 +848,7 @@ async function renderAdmin(){
   await autoProses();
   const [r1,r2,r3]=await Promise.all([
     sb.from('profiles').select('*').eq('role','tukang').order('dibuat',{ascending:false}),
-    sb.from('profiles').select('id,nama,telp').eq('role','pemilik'),
+    sb.from('profiles').select('id,nama,telp,daftar_manual').eq('role','pemilik'),
     sb.from('orders').select('*').order('dibuat',{ascending:false})
   ]);
   if(r1.error){sc.innerHTML=`<div class="empty"><p>Gagal memuat: ${esc(r1.error.message)}</p></div>`;return}
@@ -892,6 +893,16 @@ async function renderAdmin(){
         </div>
       </div>
       <button class="btn btn-primary btn-sm" style="width:100%;margin-top:10px" onclick="openTambahTukangManual()">➕ Daftarkan Tukang Manual</button>
+    </div>
+    <div class="card" style="padding:13px 14px;margin-bottom:12px;border:1.5px solid #0D5953">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:13.5px">📱 Konsumen Malas Pegang HP?</div>
+          <p style="font-size:11.5px;color:#46605c;margin-top:2px">Daftarkan langsung pakai nama & no. WA-nya saja — dia tidak perlu install atau login apapun.</p>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-sm" style="width:100%;margin-top:10px" onclick="openTambahKonsumenManual()">➕ Daftarkan Konsumen Manual</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" onclick="openBuatPesananManual()">🧾 Buatkan Pesanan untuk Konsumen Manual</button>
     </div>
     <div class="sec-title">⚡ Perlu Tindakan</div>
     ${belumBayar.length?`<div class="card" style="padding:13px;margin-bottom:8px"><div style="font-weight:800;font-size:13.5px">📝 Menunggu Pembayaran · ${belumBayar.length}</div><p style="font-size:10.5px;color:var(--muted);margin-top:2px">Pesanan baru, konsumen belum transfer/belum upload bukti.</p>${belumBayar.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp(o.termin?o.dp_nominal:(o.biaya||fee(o.harga)).escrow)}</div><div class="meta">${esc(o.lokasi||'-')} · ${esc(o.pemilik_nama||'-')} · ${tgljamID(o.dibuat)}</div>${o.bukti_transfer_url?`<img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px"><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="verifPembayaran('${o.id}')">✔ Konfirmasi Dana Masuk</button>`:'<div style="font-size:11px;color:var(--muted);margin-top:4px">⏳ Belum ada bukti transfer</div>'}</div>`).join('')}</div>`:''}
@@ -1039,7 +1050,120 @@ async function simpanTukangManual(){
   toast('✅ Tukang dibuat — sekarang unggah foto KTP & selfie-nya');
   openBantuVerifikasi(data,nama,'');
 }
+function openTambahKonsumenManual(){
+  openSheet(`<div style="padding:20px">
+    <h3 style="font-size:17px;font-weight:800;margin-bottom:4px">📱 Daftarkan Konsumen Manual</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Untuk konsumen yang tidak mau/tidak bisa pakai app sendiri. Dia tidak akan bisa login — pesanan &amp; info pembayaran dikirim lewat WhatsApp oleh admin.</p>
+    <input id="mkNama" placeholder="Nama lengkap" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
+    <input id="mkTelp" inputmode="tel" placeholder="No. WhatsApp (mis. 6281234567890)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:12px">
+    <button class="btn btn-primary" id="mkBtn" onclick="simpanKonsumenManual()">Daftarkan</button>
+    <button class="btn btn-ghost" style="margin-top:10px" onclick="closeSheet()">Batal</button>
+  </div>`);
+}
+async function simpanKonsumenManual(){
+  const nama=(($('mkNama')||{}).value||'').trim();
+  const telp=(($('mkTelp')||{}).value||'').trim();
+  if(!nama||!telp){toast('Isi nama & no. WhatsApp dulu');return}
+  const btn=$('mkBtn');if(btn){btn.disabled=true;btn.textContent='Menyimpan…';}
+  const {data,error}=await sb.rpc('daftar_konsumen_manual',{p_nama:nama,p_telp:telp});
+  if(error){toast('Gagal: '+error.message);if(btn){btn.disabled=false;btn.textContent='Daftarkan';}return}
+  const kode=(data&&data.kode_klaim)||'-';
+  openSheet(`<div style="padding:20px;text-align:center">
+    <div style="font-size:34px">✅</div>
+    <h3 style="font-size:16px;font-weight:800;margin-top:6px">Konsumen Didaftarkan</h3>
+    <p style="font-size:12px;color:var(--muted);margin:8px 0 14px">Simpan kode ini — berikan ke ${esc(nama)} lewat WA setelah dia login sendiri nanti (Google), supaya riwayat pesanannya pindah otomatis ke akunnya.</p>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:700;letter-spacing:4px;background:var(--surface);border:1.5px dashed #0D5953;border-radius:12px;padding:16px;color:#0D5953">${esc(kode)}</div>
+    <button class="btn btn-primary" style="margin-top:16px" onclick="closeSheet();renderAdmin()">Selesai</button>
+  </div>`);
+}
+function openBuatPesananManual(){
+  const manual=(ADMIN_PEMILIK||[]).filter(p=>p.daftar_manual);
+  if(!manual.length){toast('Belum ada konsumen manual — daftarkan dulu');return}
+  openSheet(`<div style="padding:20px;max-height:82vh;overflow:auto">
+    <h3 style="font-size:17px;font-weight:800;margin-bottom:4px">🧾 Buatkan Pesanan Manual</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Pesanan ini akan muncul di riwayat konsumen tsb — begitu dia login nanti, dia bisa lihat sendiri.</p>
+    <label style="font-size:12px;font-weight:700;color:var(--muted)">Konsumen</label>
+    <select id="pmKonsumen" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin:6px 0 12px;background:#fff">
+      ${manual.map(p=>`<option value="${p.id}">${esc(p.nama)} · ${esc(p.telp||'')}</option>`).join('')}
+    </select>
+    <label style="font-size:12px;font-weight:700;color:var(--muted)">Kategori</label>
+    <select id="pmKat" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin:6px 0 12px;background:#fff">
+      ${KAT.map(k=>`<option value="${k.id}">${k.ic} ${k.nm}</option>`).join('')}
+    </select>
+    <input id="pmJudul" placeholder="Judul pekerjaan (mis. Ganti keran bocor)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
+    <textarea id="pmDesk" placeholder="Deskripsi (opsional)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px;min-height:60px"></textarea>
+    <input id="pmLokasi" placeholder="Lokasi/alamat" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:12px">
+    <div class="seg" id="pmSysseg">
+      <button class="on" onclick="pmPickSistem('borongan',this)">📦 Borongan</button>
+      <button onclick="pmPickSistem('harian',this)">📅 Harian</button>
+    </div>
+    <div id="pmBorongan">
+      <input id="pmHarga" inputmode="numeric" placeholder="Harga total (Rp)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
+    </div>
+    <div id="pmHarian" style="display:none">
+      <input id="pmTarif" inputmode="numeric" placeholder="Tarif per hari (Rp)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
+      <input id="pmHari" inputmode="numeric" placeholder="Jumlah hari" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
+    </div>
+    <button class="btn btn-primary" id="pmBtn" style="margin-top:6px" onclick="submitPesananManual()">Buat Pesanan</button>
+    <button class="btn btn-ghost" style="margin-top:10px" onclick="closeSheet()">Batal</button>
+  </div>`);
+}
+function pmPickSistem(s,el){
+  draft.pmSistem=s;
+  document.querySelectorAll('#pmSysseg button').forEach(b=>b.classList.remove('on'));el.classList.add('on');
+  const bo=$('pmBorongan'),ha=$('pmHarian');
+  if(bo)bo.style.display=s==='borongan'?'block':'none';
+  if(ha)ha.style.display=s==='harian'?'block':'none';
+}
+async function submitPesananManual(){
+  const pemilikId=($('pmKonsumen')||{}).value;
+  const kat=($('pmKat')||{}).value;
+  const judul=(($('pmJudul')||{}).value||'').trim();
+  const desk=(($('pmDesk')||{}).value||'').trim()||'-';
+  const lokasi=(($('pmLokasi')||{}).value||'').trim();
+  const sistem=draft.pmSistem||'borongan';
+  if(!judul){toast('Isi judul dulu');return}
+  const btn=$('pmBtn');if(btn){btn.disabled=true;btn.textContent='Menyimpan…';}
+  const jarakKm=(Math.random()*3+0.5).toFixed(1);
+  let params;
+  if(sistem==='harian'){
+    const t=+(($('pmTarif')||{}).value)||0,h=+(($('pmHari')||{}).value)||0;
+    if(!t||!h){toast('Isi tarif & jumlah hari');if(btn){btn.disabled=false;btn.textContent='Buat Pesanan';}return}
+    const base=t*h,markup=(BIZ.feeHarianPerHari||0)*h,total=base+markup;
+    params={p_pemilik_id:pemilikId,p_kat:kat,p_judul:judul,p_desk:desk,p_material:false,p_lokasi:lokasi,p_jarak_km:jarakKm,p_lat:null,p_lng:null,
+      p_kode_selesai:otp(),p_sistem:'harian',p_harga:base,p_biaya:{harga:base,layanan:markup,komisi:0,escrow:total,payout:base},p_tarif_harian:t,p_hari:h};
+  }else{
+    const harga=+(($('pmHarga')||{}).value)||0;
+    if(!harga){toast('Isi harga');if(btn){btn.disabled=false;btn.textContent='Buat Pesanan';}return}
+    const biaya=fee(harga);
+    params={p_pemilik_id:pemilikId,p_kat:kat,p_judul:judul,p_desk:desk,p_material:false,p_lokasi:lokasi,p_jarak_km:jarakKm,p_lat:null,p_lng:null,
+      p_kode_selesai:otp(),p_sistem:'borongan',p_harga:harga,p_biaya:biaya};
+  }
+  const {data,error}=await sb.rpc('buat_pesanan_manual',params);
+  if(error){toast('Gagal: '+error.message);if(btn){btn.disabled=false;btn.textContent='Buat Pesanan';}return}
+  toast('✅ Pesanan dibuat untuk konsumen ini');
+  closeSheet();renderAdmin();
+}
 let _assignOrder=null;
+function openKlaimAkun(){
+  openSheet(`<div style="padding:20px">
+    <h3 style="font-size:17px;font-weight:800;margin-bottom:4px">🔑 Klaim Riwayat Pesanan</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Kalau admin sudah pernah buatkan pesanan untuk Anda sebelum Anda punya akun sendiri, masukkan kode klaim yang diberikan lewat WhatsApp — riwayat pesanan itu akan pindah ke akun ini.</p>
+    <input id="kaKode" inputmode="numeric" placeholder="Kode klaim (6 digit)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;letter-spacing:2px;text-align:center;margin-bottom:12px">
+    <button class="btn btn-primary" id="kaBtn" onclick="klaimAkun()">Klaim Sekarang</button>
+    <button class="btn btn-ghost" style="margin-top:10px" onclick="closeSheet()">Batal</button>
+  </div>`);
+}
+async function klaimAkun(){
+  const kode=(($('kaKode')||{}).value||'').trim();
+  if(!kode){toast('Isi kode klaim dulu');return}
+  const btn=$('kaBtn');if(btn){btn.disabled=true;btn.textContent='Memproses…';}
+  const {data,error}=await sb.rpc('klaim_akun_manual',{p_kode:kode});
+  if(error){toast('Gagal: '+error.message);if(btn){btn.disabled=false;btn.textContent='Klaim Sekarang';}return}
+  const n=(data&&data.pesanan_dipindahkan)||0;
+  toast(n>0?`✅ ${n} pesanan berhasil dipindahkan ke akun Anda!`:'✅ Akun berhasil diklaim');
+  closeSheet();await refresh();
+}
 function tukangRating(id){const rs=ORDERS.filter(o=>o.tukang_id===id&&o.rating).map(o=>o.rating);return rs.length?(rs.reduce((a,b)=>a+b,0)/rs.length):0;}
 function tukangSelesai(id){return ORDERS.filter(o=>o.tukang_id===id&&o.status==='SELESAI').length;}
 function openAssign(orderId){
@@ -1456,7 +1580,7 @@ async function renderDetail(){
   const sc=$('scroll');sc.innerHTML=`<div class="loadwrap" style="min-height:200px"><div class="spinner"></div></div>`;
   const [log,msgs]=await Promise.all([getLog(o.id),getMsgs(o.id)]);
   if((ME.is_admin||ME.is_owner)&&ADMIN_PEMILIK.length===0){
-    const {data}=await sb.from('profiles').select('id,nama,telp').eq('role','pemilik');
+    const {data}=await sb.from('profiles').select('id,nama,telp,daftar_manual').eq('role','pemilik');
     ADMIN_PEMILIK=data||[];
   }
   const k=katOf(o.kat),b=o.biaya||fee(o.harga),s=ST[o.status]||ST.MENUNGGU_DANA;
