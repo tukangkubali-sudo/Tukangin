@@ -914,7 +914,7 @@ async function renderAdmin(){
       <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" onclick="openBuatPesananManual()">🧾 Buatkan Pesanan untuk Konsumen Manual</button>
     </div>
     <div class="sec-title">⚡ Perlu Tindakan</div>
-    ${belumBayar.length?`<div class="card" style="padding:13px;margin-bottom:8px"><div style="font-weight:800;font-size:13.5px">📝 Menunggu Pembayaran · ${belumBayar.length}</div><p style="font-size:10.5px;color:var(--muted);margin-top:2px">Pesanan baru, konsumen belum transfer/belum upload bukti.</p>${belumBayar.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp(o.termin?o.dp_nominal:(o.biaya||fee(o.harga)).escrow)}</div><div class="meta">${esc(o.lokasi||'-')} · ${esc(o.pemilik_nama||'-')} · ${tgljamID(o.dibuat)}</div>${o.bukti_transfer_url?`<img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px">`:'<div style="font-size:11px;color:var(--muted);margin-top:4px">⏳ Belum ada bukti transfer</div>'}<button class="btn btn-primary btn-sm" style="margin-top:8px;width:100%" onclick="verifPembayaran('${o.id}')">✔ Konfirmasi Dana Masuk</button><button class="btn btn-ghost btn-sm" style="margin-top:6px;color:var(--bad);border-color:var(--bad)" onclick="batalkanAdmin('${o.id}')">🗑️ Batalkan Pesanan</button></div>`).join('')}</div>`:''}
+    ${belumBayar.length?`<div class="card" style="padding:13px;margin-bottom:8px"><div style="font-weight:800;font-size:13.5px">📝 Menunggu Pembayaran · ${belumBayar.length}</div><p style="font-size:10.5px;color:var(--muted);margin-top:2px">Pesanan baru, konsumen belum transfer/belum upload bukti.</p>${belumBayar.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp(o.termin?o.dp_nominal:(o.biaya||fee(o.harga)).escrow)}</div><div class="meta">${esc(o.lokasi||'-')} · ${esc(o.pemilik_nama||'-')} · ${tgljamID(o.dibuat)}</div>${o.bukti_transfer_url?`<img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px">`:'<div style="font-size:11px;color:var(--muted);margin-top:4px">⏳ Belum ada bukti transfer</div>'}<button class="btn btn-primary btn-sm" style="margin-top:8px;width:100%" onclick="verifPembayaran('${o.id}')">✔ Konfirmasi Dana Masuk</button><div style="display:flex;gap:6px;margin-top:6px"><button class="btn btn-ghost btn-sm" style="flex:1" onclick="openEditPesananAdmin('${o.id}')">✏️ Edit</button><button class="btn btn-ghost btn-sm" style="flex:1" onclick="pilihBuktiAdmin('${o.id}')">📷 Unggah Bukti</button></div><button class="btn btn-ghost btn-sm" style="margin-top:6px;width:100%;color:var(--bad);border-color:var(--bad)" onclick="batalkanAdmin('${o.id}')">🗑️ Batalkan Pesanan</button></div>`).join('')}</div>`:''}
     ${cekBayar.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--brass)"><div style="font-weight:800;font-size:13.5px">💵 Verifikasi Pembayaran · ${cekBayar.length}</div>${cekBayar.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp(o.termin?o.dp_nominal:(o.biaya||fee(o.harga)).escrow)}${o.termin?' <span style="font-size:9.5px;font-weight:700;background:#E7F2F0;color:#0D5953;padding:2px 6px;border-radius:6px">DP</span>':''}</div><div class="meta">Pemilik: ${esc(o.pemilik_nama||'-')}</div>${o.bukti_transfer_url?`<img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px">`:'<div style="font-size:11px;color:var(--bad);margin-top:4px">⚠ tanpa bukti</div>'}<button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="verifPembayaran('${o.id}')">✔ Konfirmasi Dana Masuk</button></div>`).join('')}</div>`:''}
     ${cekPelunasan.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--brass)"><div style="font-weight:800;font-size:13.5px">💰 Verifikasi Pelunasan · ${cekPelunasan.length}</div>${cekPelunasan.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} — ${rp(o.pelunasan_nominal)} <span style="font-size:9.5px;font-weight:700;background:#FEF3E0;color:#9a6a14;padding:2px 6px;border-radius:6px">PELUNASAN</span></div><div class="meta">Pemilik: ${esc(o.pemilik_nama||'-')}</div>${o.bukti_pelunasan_url?`<img src="${o.bukti_pelunasan_url}" onclick="window.open('${o.bukti_pelunasan_url}')" style="max-height:90px;border-radius:9px;border:1px solid var(--line);margin-top:6px">`:'<div style="font-size:11px;color:var(--bad);margin-top:4px">⚠ tanpa bukti</div>'}<button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="verifPelunasan('${o.id}')">✔ Konfirmasi Pelunasan</button></div>`).join('')}</div>`:''}
     ${belumTukang.length?`<div class="card" style="padding:13px;margin-bottom:8px"><div style="font-weight:800;font-size:13.5px">🔍 Belum Ada Tukang · ${belumTukang.length}</div>${belumTukang.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px;display:flex;align-items:center;gap:8px"><div style="flex:1"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')}</div><div class="meta">${esc(o.lokasi||'-')} · ${esc(o.pemilik_nama||'-')}</div></div><button class="btn btn-primary btn-sm" onclick="openAssign('${o.id}')">Tugaskan</button></div>`).join('')}</div>`:''}
@@ -2295,6 +2295,50 @@ async function batalkanAdmin(id){
   const {error}=await sb.rpc('batalkan_pesanan_admin',{p_order_id:id});
   if(error){toast('Gagal: '+error.message);return}
   toast('✅ Pesanan dibatalkan');await refresh();renderAdmin();
+}
+function openEditPesananAdmin(id){
+  const o=ORDERS.find(x=>x.id===id);if(!o)return;
+  const totalSaatIni=o.termin?((o.dp_nominal||0)+(o.pelunasan_nominal||0)):(o.biaya||fee(o.harga)).escrow;
+  openSheet(`<div style="padding:20px;max-height:82vh;overflow:auto">
+    <h3 style="font-size:17px;font-weight:800;margin-bottom:14px">✏️ Edit Pesanan</h3>
+    <input id="epJudul" value="${esc(o.judul||'')}" placeholder="Judul pekerjaan" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
+    <textarea id="epDesk" placeholder="Deskripsi" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px;min-height:60px">${esc(o.desk||'')}</textarea>
+    <input id="epLokasi" value="${esc(o.lokasi||'')}" placeholder="Lokasi/alamat" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
+    ${o.sistem==='borongan'?`<input id="epHarga" inputmode="numeric" value="${totalSaatIni}" placeholder="Total yang dibayar konsumen (Rp)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px"><p style="font-size:11px;color:var(--muted);margin-bottom:8px">Biaya layanan dihitung ulang otomatis, total tetap sesuai angka ini.</p>`:''}
+    <button class="btn btn-primary" id="epBtn" onclick="simpanEditPesananAdmin('${o.id}')">Simpan Perubahan</button>
+    <button class="btn btn-ghost" style="margin-top:10px" onclick="closeSheet()">Batal</button>
+  </div>`);
+}
+async function simpanEditPesananAdmin(id){
+  const o=ORDERS.find(x=>x.id===id);if(!o)return;
+  const judul=(($('epJudul')||{}).value||'').trim();
+  const desk=(($('epDesk')||{}).value||'').trim()||'-';
+  const lokasi=(($('epLokasi')||{}).value||'').trim();
+  const btn=$('epBtn');if(btn){btn.disabled=true;btn.textContent='Menyimpan…';}
+  const params={p_order_id:id,p_judul:judul,p_desk:desk,p_lokasi:lokasi};
+  if(o.sistem==='borongan'){
+    const totalKonsumen=+(($('epHarga')||{}).value)||0;
+    if(!totalKonsumen){toast('Isi total yang dibayar konsumen');if(btn){btn.disabled=false;btn.textContent='Simpan Perubahan';}return}
+    const harga=hargaDariTotal(totalKonsumen),biaya=fee(harga);
+    params.p_harga=harga;params.p_biaya=biaya;
+    if(o.termin){
+      const dp=Math.round(biaya.escrow*0.5/1000)*1000;
+      params.p_dp_nominal=dp;params.p_pelunasan_nominal=biaya.escrow-dp;
+    }
+  }
+  const {error}=await sb.rpc('admin_edit_pesanan',params);
+  if(error){toast('Gagal: '+error.message);if(btn){btn.disabled=false;btn.textContent='Simpan Perubahan';}return}
+  toast('✅ Pesanan diperbarui');closeSheet();await refresh();renderAdmin();
+}
+function pilihBuktiAdmin(id){
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=async()=>{if(inp.files&&inp.files[0]){toast('Memproses foto…');try{const dataUrl=await kompresFoto(inp.files[0]);await uploadBuktiAdmin(id,dataUrl);}catch(e){toast('Gagal memproses foto');}}inp.remove();};
+  inp.click();
+}
+async function uploadBuktiAdmin(id,dataUrl){
+  const {error}=await sb.rpc('admin_set_bukti_transfer',{p_order_id:id,p_bukti_url:dataUrl});
+  if(error){toast('Gagal: '+error.message);return}
+  toast('✅ Bukti transfer tersimpan');await refresh();renderAdmin();
 }
 async function batal(id){
   const o=ORDERS.find(x=>x.id===id);
