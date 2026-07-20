@@ -2307,6 +2307,9 @@ function openEditPesananAdmin(id){
     ${o.sistem==='borongan'?`<input id="epHarga" inputmode="numeric" value="${totalSaatIni}" placeholder="Total yang dibayar konsumen (Rp)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
     <label style="display:flex;align-items:flex-start;gap:9px;margin:2px 2px 10px;font-size:12px;color:#2c4642;line-height:1.45;border:1px solid var(--line);border-radius:10px;padding:10px 11px"><input type="checkbox" id="epTermin" ${o.termin?'checked':''} style="width:18px;height:18px;flex:none;margin-top:1px"> <span><b>Bayar bertahap</b> — DP 50% di awal, sisanya saat pekerjaan mendekati selesai.</span></label>
     <p style="font-size:11px;color:var(--muted);margin-bottom:8px">Biaya layanan dihitung ulang otomatis, total tetap sesuai angka ini.</p>`:''}
+    ${o.sistem==='harian'?`<input id="epTarif" inputmode="numeric" value="${o.tarif_harian||''}" placeholder="Tarif per hari (Rp)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
+    <input id="epHari" inputmode="numeric" value="${o.hari||''}" placeholder="Jumlah hari" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
+    <p style="font-size:11px;color:var(--muted);margin-bottom:8px">Biaya layanan Rp10.000/hari dihitung ulang otomatis dari jumlah hari ini.</p>`:''}
     <button class="btn btn-primary" id="epBtn" onclick="simpanEditPesananAdmin('${o.id}')">Simpan Perubahan</button>
     <button class="btn btn-ghost" style="margin-top:10px" onclick="closeSheet()">Batal</button>
   </div>`);
@@ -2330,6 +2333,12 @@ async function simpanEditPesananAdmin(id){
     }else{
       params.p_dp_nominal=null;params.p_pelunasan_nominal=null;
     }
+  }else if(o.sistem==='harian'){
+    const tarif=+(($('epTarif')||{}).value)||0,hari=+(($('epHari')||{}).value)||0;
+    if(!tarif||!hari){toast('Isi tarif per hari & jumlah hari');if(btn){btn.disabled=false;btn.textContent='Simpan Perubahan';}return}
+    const base=tarif*hari,markup=(BIZ.feeHarianPerHari||0)*hari;
+    params.p_harga=base;params.p_biaya={harga:base,layanan:markup,komisi:0,escrow:base+markup,payout:base};
+    params.p_tarif_harian=tarif;params.p_hari=hari;
   }
   const {error}=await sb.rpc('admin_edit_pesanan',params);
   if(error){toast('Gagal: '+error.message);if(btn){btn.disabled=false;btn.textContent='Simpan Perubahan';}return}
