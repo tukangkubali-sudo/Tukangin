@@ -953,7 +953,7 @@ async function renderAdmin(){
     <div class="sec-title">Verifikasi Tukang${pending.length?` · ${pending.length}`:''}</div>
     ${pending.length?pending.map(adminCard).join(''):emptyBox('✅','Tidak ada antrean','Semua tukang sudah ditinjau.')}
     <div class="sec-title">Sudah Ditinjau</div>
-    ${done.length?done.map(p=>`<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><div class="tukav" style="width:34px;height:34px;font-size:13px">${esc(p.inisial||initial(p.nama))}</div><div style="flex:1"><b style="font-size:13.5px">${esc(p.nama)}</b>${p.daftar_manual?' <span class="badge b-hold" style="font-size:9px">🤝 Manual</span>':''}<div class="meta" style="font-size:11px">💰 ${p.bayar_metode?esc(p.bayar_metode+(p.bayar_detail?' · '+p.bayar_detail:'')):'—'}${p.strike?` · ⚠️ ${p.strike} strike`:''}</div></div><span class="badge ${p.verif_status==='terverifikasi'?'b-done':'b-dispute'}">${p.verif_status}</span></div>`).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:4px 2px">Belum ada.</p>'}
+    ${done.length?done.map(p=>`<div class="card" style="padding:12px 14px;margin-bottom:8px"><div style="display:flex;align-items:center;gap:10px"><div class="tukav" style="width:34px;height:34px;font-size:13px">${esc(p.inisial||initial(p.nama))}</div><div style="flex:1"><b style="font-size:13.5px">${esc(p.nama)}</b>${p.daftar_manual?' <span class="badge b-hold" style="font-size:9px">🤝 Manual</span>':''}<div class="meta" style="font-size:11px">💰 ${p.bayar_metode?esc(p.bayar_metode+(p.bayar_detail?' · '+p.bayar_detail:'')):'—'}${p.strike?` · ⚠️ ${p.strike} strike`:''}</div>${p.catatan?`<div style="font-size:11px;color:#8a6d1f;margin-top:3px;font-style:italic">📝 ${esc(p.catatan)}</div>`:''}</div><span class="badge ${p.verif_status==='terverifikasi'?'b-done':'b-dispute'}">${p.verif_status}</span></div><div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-ghost btn-sm" style="flex:1" onclick="openCatatanTukang('${p.id}')">📝 Catatan</button><button class="btn btn-ghost btn-sm" style="flex:1" onclick="openKasbonTukang('${p.id}')">💵 Kasbon</button></div></div>`).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:4px 2px">Belum ada.</p>'}
     <div class="sec-title">👷 Tukang Terdaftar</div>
     <div id="tukangboxAdmin"><div class="card" style="padding:16px;text-align:center"><div class="spinner" style="margin:0 auto"></div></div></div>`;
   loadTukangList('tukangboxAdmin');
@@ -2289,6 +2289,65 @@ async function sengketa(id){
   await sb.from('orders').update({status:'SENGKETA'}).eq('id',id);
   await addLog(id,'Sengketa diajukan','Dana dibekukan, ditinjau tim');
   await refresh();openOrder(id);toast('Sengketa dikirim, dana dibekukan');
+}
+function openCatatanTukang(id){
+  const p=(ADMIN_TUKANG||[]).find(x=>x.id===id);if(!p)return;
+  openSheet(`<div style="padding:20px">
+    <h3 style="font-size:16px;font-weight:800;margin-bottom:4px">📝 Catatan — ${esc(p.nama)}</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Untuk keterangan internal, misalnya "akun dikerjakan 2 orang: A & B" atau catatan lain. Tidak dilihat konsumen.</p>
+    <textarea id="ctIsi" placeholder="Tulis catatan…" style="width:100%;min-height:90px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:12px">${esc(p.catatan||'')}</textarea>
+    <button class="btn btn-primary" id="ctBtn" onclick="simpanCatatanTukang('${id}')">Simpan</button>
+    <button class="btn btn-ghost" style="margin-top:10px" onclick="closeSheet()">Batal</button>
+  </div>`);
+}
+async function simpanCatatanTukang(id){
+  const isi=(($('ctIsi')||{}).value||'').trim();
+  const btn=$('ctBtn');if(btn){btn.disabled=true;btn.textContent='Menyimpan…';}
+  const {error}=await sb.from('profiles').update({catatan:isi||null}).eq('id',id);
+  if(error){toast('Gagal: '+error.message);if(btn){btn.disabled=false;btn.textContent='Simpan';}return}
+  toast('✅ Catatan disimpan');closeSheet();await refresh();renderAdmin();
+}
+let KASBON_CACHE=[];
+async function openKasbonTukang(id){
+  const p=(ADMIN_TUKANG||[]).find(x=>x.id===id);if(!p)return;
+  const {data,error}=await sb.from('kasbon').select('*').eq('tukang_id',id).order('dibuat',{ascending:false});
+  if(error){toast('Gagal memuat kasbon: '+error.message);return}
+  KASBON_CACHE=data||[];
+  renderKasbonSheet(id,p.nama);
+}
+function renderKasbonSheet(id,nama){
+  const list=KASBON_CACHE;
+  const belumLunas=list.filter(k=>k.status==='belum_lunas');
+  const total=belumLunas.reduce((s,k)=>s+(+k.jumlah||0),0);
+  openSheet(`<div style="padding:20px;max-height:82vh;overflow:auto">
+    <h3 style="font-size:16px;font-weight:800;margin-bottom:4px">💵 Kasbon — ${esc(nama)}</h3>
+    <div style="background:${total>0?'#fdecec':'#eaf5ef'};border-radius:10px;padding:12px;margin:10px 0;text-align:center">
+      <div style="font-size:11px;color:var(--muted)">Belum lunas</div>
+      <div style="font-size:22px;font-weight:800;color:${total>0?'#b3402f':'#0D5953'}">${rp(total)}</div>
+    </div>
+    <input id="kbJumlah" inputmode="numeric" placeholder="Jumlah kasbon baru (Rp)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
+    <input id="kbCatatan" placeholder="Keterangan (opsional)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:10px">
+    <button class="btn btn-primary" id="kbBtn" onclick="tambahKasbon('${id}','${esc(nama)}')">+ Catat Kasbon Baru</button>
+    <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:10px">
+      ${list.length?list.map(k=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)"><div style="flex:1"><b style="font-size:13px">${rp(k.jumlah)}</b> <span class="badge ${k.status==='lunas'?'b-done':'b-hold'}" style="font-size:9px">${k.status==='lunas'?'lunas':'belum lunas'}</span><div class="meta" style="font-size:11px">${esc(k.catatan||'-')} · ${new Date(k.dibuat).toLocaleDateString('id-ID')}</div></div>${k.status==='belum_lunas'?`<button class="btn btn-ghost btn-sm" onclick="lunasiKasbonNow('${k.id}','${id}','${esc(nama)}')">Lunas</button>`:''}</div>`).join(''):'<p style="font-size:12px;color:var(--muted)">Belum ada riwayat kasbon.</p>'}
+    </div>
+    <button class="btn btn-ghost" style="margin-top:14px" onclick="closeSheet()">Tutup</button>
+  </div>`);
+}
+async function tambahKasbon(id,nama){
+  const jumlah=+(($('kbJumlah')||{}).value)||0;
+  const catatan=(($('kbCatatan')||{}).value||'').trim();
+  if(!jumlah){toast('Isi jumlah kasbon');return}
+  const btn=$('kbBtn');if(btn){btn.disabled=true;btn.textContent='Menyimpan…';}
+  const {error}=await sb.rpc('catat_kasbon',{p_tukang_id:id,p_jumlah:jumlah,p_catatan:catatan||null});
+  if(error){toast('Gagal: '+error.message);if(btn){btn.disabled=false;btn.textContent='+ Catat Kasbon Baru';}return}
+  toast('✅ Kasbon dicatat');await openKasbonTukang(id);
+}
+async function lunasiKasbonNow(kasbonId,tukangId,nama){
+  if(!confirm('Tandai kasbon ini lunas?'))return;
+  const {error}=await sb.rpc('lunasi_kasbon',{p_kasbon_id:kasbonId});
+  if(error){toast('Gagal: '+error.message);return}
+  toast('✅ Ditandai lunas');await openKasbonTukang(tukangId);
 }
 async function batalkanAdmin(id){
   if(!confirm('Batalkan pesanan ini? (Belum ada dana masuk, aman dibatalkan)'))return;
