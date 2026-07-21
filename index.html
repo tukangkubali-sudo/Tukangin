@@ -857,7 +857,7 @@ async function renderAdmin(){
   await autoProses();
   const [r1,r2,r3]=await Promise.all([
     sb.from('profiles').select('*').eq('role','tukang').order('dibuat',{ascending:false}),
-    sb.from('profiles').select('id,nama,telp,daftar_manual').eq('role','pemilik'),
+    sb.from('profiles').select('id,nama,telp,daftar_manual,kode_klaim').eq('role','pemilik'),
     sb.from('orders').select('*').order('dibuat',{ascending:false})
   ]);
   if(r1.error){sc.innerHTML=`<div class="empty"><p>Gagal memuat: ${esc(r1.error.message)}</p></div>`;return}
@@ -911,6 +911,7 @@ async function renderAdmin(){
         </div>
       </div>
       <button class="btn btn-primary btn-sm" style="width:100%;margin-top:10px" onclick="openTambahKonsumenManual()">➕ Daftarkan Konsumen Manual</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" onclick="openDaftarKodeKlaim()">🔑 Lihat Kode Klaim Konsumen</button>
       <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" onclick="openBuatPesananManual()">🧾 Buatkan Pesanan untuk Konsumen Manual</button>
     </div>
     <div class="sec-title">⚡ Perlu Tindakan</div>
@@ -1058,6 +1059,14 @@ async function simpanTukangManual(){
   if(error){toast('Gagal: '+error.message);if(btn){btn.disabled=false;btn.textContent='Daftarkan';}return}
   toast('✅ Tukang dibuat — sekarang unggah foto KTP & selfie-nya');
   openBantuVerifikasi(data,nama,'');
+}
+function openDaftarKodeKlaim(){
+  const manual=(ADMIN_PEMILIK||[]).filter(p=>p.daftar_manual);
+  openSheet(`<div style="padding:20px;max-height:82vh;overflow:auto">
+    <h3 style="font-size:16px;font-weight:800;margin-bottom:12px">🔑 Kode Klaim Konsumen Manual</h3>
+    ${manual.length?manual.map(p=>`<div style="border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:8px"><b style="font-size:13.5px">${esc(p.nama)}</b><div class="meta" style="font-size:11.5px">${esc(p.telp||'-')}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700;letter-spacing:3px;color:#0D5953;margin-top:6px">${p.kode_klaim?esc(p.kode_klaim):'(sudah diklaim / tidak ada)'}</div></div>`).join(''):'<p style="font-size:12.5px;color:var(--muted)">Belum ada konsumen manual.</p>'}
+    <button class="btn btn-ghost" style="margin-top:6px" onclick="closeSheet()">Tutup</button>
+  </div>`);
 }
 function openTambahKonsumenManual(){
   openSheet(`<div style="padding:20px">
@@ -1608,7 +1617,7 @@ async function renderDetail(){
   const sc=$('scroll');sc.innerHTML=`<div class="loadwrap" style="min-height:200px"><div class="spinner"></div></div>`;
   const [log,msgs]=await Promise.all([getLog(o.id),getMsgs(o.id)]);
   if((ME.is_admin||ME.is_owner)&&ADMIN_PEMILIK.length===0){
-    const {data}=await sb.from('profiles').select('id,nama,telp,daftar_manual').eq('role','pemilik');
+    const {data}=await sb.from('profiles').select('id,nama,telp,daftar_manual,kode_klaim').eq('role','pemilik');
     ADMIN_PEMILIK=data||[];
   }
   const k=katOf(o.kat),b=o.biaya||fee(o.harga),s=ST[o.status]||ST.MENUNGGU_DANA;
@@ -1776,6 +1785,7 @@ async function renderDetail(){
     ${kodeCard}
     ${showChat?chatBox(o,msgs):''}
     <div style="margin-top:18px">${actions}</div>
+    ${(ME.is_owner&&!['SELESAI','DIBATALKAN','MENUNGGU_DANA','MENUNGGU_VERIFIKASI'].includes(o.status))?`<div class="card" style="padding:13px 14px;margin-top:12px;border:1.5px dashed var(--bad)"><div style="font-weight:800;font-size:13px">👑 Override Owner</div><p style="font-size:11px;color:var(--muted);margin:4px 0 9px">Kalau konsumen & tukang sama-sama tidak mau pencet apapun di HP, padahal pekerjaan sudah nyata selesai & sudah dicek langsung — cairkan paksa di sini.</p><button class="btn btn-danger btn-sm" style="width:100%" onclick="selesaikanPaksaOwner('${o.id}')">✔ Selesaikan & Cairkan Paksa</button></div>`:''}
     ${ratingBlock(o,amPemilik)}
     <div class="sec-title">Riwayat Aktivitas</div>
     <div class="card" style="padding:8px 16px">${log.map(r=>`<div class="logitem"><div class="ldot"></div><div><h6>${esc(r.judul)}</h6><p>${esc(r.detail)}${r.oleh?' · oleh '+esc(r.oleh):''} · ${timeAgo(r.dibuat)}</p></div></div>`).join('')||'<p style="color:var(--muted);font-size:12.5px;padding:8px 0">Belum ada aktivitas.</p>'}</div>`;
@@ -2348,6 +2358,12 @@ async function lunasiKasbonNow(kasbonId,tukangId,nama){
   const {error}=await sb.rpc('lunasi_kasbon',{p_kasbon_id:kasbonId});
   if(error){toast('Gagal: '+error.message);return}
   toast('✅ Ditandai lunas');await openKasbonTukang(tukangId);
+}
+async function selesaikanPaksaOwner(id){
+  if(!confirm('Selesaikan paksa & cairkan dana ke tukang? Pastikan pekerjaan memang sudah beres — ini melewati konfirmasi konsumen & tukang.'))return;
+  const {error}=await sb.rpc('selesaikan_paksa_owner',{p_order_id:id});
+  if(error){toast('Gagal: '+error.message);return}
+  toast('✅ Pesanan diselesaikan & dana dicairkan');await refresh();openOrder(id);
 }
 async function batalkanAdmin(id){
   if(!confirm('Batalkan pesanan ini? (Belum ada dana masuk, aman dibatalkan)'))return;
