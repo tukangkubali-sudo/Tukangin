@@ -181,8 +181,8 @@ function hargaDariTotal(target){
   return Math.round(lo);
 }
 function sisaPayout(o,b){const dpCair=(o.biaya&&o.biaya.dp_dicairkan)||0;return Math.max(0,(b.payout||0)-dpCair);}
-const KAT=[{id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa',ic:'🔧'},{id:'ac',nm:'AC',ic:'❄️'},{id:'las',nm:'Las/Pagar',ic:'🔥'},{id:'cat',nm:'Cat',ic:'🎨'},{id:'bocor',nm:'Atap Bocor',ic:'🏠'},{id:'kunci',nm:'Kunci',ic:'🔑'},{id:'umum',nm:'Lainnya',ic:'🛠️'}];
-const katOf=id=>KAT.find(k=>k.id===id)||KAT[7];
+const KAT=[{id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa',ic:'🔧'},{id:'ac',nm:'AC',ic:'❄️'},{id:'las',nm:'Las/Pagar',ic:'🔥'},{id:'cat',nm:'Cat',ic:'🎨'},{id:'bocor',nm:'Atap Bocor',ic:'🏠'},{id:'kunci',nm:'Kunci',ic:'🔑'},{id:'bangun',nm:'Bangun/Renovasi',ic:'🏗️'},{id:'umum',nm:'Lainnya',ic:'🛠️'}];
+const katOf=id=>KAT.find(k=>k.id===id)||KAT[8];
 const ST={MENUNGGU_DANA:{l:'Menunggu Pembayaran',c:'b-wait'},MENUNGGU_VERIFIKASI:{l:'Cek Pembayaran',c:'b-wait'},DANA_DITAHAN:{l:'Dana Ditahan',c:'b-hold'},DIKERJAKAN:{l:'Dikerjakan',c:'b-work'},MENUNGGU_KONFIRMASI:{l:'Menunggu Konfirmasi',c:'b-confirm'},SELESAI:{l:'Selesai',c:'b-done'},SENGKETA:{l:'Sengketa',c:'b-dispute'},DIBATALKAN:{l:'Dibatalkan',c:'b-dispute'}};
 /* Identitas usaha — EDIT di sini bila perlu */
 const BIZ={nama:'Tukangin',badan:'Guna Merta Home Service',pemilik:'Deny',kota:'Bali',alamat:'Jln Tukad Irawadi No. 44',wa:'6282233089533',waTampil:'0822-3308-9533',bank:'BNI',rek:'1881552632',rekNama:'Putu Helyvia',garansiHari:7,retensiPersen:10,feeHarianPerHari:10000};
@@ -1486,7 +1486,7 @@ function pageBantuan(){
 /* ====== BUAT PESANAN ====== */
 let draft={};
 function sheetBuat(kat){
-  draft={kat:kat||'umum',judul:'',desk:'',lokasi:'Canggu',harga:'',lat:null,lng:null,panjang:'',tinggi:'',material:false,sistem:'borongan',tarif:'',hari:'',termin:false};
+  draft={kat:kat||'umum',judul:'',desk:'',lokasi:'Canggu',harga:'',lat:null,lng:null,panjang:'',tinggi:'',material:false,sistem:'borongan',tarif:'',hari:'',termin:false,luasBangun:'',jenisBangun:'renovasi',spekBangun:'sedang'};
   openSheet(`<div style="padding:16px 18px"><h3 style="font-size:18px;font-weight:800;margin-bottom:14px">Buat Pesanan</h3>
     <div class="field"><label>Kategori</label><div class="chips" id="katchips">${KAT.map(c=>`<button class="chip ${c.id===draft.kat?'on':''}" onclick="pickKat('${c.id}',this)">${c.ic} ${c.nm}</button>`).join('')}</div></div>
     <div class="field" id="lasextra" style="display:${draft.kat==='las'?'block':'none'}">
@@ -1495,6 +1495,17 @@ function sheetBuat(kat){
         <input class="input" id="d_panjang" inputmode="decimal" placeholder="Panjang (m)" value="${draft.panjang||''}" oninput="draft.panjang=this.value">
         <input class="input" id="d_tinggi" inputmode="decimal" placeholder="Tinggi (m)" value="${draft.tinggi||''}" oninput="draft.tinggi=this.value">
       </div>
+    </div>
+    <div class="field" id="bangunextra" style="display:${draft.kat==='bangun'?'block':'none'}">
+      <label>Jenis pekerjaan</label>
+      <div class="seg" id="jenisbangunseg" style="margin-bottom:8px">
+        <button class="${draft.jenisBangun==='bangun'?'on':''}" onclick="pickJenisBangun('bangun',this)">🏗️ Bangun Baru</button>
+        <button class="${draft.jenisBangun==='renovasi'?'on':''}" onclick="pickJenisBangun('renovasi',this)">🔨 Renovasi</button>
+      </div>
+      <label>Luas bangunan <span class="hint">untuk taksir per m²</span></label>
+      <input class="input" id="d_luasBangun" inputmode="decimal" placeholder="Luas (m²)" value="${draft.luasBangun||''}" oninput="draft.luasBangun=this.value" style="margin-bottom:8px">
+      <label>Tingkat spesifikasi</label>
+      <div class="chips" id="spekbangunchips">${spekBangunOpts(draft.jenisBangun).map(s=>`<button class="chip ${s.id===draft.spekBangun?'on':''}" onclick="pickSpekBangun('${s.id}',this)">${s.nm}</button>`).join('')}</div>
     </div>
     <div class="field"><label>Sistem kerja</label>
       <div class="seg" id="sysseg" style="margin-bottom:0">
@@ -1529,7 +1540,18 @@ function sheetBuat(kat){
     <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:9px">Belum ditagih. Bayar escrow setelah posting.</p>
     </div>`);
 }
-function pickKat(id,el){draft.kat=id;document.querySelectorAll('#katchips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');const le=$('lasextra');if(le)le.style.display=id==='las'?'block':'none';}
+function pickKat(id,el){draft.kat=id;document.querySelectorAll('#katchips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');const le=$('lasextra');if(le)le.style.display=id==='las'?'block':'none';const be=$('bangunextra');if(be)be.style.display=id==='bangun'?'block':'none';}
+function spekBangunOpts(jenis){
+  return jenis==='bangun'
+    ?[{id:'sederhana',nm:'Sederhana'},{id:'menengah',nm:'Menengah'},{id:'premium',nm:'Premium'}]
+    :[{id:'ringan',nm:'Ringan'},{id:'sedang',nm:'Sedang'},{id:'berat',nm:'Berat/Total'}];
+}
+function pickJenisBangun(v,el){
+  draft.jenisBangun=v;draft.spekBangun=v==='bangun'?'menengah':'sedang';
+  document.querySelectorAll('#jenisbangunseg button').forEach(b=>b.classList.remove('on'));el.classList.add('on');
+  const c=$('spekbangunchips');if(c)c.innerHTML=spekBangunOpts(v).map(s=>`<button class="chip ${s.id===draft.spekBangun?'on':''}" onclick="pickSpekBangun('${s.id}',this)">${s.nm}</button>`).join('');
+}
+function pickSpekBangun(id,el){draft.spekBangun=id;document.querySelectorAll('#spekbangunchips .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
 function pickMat(v,el){draft.material=v;document.querySelectorAll('#matseg button').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
 function pickSistem(s,el){draft.sistem=s;document.querySelectorAll('#sysseg button').forEach(b=>b.classList.remove('on'));el.classList.add('on');const bo=$('borongan'),ha=$('harian');if(bo)bo.style.display=s==='borongan'?'block':'none';if(ha)ha.style.display=s==='harian'?'block':'none';if(s==='harian'){draft.termin=false;const c=$('d_termin');if(c)c.checked=false;}}
 function hitungHarian(){
@@ -1541,6 +1563,7 @@ function hitungHarian(){
 }
 async function estimasiAI(){
   if(draft.kat==='las'){ if(!(draft.panjang&&draft.tinggi)&&(draft.desk||'').trim().length<6){toast('Isi ukuran atau deskripsi dulu');return} }
+  else if(draft.kat==='bangun'){ if(!draft.luasBangun){toast('Isi luas bangunan dulu');return} }
   else if((draft.desk||'').trim().length<6){toast('Isi deskripsi dulu');return}
   const box=$('estbox'),btn=$('aibtn');btn.disabled=true;btn.textContent='Menaksir…';
   const h=await taksir(draft);
@@ -1555,7 +1578,10 @@ async function taksir(d){
   if(AI_ENDPOINT){
     try{
       let prompt;
-      if(kat==='las'&&luas>0){
+      if(kat==='bangun'&&+d.luasBangun>0){
+        const jenis=d.jenisBangun==='bangun'?'membangun rumah baru':'merenovasi rumah';
+        prompt=`Anda penaksir biaya borongan jasa konstruksi (jasa+material) di ${d.lokasi||'Bali'}, Bali, memakai harga pasar SAAT INI. Pekerjaan: ${jenis}, luas ${d.luasBangun} m², spesifikasi ${d.spekBangun||'menengah/sedang'}. Deskripsi tambahan: "${desk}". Hitung total berdasarkan estimasi harga per m² yang wajar untuk Bali saat ini dikali luas. Balas HANYA JSON {"min":n,"max":n,"rekomendasi":n,"alasan":"maks 12 kata"}`;
+      }else if(kat==='las'&&luas>0){
         const isPintu=/dorong|sliding|geser|pintu|gerbang/i.test(desk);
         prompt=`Anda penaksir harga jasa las/pagar besi di ${d.lokasi||'Bali'}, Bali, memakai harga pasar lokal terkini. Pekerjaan pagar/pintu besi ukuran ${d.panjang}m x ${d.tinggi}m = ${luas.toFixed(1)} m².${isPintu?' Ini PINTU DORONG (sliding) — tambahkan biaya rel, roda, dan rangka penguat.':''} Lingkup: ${d.material?'TERMASUK material (besi hollow, spandek, rel, roda, cat).':'JASA saja (las + pasang, material disediakan pemilik).'} Deskripsi: "${desk}". Hitung per m² lalu total. Balas HANYA JSON {"min":n,"max":n,"rekomendasi":n,"alasan":"maks 12 kata"}`;
       }else{
@@ -1571,6 +1597,18 @@ async function taksir(d){
 function taksirLokal(d){
   const kat=d.kat,t=(d.desk||'').toLowerCase();
   const luas=(parseFloat(d.panjang)||0)*(parseFloat(d.tinggi)||0);
+  if(kat==='bangun'){
+    const lb=parseFloat(d.luasBangun)||0;
+    if(!lb)return{min:0,max:0,rekomendasi:0,alasan:'Isi luas bangunan dulu'};
+    const TABEL={
+      bangun:{sederhana:[4000000,5500000],menengah:[5500000,7500000],premium:[7500000,10000000]},
+      renovasi:{ringan:[500000,1500000],sedang:[1500000,3000000],berat:[3000000,4500000]}
+    };
+    const jenis=d.jenisBangun||'renovasi',spek=d.spekBangun||(jenis==='bangun'?'menengah':'sedang');
+    const[lo,hi]=(TABEL[jenis]&&TABEL[jenis][spek])||TABEL.renovasi.sedang;
+    const min=Math.round(lb*lo/100000)*100000,max=Math.round(lb*hi/100000)*100000;
+    return{min,max,rekomendasi:Math.round((min+max)/2/100000)*100000,alasan:`${jenis==='bangun'?'Bangun baru':'Renovasi'} ${spek} · patokan pasar Bali per m² (kisaran umum, bukan harga hari ini)`};
+  }
   if(kat==='las'&&luas>0){
     const isPintu=/dorong|sliding|geser|pintu|gerbang/.test(t);
     let lo,hi; if(d.material){lo=400000;hi=650000}else{lo=100000;hi=250000}
