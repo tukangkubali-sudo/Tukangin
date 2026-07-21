@@ -255,7 +255,7 @@ function welcomeHTML(){return `<div style="min-height:100vh;min-height:100dvh;di
     <button class="btn btn-ghost" style="margin-top:11px" onclick="setAuth('login')">Sudah punya akun? Masuk</button>
     ${sudahTerpasang()?'':`<button class="btn btn-ghost" style="margin-top:11px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="pasangApp()">📲 Pasang Aplikasi ke Layar HP</button>`}
     <button class="btn btn-ghost btn-sm" style="margin-top:11px;color:#0D5953;font-weight:800" onclick="openKeamanan()">😟 Takut uang hilang? Baca ini dulu →</button>
-    <button class="btn btn-ghost btn-sm" style="margin-top:9px;color:#0D5953;font-weight:800" onclick="openBantuan()">🤖 Pusat Bantuan — pertanyaan umum</button>
+    <button class="btn btn-ghost btn-sm" style="margin-top:9px;color:#0D5953;font-weight:800" onclick="openAsisten()">🤖 Tanya Asisten — bingung? tanya di sini</button>
     <button class="btn btn-ghost btn-sm" style="margin-top:9px;color:#0D5953;font-weight:800" onclick="openTentang()">🏢 Tentang Kami — visi & misi</button>
     <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:16px">Dikelola <b>Guna Merta Home Service</b></p>
   </div>
@@ -554,7 +554,7 @@ function renderPemilik(){
       </div>
       <div id="statsbox" class="card" style="padding:14px;margin-top:13px;display:none"></div>
       <button class="btn btn-ghost" style="width:100%;margin-top:11px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openKeamanan()">😟 Takut uang hilang? Baca ini dulu →</button>
-      <button class="btn btn-ghost" style="width:100%;margin-top:9px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openBantuan()">🤖 Pusat Bantuan — pertanyaan umum</button>
+      <button class="btn btn-ghost" style="width:100%;margin-top:9px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openAsisten()">🤖 Tanya Asisten — bingung? tanya di sini</button>
       <button class="btn btn-ghost" style="width:100%;margin-top:9px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openKomisi()">💸 Bagaimana biaya & komisi dihitung?</button>
       <button class="btn btn-ghost" style="width:100%;margin-top:9px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openTentang()">🏢 Tentang Kami — visi & misi</button>
       <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:9px;color:var(--muted)" onclick="openKlaimAkun()">🔑 Punya kode klaim dari admin?</button>
@@ -686,6 +686,10 @@ function profilT(){
     <div class="sec-title">Aturan & Komitmen</div>
     <div class="card" style="padding:14px;cursor:pointer" onclick="openAturanTukang()">
       <div class="infoline" style="border:none;padding:0">📋 <span style="flex:1">Baca <b>Aturan & Komitmen Tukang</b>${ME.setuju_aturan?' · <span style="color:var(--ok);font-weight:700">✔ disetujui</span>':' — penting dipahami.'}</span><span style="color:var(--muted);font-size:18px">›</span></div></div>
+    <div class="sec-title">Bantuan</div>
+    <div class="card" style="padding:14px">
+      <button class="btn btn-ghost" style="width:100%;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openAsisten()">🤖 Tanya Asisten — bingung klaim uang, dll?</button>
+    </div>
     <div class="sec-title">Akun</div>
     <div class="card" style="padding:14px"><div class="infoline" style="border:none;padding:0;margin-bottom:12px">📱 <span>WhatsApp: <b>${esc(ME.telp||'-')}</b></span></div>
     <button class="btn btn-ghost" onclick="logout()">Keluar</button></div>`;
@@ -2817,6 +2821,89 @@ function faqHTML(){
   <button class="btn btn-ghost" style="margin-top:10px" onclick="closeSheet()">Tutup</button></div>`;
 }
 function openBantuan(){openSheet(faqHTML());}
+
+/* ====== ASISTEN AI (dual-mode: AI kalau AI_ENDPOINT diisi, FAQ lokal kalau kosong) ====== */
+const FAQ_LOCAL=[
+  {role:'pemilik',kw:['pesan','order','cara pesan','buat pesanan'],a:'Tekan "＋ Buat Pesanan" di beranda, pilih kategori, isi detail kerjaan, lalu pilih Borongan (harga sekali sepakat) atau Harian (tarif per hari). Setelah itu Anda transfer sesuai instruksi, dan pekerjaan mulai terbuka ke tukang setelah dana dikonfirmasi.'},
+  {role:'pemilik',kw:['kenapa bayar duluan','kenapa transfer duluan','ditahan','escrow','takut','ragu','tipu','hilang'],a:'Uang Anda tidak langsung ke tukang — ditahan dulu oleh sistem (escrow), baru cair setelah Anda konfirmasi pekerjaan beres. Kalau ada masalah, dana bisa dikembalikan. Ini justru melindungi Anda, bukan "disita".'},
+  {role:'pemilik',kw:['kapan cair','konfirmasi selesai','tekan selesai','sudah beres'],a:'Setelah tukang menandai pekerjaan selesai (dengan foto sebelum/sesudah), Anda tinggal periksa hasilnya lalu tekan "Konfirmasi & Cairkan Dana" di pesanan itu. Kalau tidak ada masalah dan Anda tidak menekan apapun, sistem otomatis mencairkan setelah beberapa waktu.'},
+  {role:'pemilik',kw:['masalah','komplain','tidak sesuai','jelek','kurang','sengketa'],a:'Tekan "⚠ Ada Masalah" pada pesanan itu sebelum dana otomatis cair. Tim kami akan meninjau dan membantu mediasi — dana tetap ditahan sampai masalahnya selesai.'},
+  {role:'pemilik',kw:['garansi'],a:'Pekerjaan yang sudah selesai punya masa garansi. Kalau dalam masa itu ada yang kurang beres, tukang wajib memperbaiki tanpa biaya tambahan — laporkan lewat menu garansi di pesanan tersebut.'},
+  {role:'pemilik',kw:['harian','borongan','beda'],a:'Borongan: harga disepakati di awal untuk keseluruhan pekerjaan. Harian: dibayar per hari kehadiran tukang (tarif harian × jumlah hari), cocok untuk kerjaan kecil/rutin.'},
+  {role:'pemilik',kw:['kode klaim','lupa kode'],a:'Kalau Anda didaftarkan admin sebelumnya dan lupa kode klaim, hubungi admin lewat WhatsApp untuk diberi tahu ulang kodenya.'},
+  {role:'tukang',kw:['ambil kerja','cara ambil','dapat kerjaan'],a:'Buka tab "Cari Kerja", pilih pekerjaan yang sesuai keahlian & lokasi Anda. Hanya pekerjaan yang dananya sudah ditahan (escrow aktif) yang tampil, jadi pasti dibayar.'},
+  {role:'tukang',kw:['belum bisa ambil','tidak muncul','verifikasi','ktp'],a:'Anda harus unggah foto KTP + selfie dulu di Profil dan menunggu disetujui admin sebelum bisa mengambil pekerjaan. Cek status verifikasi di halaman Profil Anda.'},
+  {role:'tukang',kw:['klaim uang','cairkan','kapan dibayar','uang belum masuk','uang belum cair','cara dapat uang','pembayaran'],a:'Setelah pekerjaan selesai, unggah foto sebelum & sesudah dari halaman pesanan. Pemilik lalu konfirmasi (atau otomatis cair kalau tidak ada masalah dalam beberapa waktu). Uang dikirim sesuai metode pembayaran yang Anda pilih di Profil (Tunai/E-wallet/Rekening) — kalau sudah lewat cukup lama belum cair juga, hubungi admin lewat WhatsApp.'},
+  {role:'tukang',kw:['absen','absensi','harian','jam kerja'],a:'Untuk pekerjaan harian, lakukan Absen Masuk & Absen Keluar (GPS) tiap hari kerja lewat halaman pesanan itu. Pembayaran dihitung dari hari yang benar-benar Anda hadiri.'},
+  {role:'tukang',kw:['garansi','komplain','ditolak konsumen'],a:'Kalau konsumen melapor masalah dalam masa garansi, Anda wajib memperbaikinya tanpa biaya tambahan. Ini bagian dari komitmen sebagai mitra Tukangin.'},
+  {role:'tukang',kw:['komisi','potongan','berapa persen'],a:'Untuk pekerjaan harian, Anda menerima penuh tarif yang Anda ajukan — konsumen membayar sedikit tambahan sebagai biaya layanan, bukan potongan dari Anda. Untuk borongan, ada komisi kecil yang sudah dihitung transparan di rincian pesanan.'},
+];
+function cariFAQLokal(q,role){
+  const t=(q||'').toLowerCase();
+  const kandidat=FAQ_LOCAL.filter(f=>f.role===role||f.role==='semua');
+  let best=null,skor=0;
+  kandidat.forEach(f=>{const s=f.kw.filter(k=>t.includes(k)).length;if(s>skor){skor=s;best=f;}});
+  if(best)return best.a;
+  return `Maaf, saya belum menemukan jawaban pasti untuk itu. Coba tanya dengan kata lain, atau langsung hubungi admin lewat WhatsApp ${BIZ.waTampil} — kami bantu langsung.`;
+}
+function sistemPromptAsisten(role){
+  return `Anda asisten bantuan aplikasi Tukangin (marketplace jasa tukang di Bali). Peran penanya: ${role==='tukang'?'TUKANG (penyedia jasa)':'KONSUMEN/PEMILIK (pemesan jasa)'}.
+Cara kerja aplikasi yang perlu Anda pahami:
+- Konsumen membuat pesanan (Borongan: harga disepakati di awal; Harian: tarif per hari × jumlah hari), lalu transfer ke rekening resmi Tukangin. Dana DITAHAN sistem (escrow) — belum ke tukang.
+- Setelah dana dikonfirmasi admin, pesanan terbuka untuk tukang mengambil (khusus yang sesuai keahlian/lokasi).
+- Tukang mengerjakan, lalu unggah foto sebelum/sesudah sebagai tanda selesai. Konsumen memeriksa dan menekan "Konfirmasi & Cairkan Dana" — atau otomatis cair kalau tidak ada masalah dalam beberapa waktu.
+- Kalau ada masalah, konsumen bisa tekan "Ada Masalah" untuk mengajukan sengketa — admin memediasi, dana tetap ditahan sampai selesai.
+- Ada masa garansi setelah pekerjaan selesai — tukang wajib perbaiki gratis kalau ada keluhan dalam masa itu.
+- Untuk pekerjaan Harian, tukang absen masuk/keluar via GPS tiap hari, dibayar sesuai hari yang benar-benar dihadiri.
+- Tukang menerima pembayaran sesuai metode yang mereka pilih (Tunai/E-wallet/Rekening) di Profil.
+Jawab singkat (maks 4 kalimat), ramah, bahasa Indonesia sehari-hari, dan kalau pertanyaannya di luar cakupan aplikasi atau butuh tindakan admin langsung (misalnya kasus keuangan spesifik, sengketa rumit), sarankan hubungi admin lewat WhatsApp ${BIZ.waTampil}.`;
+}
+let CHAT_HIST=[];
+function openAsisten(){
+  CHAT_HIST=[];
+  openSheet(`<div style="padding:16px 18px;display:flex;flex-direction:column;height:78vh">
+    <h3 style="font-size:17px;font-weight:800;margin-bottom:2px">🤖 Tanya Asisten</h3>
+    <p style="font-size:11.5px;color:var(--muted);margin-bottom:10px">Bingung soal pemesanan, pembayaran, atau klaim uang? Tanya di sini.</p>
+    <div id="chatlist" style="flex:1;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface);margin-bottom:10px"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px" id="chatsuggest"></div>
+    <div style="display:flex;gap:8px">
+      <input id="chatIn" placeholder="Tulis pertanyaan…" style="flex:1;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px" onkeydown="if(event.key==='Enter')kirimChatAsisten()">
+      <button class="btn btn-primary btn-sm" onclick="kirimChatAsisten()">Kirim</button>
+    </div>
+  </div>`);
+  const role=ME.role==='tukang'?'tukang':'pemilik';
+  const saran=role==='tukang'
+    ?['Kapan uang saya cair?','Kenapa belum bisa ambil kerjaan?','Cara absen harian gimana?']
+    :['Kenapa harus bayar duluan?','Kapan dana cair ke tukang?','Ada masalah, gimana?'];
+  const sg=$('chatsuggest');if(sg)sg.innerHTML=saran.map(s=>`<button class="btn btn-ghost btn-sm" onclick="$('chatIn').value=${JSON.stringify(s)};kirimChatAsisten()">${esc(s)}</button>`).join('');
+  tambahChatBubble('assistant',`Halo! Ada yang bisa saya bantu soal ${role==='tukang'?'pekerjaan atau pembayaran Anda':'pemesanan atau pembayaran'}?`);
+}
+function tambahChatBubble(peran,teks){
+  CHAT_HIST.push({peran,teks});
+  const box=$('chatlist');if(!box)return;
+  const bubble=document.createElement('div');
+  bubble.style.cssText=`margin-bottom:9px;display:flex;justify-content:${peran==='user'?'flex-end':'flex-start'}`;
+  bubble.innerHTML=`<div style="max-width:82%;padding:9px 12px;border-radius:12px;font-size:13px;line-height:1.5;background:${peran==='user'?'#0D5953':'#fff'};color:${peran==='user'?'#fff':'#1b2b28'};border:${peran==='user'?'none':'1px solid var(--line)'}">${esc(teks)}</div>`;
+  box.appendChild(bubble);box.scrollTop=box.scrollHeight;
+}
+async function kirimChatAsisten(){
+  const inp=$('chatIn');const q=(inp.value||'').trim();if(!q)return;
+  inp.value='';tambahChatBubble('user',q);
+  const thinking=document.createElement('div');thinking.id='chatThinking';thinking.style.cssText='margin-bottom:9px;font-size:12px;color:var(--muted)';thinking.textContent='Asisten mengetik…';
+  const box=$('chatlist');if(box){box.appendChild(thinking);box.scrollTop=box.scrollHeight;}
+  const role=ME.role==='tukang'?'tukang':'pemilik';
+  let jawaban;
+  if(AI_ENDPOINT){
+    try{
+      const r=await fetch(AI_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,system:sistemPromptAsisten(role),messages:[...CHAT_HIST.filter(c=>c.peran!=='assistant'||CHAT_HIST.indexOf(c)>0).map(c=>({role:c.peran==='user'?'user':'assistant',content:c.teks})),{role:'user',content:q}]})});
+      const dd=await r.json();jawaban=(dd.content||[]).map(i=>i.text||'').join('').trim()||cariFAQLokal(q,role);
+    }catch(e){jawaban=cariFAQLokal(q,role);}
+  }else{
+    jawaban=cariFAQLokal(q,role);
+  }
+  const th=$('chatThinking');if(th)th.remove();
+  tambahChatBubble('assistant',jawaban);
+}
 function openKeamanan(){openSheet(infoSheet('🔒 Keamanan & Kepercayaan','Kenapa aman bertransaksi di Tukangin',[
   ['Dana ditahan dulu (escrow)','Saat Anda bayar, dana <b>tidak langsung</b> diberikan ke tukang — ditahan dulu sampai Anda menekan "Selesai". Bila pekerjaan bermasalah, dana bisa dikembalikan.'],
   ['Tukang terverifikasi KTP','Setiap tukang wajib unggah <b>KTP + selfie</b> sebelum boleh menerima pekerjaan. Bukan orang anonim — identitasnya tercatat.'],
