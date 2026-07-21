@@ -254,7 +254,7 @@ function welcomeHTML(){return `<div style="min-height:100vh;min-height:100dvh;di
     <button class="btn" style="font-size:16px;padding:16px;margin-top:10px;background:#C97D17;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px" onclick="mulaiDaftar('tukang')">🛠️ Saya Tukang — Cari Kerja</button>
     <button class="btn btn-ghost" style="margin-top:11px" onclick="setAuth('login')">Sudah punya akun? Masuk</button>
     ${sudahTerpasang()?'':`<button class="btn btn-ghost" style="margin-top:11px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="pasangApp()">📲 Pasang Aplikasi ke Layar HP</button>`}
-    <button class="btn btn-ghost btn-sm" style="margin-top:11px;color:#0D5953;font-weight:800" onclick="openKeamanan()">🔒 Keamanan & Kepercayaan — kenapa aman?</button>
+    <button class="btn btn-ghost btn-sm" style="margin-top:11px;color:#0D5953;font-weight:800" onclick="openKeamanan()">😟 Takut uang hilang? Baca ini dulu →</button>
     <button class="btn btn-ghost btn-sm" style="margin-top:9px;color:#0D5953;font-weight:800" onclick="openBantuan()">🤖 Pusat Bantuan — pertanyaan umum</button>
     <button class="btn btn-ghost btn-sm" style="margin-top:9px;color:#0D5953;font-weight:800" onclick="openTentang()">🏢 Tentang Kami — visi & misi</button>
     <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:16px">Dikelola <b>Guna Merta Home Service</b></p>
@@ -553,7 +553,7 @@ function renderPemilik(){
         <p style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:10px">Pembayaran ditahan ${BIZ.nama} sampai Anda konfirmasi pekerjaan selesai.</p>
       </div>
       <div id="statsbox" class="card" style="padding:14px;margin-top:13px;display:none"></div>
-      <button class="btn btn-ghost" style="width:100%;margin-top:11px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openKeamanan()">🔒 Keamanan & Kepercayaan — kenapa aman?</button>
+      <button class="btn btn-ghost" style="width:100%;margin-top:11px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openKeamanan()">😟 Takut uang hilang? Baca ini dulu →</button>
       <button class="btn btn-ghost" style="width:100%;margin-top:9px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openBantuan()">🤖 Pusat Bantuan — pertanyaan umum</button>
       <button class="btn btn-ghost" style="width:100%;margin-top:9px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openKomisi()">💸 Bagaimana biaya & komisi dihitung?</button>
       <button class="btn btn-ghost" style="width:100%;margin-top:9px;border:1.5px solid #0D5953;color:#0D5953;font-weight:800" onclick="openTentang()">🏢 Tentang Kami — visi & misi</button>
@@ -1671,6 +1671,7 @@ async function renderDetail(){
         <p style="font-size:11.5px;color:#8a6a2a;margin-top:9px">Dana ditahan Tukangin sampai pekerjaan selesai. Jika batal, dana dikembalikan.</p>
       </div>
       <button class="btn btn-primary" style="margin-top:12px" onclick="bayar('${o.id}')">✅ Saya sudah transfer</button>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px;color:#0D5953;font-weight:700" onclick="openKeamanan()">😟 Ragu transfer duluan? Baca ini →</button>
       ${o.bukti_transfer_url?`<div style="margin-top:10px;text-align:center"><img src="${o.bukti_transfer_url}" onclick="window.open('${o.bukti_transfer_url}')" style="max-height:130px;border-radius:11px;border:1px solid var(--line)"><div style="font-size:11px;color:var(--ok);font-weight:600;margin-top:4px">✓ Bukti transfer terunggah</div></div>`:''}
       <button class="btn btn-ghost" style="margin-top:9px" onclick="pilihBukti('${o.id}')">📷 ${o.bukti_transfer_url?'Ganti':'Unggah'} Bukti Transfer</button>
       <button class="btn btn-ghost" style="margin-top:9px" onclick="batal('${o.id}')">Batalkan Pesanan</button>`;
