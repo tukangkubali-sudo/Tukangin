@@ -181,6 +181,7 @@ function hargaDariTotal(target){
   return Math.round(lo);
 }
 function sisaPayout(o,b){const dpCair=(o.biaya&&o.biaya.dp_dicairkan)||0;return Math.max(0,(b.payout||0)-dpCair);}
+function cekViewer(){if(ME&&ME.is_viewer){toast('👁️ Anda mode Lihat Saja — hubungi admin utama untuk perubahan data');return true}return false}
 const KAT=[{id:'listrik',nm:'Listrik',ic:'⚡'},{id:'pipa',nm:'Pipa',ic:'🔧'},{id:'ac',nm:'AC',ic:'❄️'},{id:'las',nm:'Las/Pagar',ic:'🔥'},{id:'cat',nm:'Cat',ic:'🎨'},{id:'bocor',nm:'Atap Bocor',ic:'🏠'},{id:'kunci',nm:'Kunci',ic:'🔑'},{id:'bangun',nm:'Bangun/Renovasi',ic:'🏗️'},{id:'umum',nm:'Lainnya',ic:'🛠️'}];
 const katOf=id=>KAT.find(k=>k.id===id)||KAT[8];
 const ST={MENUNGGU_DANA:{l:'Menunggu Pembayaran',c:'b-wait'},MENUNGGU_VERIFIKASI:{l:'Cek Pembayaran',c:'b-wait'},DANA_DITAHAN:{l:'Dana Ditahan',c:'b-hold'},DIKERJAKAN:{l:'Dikerjakan',c:'b-work'},MENUNGGU_KONFIRMASI:{l:'Menunggu Konfirmasi',c:'b-confirm'},SELESAI:{l:'Selesai',c:'b-done'},SENGKETA:{l:'Sengketa',c:'b-dispute'},DIBATALKAN:{l:'Dibatalkan',c:'b-dispute'}};
@@ -496,7 +497,7 @@ function render(){
   $('app').innerHTML=top+body+nav;
   if(VIEW.orderId)renderDetail();
   else if(VIEW.page)renderPage();
-  else if(VIEW.tab==='admin'&&ME.is_admin)renderAdmin();
+  else if(VIEW.tab==='admin'&&(ME.is_admin||ME.is_viewer))renderAdmin();
   else if(VIEW.tab==='bantuan')renderBantuan();
   else if(ME.role==='pemilik')renderPemilik();
   else renderTukang();
@@ -506,13 +507,13 @@ function topPemilik(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
     <div class="logo">🔧</div><div class="brand"><b>Tukangin</b><small>Halo, ${esc(ME.nama.split(' ')[0])} · ${APPVER}</small></div>
-    <span class="rolepill">👤 Pemilik</span></div></div>`;
+    <span class="rolepill">${ME.is_viewer?'👁️ Partner':'👤 Pemilik'}</span></div></div>`;
 }
 function topTukang(){
   if(VIEW.orderId)return topDetail();
   return `<div class="topbar"><div class="tb-row">
     <div class="logo">🔧</div><div class="brand"><b>Tukangin Mitra</b><small>Halo, ${esc(ME.nama.split(' ')[0])} · ${APPVER}</small></div>
-    <span class="rolepill">🛠️ Tukang</span></div></div>`;
+    <span class="rolepill">${ME.is_viewer?'👁️ Partner':'🛠️ Tukang'}</span></div></div>`;
 }
 function topDetail(){return `<div class="topbar" style="background:#fff;color:var(--ink);border-bottom:1px solid var(--line)">
   <div class="tb-row"><button onclick="back()" style="font-size:24px;width:30px">‹</button>
@@ -521,7 +522,7 @@ function navBar(){
   let tabs=ME.role==='pemilik'
     ?[['beranda','Beranda','🏠'],['pesanan','Pesanan','📋'],['bantuan','Bantuan','🛟'],['akun','Akun','👤']]
     :[['kerja','Cari Kerja','🔍'],['aktif','Aktif','🧰'],['bantuan','Bantuan','🛟'],['profil','Profil','👤']];
-  if(ME.is_admin)tabs.push(['admin','Admin','🛡️']);
+  if(ME.is_admin||ME.is_viewer)tabs.push(['admin','Admin','🛡️']);
   return `<div class="botnav">${tabs.map(([id,nm,ic])=>{const bdg=(id==='admin'&&ME.is_admin)?adminPending():0;return `<button class="navb ${VIEW.tab===id?'on':''}" onclick="go('${id}')" style="position:relative"><span style="font-size:21px">${ic}</span>${nm}${bdg?`<span style="position:absolute;top:3px;right:calc(50% - 22px);min-width:16px;height:16px;background:var(--bad);color:#fff;font-size:10px;font-weight:800;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px">${bdg}</span>`:''}</button>`;}).join('')}</div>`;
 }
 function go(t){stopTracking();VIEW={tab:t,orderId:null};render();const s=$('scroll');if(s)s.scrollTop=0}
@@ -709,6 +710,7 @@ async function simpanArea(){
   ME.area=v||null;toast('✅ Area tersimpan');render();
 }
 async function adminSetTelp(id){
+  if(cekViewer())return;
   const t=(($('atelp')||{}).value||'').trim();
   if(!/^(0|62)?8\d{7,12}$/.test(t.replace(/\D/g,''))){toast('Nomor tidak valid (mis. 08xxxxxxxxxx)');return}
   const {error}=await sb.from('profiles').update({telp:t}).eq('id',id);
@@ -716,6 +718,7 @@ async function adminSetTelp(id){
   toast('✅ Nomor tukang disimpan');closeSheet();await refresh();openTukangProfil(id);
 }
 async function tambahTelpTukang(id){
+  if(cekViewer())return;
   const t=(prompt('Nomor HP/WhatsApp tukang (mis. 08xxxxxxxxxx):')||'').trim();
   if(!t)return;
   if(!/^(0|62)?8\d{7,12}$/.test(t.replace(/\D/g,''))){toast('Nomor tidak valid');return}
@@ -815,6 +818,7 @@ function pilihFotoVerifAdmin(jenis){
   document.body.appendChild(inp);inp.click();
 }
 async function uploadFotoVerifAdmin(jenis,file){
+  if(cekViewer())return;
   toast('Memproses…');
   try{
     const dataUrl=await kompresFoto(file);
@@ -827,6 +831,7 @@ async function uploadFotoVerifAdmin(jenis,file){
   }catch(e){toast('Gagal: '+(e.message||e))}
 }
 async function kirimVerifikasiAdmin(){
+  if(cekViewer())return;
   if(!_bv.ktp_url||!_bv.wajah_url){toast('Unggah kedua foto dulu');return}
   const nik=($('nikInputAdmin')?.value||'').trim();
   const err=validateNIK(nik);
@@ -880,6 +885,7 @@ async function renderAdmin(){
   const selesai=ords.filter(o=>o.status==='SELESAI');
   const belumKonfirmasi=ords.filter(o=>o.tukang_dibayar&&!o.tukang_konfirmasi_terima);
   const isOwner=ME.is_owner;
+  const canLihatOwner=isOwner||ME.is_viewer;
   const actualMasuk=o=>{if(o.termin){let t=o.dp_nominal||0;if(o.pelunasan_status==='lunas')t+=(o.pelunasan_nominal||0);return t;}return (o.biaya||fee(o.harga)).escrow||0;};
   const dpDicairkan=o=>(o.biaya&&o.biaya.dp_dicairkan)||0;
   const uangMasuk=ords.filter(o=>['DANA_DITAHAN','DIKERJAKAN','MENUNGGU_KONFIRMASI','SELESAI'].includes(o.status)).reduce((s,o)=>s+actualMasuk(o),0);
@@ -896,7 +902,7 @@ async function renderAdmin(){
     <div class="card" style="padding:13px 14px;margin-bottom:12px">
       <div style="font-size:12px;font-weight:800;color:#0D5953;margin-bottom:9px">📊 Hari Ini · ${_now.toLocaleDateString('id-ID',{day:'numeric',month:'long'})}</div>
       <div style="display:flex;gap:7px;flex-wrap:wrap">${hiBox('📥',daftarHariIni,'Daftar baru')}${hiBox('💵',cekBayar.length,'Bayar dicek',true)}${hiBox('⏳',pending.length,'Verifikasi',true)}${hiBox('⚠️',seng.length,'Sengketa',true)}${hiBox('🔧',belumVerif,'Belum verif',true)}</div>
-      ${isOwner?`<div style="margin-top:10px;padding-top:9px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center"><span style="font-size:11.5px;color:#46605c">💰 Pendapatan bulan ini</span><b style="font-size:14px;color:#0D5953">${rp(pendapatanBulan)}</b></div>`:''}
+      ${canLihatOwner?`<div style="margin-top:10px;padding-top:9px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center"><span style="font-size:11.5px;color:#46605c">💰 Pendapatan bulan ini</span><b style="font-size:14px;color:#0D5953">${rp(pendapatanBulan)}</b></div>`:''}
     </div>
     <div class="card" style="padding:13px 14px;margin-bottom:12px;border:1.5px solid #0D5953">
       <div style="display:flex;align-items:center;gap:10px">
@@ -925,14 +931,14 @@ async function renderAdmin(){
     ${belumTukang.length?`<div class="card" style="padding:13px;margin-bottom:8px"><div style="font-weight:800;font-size:13.5px">🔍 Belum Ada Tukang · ${belumTukang.length}</div>${belumTukang.map(o=>`<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px;display:flex;align-items:center;gap:8px"><div style="flex:1"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')}</div><div class="meta">${esc(o.lokasi||'-')} · ${esc(o.pemilik_nama||'-')}</div></div>${isOwner?`<button class="btn btn-ghost btn-sm" onclick="openEditPesananAdmin('${o.id}')">✏️ Edit</button>`:''}<button class="btn btn-primary btn-sm" onclick="openAssign('${o.id}')">Tugaskan</button></div>`).join('')}</div>`:''}
     ${seng.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--bad)"><div style="font-weight:800;font-size:13.5px">⚠️ Sengketa · ${seng.length}</div>${seng.map(o=>`<div style="border-top:1px solid var(--line);padding-top:8px;margin-top:8px;font-size:12.5px">${esc(o.judul||'Pesanan')} — ${esc(o.pemilik_nama||'-')} & ${esc(o.tukang_nama||'-')}. Hubungi kedua pihak (WA) untuk penyelesaian.</div>`).join('')}</div>`:''}
     ${cair.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--ok)"><div style="font-weight:800;font-size:13.5px">💵 Pencairan ke Tukang · ${cair.length}</div>${cair.map(o=>{const b=o.biaya||fee(o.harga);const sisa=sisaPayout(o,b);const dpCair=(o.biaya&&o.biaya.dp_dicairkan)||0;return `<div style="border-top:1px solid var(--line);padding-top:9px;margin-top:9px;display:flex;align-items:center;gap:8px"><div style="flex:1"><div style="font-size:13px;font-weight:700">${esc(o.judul||'Pesanan')} ${sisLabel(o)} — <span style="color:var(--ok)">${rp(sisa)}</span></div>${dpCair?`<div style="font-size:10.5px;color:var(--hold)">⚠️ Sudah diterima duluan ${rp(dpCair)} (DP bahan) · total pekerjaan ${rp(b.payout)}</div>`:''}${o.desk?`<div style="font-size:11.5px;color:#5B6B68;margin-top:2px">${esc(o.desk)}</div>`:''}<div class="meta">Tukang: ${esc(o.tukang_nama||'-')}${o.sistem==='harian'?` · ${hariPenuh(o)} hari`:''} · 💳 ${p_bayar(o)}</div></div><div style="display:flex;flex-direction:column;gap:6px">${p_wa(o)?`<a href="${p_wa(o)}" target="_blank" class="btn btn-ghost btn-sm" style="text-decoration:none;white-space:nowrap;border:1px solid #25D366;color:#128C3E">💬 WA</a>`:''}<button class="btn btn-primary btn-sm" onclick="bayarTukang('${o.id}')">Sudah Dibayar</button></div></div>`;}).join('')}</div>`:''}
-    ${isOwner?`<div class="card" style="padding:14px;margin-bottom:8px;background:#0D5953;color:#fff"><div style="font-size:12px;font-weight:700;opacity:.85;margin-bottom:8px">👑 Ringkasan Owner</div><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><span style="opacity:.85">Uang masuk (ditahan + selesai)</span><b>${rp(uangMasuk)}</b></div><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><span style="opacity:.85">Sedang ditahan</span><b>${rp(tertahan)}</b></div><div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="opacity:.85">Sudah dibayar ke tukang</span><b>${rp(uangKeluar)}</b></div></div>`:''}
+    ${canLihatOwner?`<div class="card" style="padding:14px;margin-bottom:8px;background:#0D5953;color:#fff"><div style="font-size:12px;font-weight:700;opacity:.85;margin-bottom:8px">👑 Ringkasan Owner</div><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><span style="opacity:.85">Uang masuk (ditahan + selesai)</span><b>${rp(uangMasuk)}</b></div><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><span style="opacity:.85">Sedang ditahan</span><b>${rp(tertahan)}</b></div><div style="display:flex;justify-content:space-between;font-size:12.5px"><span style="opacity:.85">Sudah dibayar ke tukang</span><b>${rp(uangKeluar)}</b></div></div>`:''}
     ${belumKonfirmasi.length?`<div class="card" style="padding:13px;margin-bottom:8px;border:1.5px solid var(--bad)"><div style="font-weight:800;font-size:13.5px;color:var(--bad)">⚠ Belum Dikonfirmasi Tukang · ${belumKonfirmasi.length}</div><p style="font-size:11.5px;color:#46605c;margin:4px 0 0">Ditandai "dibayar" tapi tukang belum menyatakan menerima. Cek apakah benar sudah dibayar.</p>${belumKonfirmasi.map(o=>{const b=o.biaya||fee(o.harga);return `<div style="border-top:1px solid var(--line);padding-top:8px;margin-top:8px"><div style="display:flex;justify-content:space-between;font-size:12.5px"><span>${esc(o.judul||'Pesanan')} · ${esc(o.tukang_nama||'-')}</span><b>${rp(b.payout)}</b></div><div style="display:flex;align-items:center;gap:8px;margin-top:5px">${p_tel(o)?`<span class="meta" style="font-size:11px">📞 ${esc(p_tel(o))}</span>${waBtnKecil(o,`Halo ${o.tukang_nama||''}, mohon konfirmasi: apakah Anda sudah menerima pembayaran ${rp(b.payout)} untuk pekerjaan ${o.judul||'-'}? Mohon tekan "Sudah Terima" di app. Terima kasih, Tukangin`)}`:`<button onclick="tambahTelpTukang('${o.tukang_id}')" style="font-size:11px;font-weight:700;color:#0D5953;background:none;border:1px solid #0D5953;padding:3px 10px;border-radius:7px">+ Tambah Nomor HP</button>`}</div></div>`;}).join('')}</div>`:''}
     ${!adaTindakan?'<div class="card" style="padding:16px;text-align:center;color:var(--muted)">✅ Tidak ada yang perlu ditindak saat ini.</div>':''}
     <div class="sec-title">🛠️ Sedang Dikerjakan${dikerjakan.length?` · ${dikerjakan.length}`:''}</div>
     ${dikerjakan.length?dikerjakan.map(o=>{const s=ST[o.status]||ST.DANA_DITAHAN;const terminMeta=o.termin?`<div class="meta" style="font-size:11px">💳 DP ${rp(o.dp_nominal)} ${o.bukti_transfer_url?'✓':'⏳'} · Pelunasan ${rp(o.pelunasan_nominal)} (${o.pelunasan_status||'belum'})</div>`:'';return `<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px" onclick="openOrder('${o.id}')"><div class="othumb" style="width:34px;height:34px">${katOf(o.kat).ic}</div><div style="flex:1;min-width:0"><b style="font-size:13.5px">${esc(o.judul||'Pesanan')}</b> ${sisLabel(o)}${o.desk?`<div style="font-size:11px;color:#5B6B68;margin-top:1px">${esc(o.desk)}</div>`:''}<div class="meta" style="font-size:11px">👤 ${esc(o.pemilik_nama||'-')}${p_tel_pemilik(o)?' · 📞 '+esc(p_tel_pemilik(o)):''}</div><div class="meta" style="font-size:11px">👷 ${esc(o.tukang_nama||'-')}${p_tel(o)?' · 📞 '+esc(p_tel(o)):''} · ${esc(o.lokasi||'-')}</div>${terminMeta}</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px"><span class="badge ${s.c}">${s.l}</span>${p_tel(o)?waBtnKecil(o,`Halo ${o.tukang_nama||''}, saya admin Tukangin terkait pekerjaan ${o.judul||'-'}.`):`<button onclick="event.stopPropagation();tambahTelpTukang('${o.tukang_id}')" style="font-size:10.5px;font-weight:700;color:#0D5953;background:none;border:1px solid #0D5953;padding:2px 8px;border-radius:6px">+ No. HP</button>`}</div></div>`;}).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:4px 2px">Belum ada pekerjaan berjalan.</p>'}
     <div class="sec-title">✅ Riwayat Selesai${selesai.length?` · ${selesai.length}`:''}</div>
     ${selesai.length?selesai.slice(0,15).map(o=>{const b=o.biaya||fee(o.harga);return `<div class="card" style="padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px" onclick="openOrder('${o.id}')"><div class="othumb" style="width:34px;height:34px">${katOf(o.kat).ic}</div><div style="flex:1;min-width:0"><b style="font-size:13.5px">${esc(o.judul||'Pesanan')}</b> ${sisLabel(o)}<div class="meta" style="font-size:11px">👷 ${esc(o.tukang_nama||'-')}${o.selesai_tgl?' · '+tgljamID(o.selesai_tgl):''}</div></div><div style="text-align:right"><div style="font-weight:800;color:var(--ok);font-size:13px">${rp(b.payout)}</div>${o.tukang_dibayar?'<span style="font-size:9.5px;color:var(--ok);font-weight:700">✓ dibayar</span>':'<span style="font-size:9.5px;color:var(--hold);font-weight:700">belum dibayar</span>'}</div></div>`;}).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:4px 2px">Belum ada pekerjaan selesai.</p>'}
-    ${isOwner?`<div class="sec-title">💾 Backup Data</div>
+    ${canLihatOwner?`<div class="sec-title">💾 Backup Data</div>
     <div class="card" style="padding:14px;margin-bottom:8px">
       <p style="font-size:12.5px;color:#46605c;margin-bottom:11px">Unduh semua pesanan & data pengguna untuk arsip (komplain, refund, garansi). Simpan ke folder Google Drive Anda.</p>
       <div style="display:flex;gap:10px">
@@ -949,6 +955,11 @@ async function renderAdmin(){
       <p style="font-size:12.5px;color:#46605c;margin-bottom:11px">Beri/cabut akses admin untuk karyawan. Operator bisa kerja harian, tapi tak bisa kelola daftar hitam, ekspor data, atau lihat ringkasan keuangan owner.</p>
       <div style="display:flex;gap:8px"><button class="btn btn-ghost" style="flex:1" onclick="openKelolaOperator()">Kelola</button><button class="btn btn-primary" style="flex:1" onclick="openPantauOperator()">🔍 Pantau</button></div>
     </div>
+    ${isOwner?`<div class="sec-title">👁️ Partner (Lihat Saja)</div>
+    <div class="card" style="padding:14px;margin-bottom:8px">
+      <p style="font-size:12.5px;color:#46605c;margin-bottom:11px">Untuk rekan bisnis/partner — bisa lihat <b>semua data</b> termasuk ringkasan keuangan owner, tapi <b>tidak bisa mengubah apa pun</b> (tidak bisa verifikasi, cairkan dana, hapus, atau edit).</p>
+      <button class="btn btn-ghost" style="width:100%" onclick="openKelolaPartner()">Kelola Partner</button>
+    </div>`:''}
     <div class="sec-title">👥 Semua Pengguna Terdaftar</div>
     <div class="card" style="padding:14px;margin-bottom:8px">
       <p style="font-size:12.5px;color:#46605c;margin-bottom:11px">Lihat SEMUA yang sudah daftar (tukang &amp; pemilik), termasuk yang <b>belum verifikasi</b>, beserta tanggal daftarnya.</p>
@@ -964,12 +975,14 @@ async function renderAdmin(){
   loadTukangList('tukangboxAdmin');
 }
 async function verifPembayaran(id){
+  if(cekViewer())return;
   const {error}=await sb.from('orders').update({status:'DANA_DITAHAN'}).eq('id',id);
   if(error){toast('Gagal: '+error.message);return}
   await addLog(id,'Pembayaran diverifikasi','Admin mengonfirmasi dana masuk & ditahan');
   toast('✅ Dana dikonfirmasi — pesanan dibuka ke tukang');renderAdmin();
 }
 async function verifPelunasan(id){
+  if(cekViewer())return;
   const {error}=await sb.from('orders').update({pelunasan_status:'lunas'}).eq('id',id);
   if(error){toast('Gagal: '+error.message);return}
   await addLog(id,'Pelunasan diverifikasi','Admin mengonfirmasi pelunasan diterima');
@@ -984,6 +997,7 @@ function waBtnKecil(o,msg){const w=waOrder(o,msg);return w?`<a href="${w}" targe
 function waLink(telp,msg){let n=(telp||'').replace(/\D/g,'');if(!n)return '';if(n[0]==='0')n='62'+n.slice(1);else if(n[0]==='8')n='62'+n;return `https://wa.me/${n}?text=${encodeURIComponent(msg||'')}`;}
 function p_wa(o){const t=(ADMIN_TUKANG||[]).find(x=>x.id===o.tukang_id);const tel=t&&t.telp;if(!tel)return '';const b=o.biaya||fee(o.harga);return waLink(tel,`Halo ${o.tukang_nama||''}, pekerjaan ${o.judul||'-'} sudah selesai. Bayaran Anda ${rp(b.payout)} akan kami cairkan. Mohon konfirmasi penerimaan ya. Terima kasih, Tukangin`);}
 async function bayarTukang(id){
+  if(cekViewer())return;
   const o=(ORDERS||[]).find(x=>x.id===id)||{};const b=o.biaya||fee(o.harga);
   const sisa=sisaPayout(o,b);const dpCair=(o.biaya&&o.biaya.dp_dicairkan)||0;
   const t=(ADMIN_TUKANG||[]).find(x=>x.id===o.tukang_id)||{};
@@ -1002,6 +1016,7 @@ async function bayarTukang(id){
   }
 }
 async function simpanBayarTukang(id,kuitansi){
+  if(cekViewer())return;
   const o=(ORDERS||[]).find(x=>x.id===id)||{};const b=o.biaya||fee(o.harga);
   const sisa=sisaPayout(o,b);const dpCair=(o.biaya&&o.biaya.dp_dicairkan)||0;
   const upd={tukang_dibayar:true,tukang_dibayar_tgl:new Date().toISOString()};
@@ -1029,6 +1044,7 @@ async function openKelolaOperator(){
     <button class="btn btn-ghost" style="margin-top:14px" onclick="closeSheet()">Tutup</button></div>`);
 }
 async function jadikanOperator(){
+  if(cekViewer())return;
   const email=(($('opEmail')||{}).value||'').trim();if(!email){toast('Isi email dulu');return}
   const {data,error}=await sb.rpc('jadikan_operator',{p_email:email});
   if(error){toast('Gagal: '+error.message);return}
@@ -1036,10 +1052,36 @@ async function jadikanOperator(){
   else toast('⚠ '+(data||'gagal'));
 }
 async function cabutOperator(id){
+  if(cekViewer())return;
   if(!confirm('Cabut akses operator ini?'))return;
   const {error}=await sb.rpc('cabut_operator',{p_id:id});
   if(error){toast('Gagal: '+error.message);return}
   toast('✅ Akses dicabut');openKelolaOperator();
+}
+async function openKelolaPartner(){
+  const {data}=await sb.from('profiles').select('id,nama,is_owner,is_viewer').eq('is_viewer',true);
+  const viewers=(data||[]).filter(p=>!p.is_owner);
+  const rows=viewers.length?viewers.map(p=>`<div style="display:flex;align-items:center;gap:8px;border-top:1px solid var(--line);padding:9px 0"><div style="flex:1;font-size:13px;font-weight:600">${esc(p.nama||'-')}</div><button class="btn btn-danger btn-sm" onclick="cabutViewer('${p.id}')">Cabut</button></div>`).join(''):'<p style="font-size:12.5px;color:var(--muted);padding:8px 0">Belum ada partner.</p>';
+  openSheet(`<div style="padding:20px"><h3 style="font-size:17px;font-weight:800;margin-bottom:4px">👁️ Kelola Partner (Lihat Saja)</h3><p style="font-size:12px;color:var(--muted);margin-bottom:12px">Partner harus mendaftar/login dulu di app (peran apa saja). Masukkan email mereka untuk memberi akses lihat-saja — termasuk ringkasan keuangan, tapi tidak bisa mengubah data apa pun.</p>
+    <input id="viewerEmail" type="email" placeholder="email partner" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;font-size:14px;margin-bottom:8px">
+    <button class="btn btn-primary" onclick="jadikanViewer()">Beri Akses Lihat Saja</button>
+    <div style="margin-top:16px;font-size:12px;font-weight:800;color:var(--muted)">PARTNER AKTIF</div>${rows}
+    <button class="btn btn-ghost" style="margin-top:14px" onclick="closeSheet()">Tutup</button></div>`);
+}
+async function jadikanViewer(){
+  if(cekViewer())return;
+  const email=(($('viewerEmail')||{}).value||'').trim();if(!email){toast('Isi email dulu');return}
+  const {data,error}=await sb.rpc('jadikan_viewer',{p_email:email});
+  if(error){toast('Gagal: '+error.message);return}
+  if((data||'').indexOf('OK')===0){toast('✅ Akses lihat-saja diberikan');closeSheet();}
+  else toast('⚠ '+(data||'gagal'));
+}
+async function cabutViewer(id){
+  if(cekViewer())return;
+  if(!confirm('Cabut akses partner ini?'))return;
+  const {error}=await sb.rpc('cabut_viewer',{p_id:id});
+  if(error){toast('Gagal: '+error.message);return}
+  toast('✅ Akses dicabut');openKelolaPartner();
 }
 function openTambahTukangManual(){
   openSheet(`<div style="padding:20px">
@@ -1215,6 +1257,7 @@ function openAssign(orderId){
   openSheet(`<div style="padding:20px"><h3 style="font-size:17px;font-weight:800;margin-bottom:4px">Tugaskan Tukang</h3><p style="font-size:12px;color:var(--muted);margin-bottom:14px">Diurutkan dari rating tertinggi. Pilih untuk pekerjaan ini.</p>${items}<button class="btn btn-ghost" style="margin-top:6px" onclick="closeSheet()">Batal</button></div>`);
 }
 async function assignTukang(tukangId){
+  if(cekViewer())return;
   const p=ADMIN_TUKANG.find(x=>x.id===tukangId);if(!p||!_assignOrder)return;
   const {error}=await sb.from('orders').update({tukang_id:p.id,tukang_nama:p.nama,tukang_inisial:p.inisial||initial(p.nama)}).eq('id',_assignOrder);
   if(error){toast('Gagal: '+error.message);return}
@@ -1306,6 +1349,7 @@ function bandingWajah(uid){(async()=>{
   </div>`);
 })();}
 async function tinjau(uid,ok){
+  if(cekViewer())return;
   const upd={verif_status:ok?'terverifikasi':'ditolak',kyc:ok,ktp_url:null,verif_tgl:new Date().toISOString()};
   if(!ok)upd.wajah_url=null; // ditolak: selfie juga dihapus (minimalkan data)
   const {error}=await sb.from('profiles').update(upd).eq('id',uid);
@@ -1331,6 +1375,7 @@ async function muatBlokir(){
   el.innerHTML=data.map(b=>`<div class="card" style="padding:11px 13px;margin-bottom:8px;display:flex;align-items:center;gap:10px"><div style="flex:1"><div style="font-size:13px;font-weight:700">${b.nik?'🪪 '+esc(b.nik):''}${b.nik&&b.telp?' · ':''}${b.telp?'📱 '+esc(b.telp):''}</div><div class="meta">${esc(b.alasan||'-')}</div></div><button class="btn-sm btn-ghost" style="color:var(--bad)" onclick="hapusBlokir('${b.id}')">Hapus</button></div>`).join('');
 }
 async function tambahBlokir(){
+  if(cekViewer())return;
   const nik=($('bNik')?.value||'').trim(),telp=($('bTelp')?.value||'').trim(),alasan=($('bAlasan')?.value||'').trim();
   if(!nik&&!telp){toast('Isi NIK atau HP');return}
   const {error}=await sb.from('blocklist').insert({nik:nik||null,telp:telp||null,alasan:alasan||null,by:ME.id});
@@ -1338,11 +1383,13 @@ async function tambahBlokir(){
   toast('✅ Ditambahkan');$('bNik').value='';$('bTelp').value='';$('bAlasan').value='';muatBlokir();
 }
 async function hapusBlokir(id){
+  if(cekViewer())return;
   const {error}=await sb.from('blocklist').delete().eq('id',id);
   if(error){toast('Gagal: '+error.message);return}
   muatBlokir();
 }
 async function blokirCepat(id){
+  if(cekViewer())return;
   const p=(ADMIN_TUKANG||[]).find(x=>x.id===id);if(!p)return;
   if(!confirm('Tolak '+(p.nama||'tukang')+' & masukkan ke daftar hitam?'))return;
   await sb.from('blocklist').insert({nik:p.nik||null,telp:p.telp||null,alasan:'Ditolak admin saat verifikasi',by:ME.id});
@@ -1350,6 +1397,7 @@ async function blokirCepat(id){
   toast('⛔ Ditolak & masuk daftar hitam');renderAdmin();
 }
 async function strikeTukang(tukangId,orderId){
+  if(cekViewer())return;
   if(!tukangId){toast('Tukang tidak ditemukan');return}
   if(!confirm('Beri STRIKE ke tukang ini karena menolak/abai memperbaiki garansi?'))return;
   const {data:p}=await sb.from('profiles').select('strike').eq('id',tukangId).maybeSingle();
@@ -1360,6 +1408,7 @@ async function strikeTukang(tukangId,orderId){
   toast('Strike diberikan'+(ns>=3?' · tukang di-suspend (3 strike)':` (${ns})`));renderAdmin();
 }
 async function beresGaransi(orderId){
+  if(cekViewer())return;
   const {error}=await sb.from('orders').update({garansi_klaim:false}).eq('id',orderId);
   if(error){toast('Gagal: '+error.message);return}
   toast('Ditandai sudah diperbaiki');renderAdmin();
@@ -1871,6 +1920,7 @@ async function ambil(id){
   VIEW.tab='aktif';await refresh();openOrder(id);toast('Pekerjaan diambil');
 }
 async function lepasTukangAdmin(id){
+  if(cekViewer())return;
   if(!ME.is_admin){toast('Khusus admin');return}
   const o=ORDERS.find(x=>x.id===id);if(!o||!o.tukang_id){toast('Tidak ada tukang untuk dilepas');return}
   if(!confirm('Lepas tukang dari pekerjaan ini? Pekerjaan kembali tersedia & bisa ditugaskan ulang.'))return;
@@ -2225,6 +2275,7 @@ function adminPaymentInfo(o,b){
   return `<div class="sec-title">💳 Info Pembayaran (Admin)</div><div class="card" style="padding:14px">${inner}</div>`;
 }
 async function cairkanDPTukang(orderId){
+  if(cekViewer())return;
   const o=ORDERS.find(x=>x.id===orderId);if(!o){toast('Pesanan tidak ditemukan');return}
   const dpCair=(o.biaya&&o.biaya.dp_dicairkan)||0;
   const dpSisa=Math.max(0,(o.dp_nominal||0)-dpCair);
@@ -2245,6 +2296,7 @@ async function cairkanDPTukang(orderId){
   }
 }
 async function simpanCairanDP(orderId,jumlah,file){
+  if(cekViewer())return;
   const o=ORDERS.find(x=>x.id===orderId);if(!o)return;
   let buktiUrl=null;
   if(file){
@@ -2262,6 +2314,7 @@ async function simpanCairanDP(orderId,jumlah,file){
   await refresh();openOrder(orderId);
 }
 function adminUploadBuktiPelunasan(orderId){
+  if(cekViewer())return;
   const inp=document.createElement('input');
   inp.type='file';inp.accept='image/*';
   inp.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;opacity:0';
@@ -2269,6 +2322,7 @@ function adminUploadBuktiPelunasan(orderId){
   document.body.appendChild(inp);inp.click();
 }
 async function simpanBuktiPelunasanAdmin(orderId,file){
+  if(cekViewer())return;
   toast('Memproses foto…');
   try{
     const dataUrl=await kompresFoto(file);
@@ -2280,6 +2334,7 @@ async function simpanBuktiPelunasanAdmin(orderId,file){
   }catch(e){toast('Gagal: '+(e.message||e))}
 }
 async function adminKonfirmasiPelunasan(orderId){
+  if(cekViewer())return;
   if(!confirm('Tandai pelunasan sebagai LUNAS?\n\nPastikan sudah dicek manual (mutasi rekening/konfirmasi dari pelanggan via WA) sebelum menandai ini.'))return;
   const {error}=await sb.from('orders').update({pelunasan_status:'lunas'}).eq('id',orderId);
   if(error){toast('Gagal: '+error.message);return}
@@ -2354,6 +2409,7 @@ function openCatatanTukang(id){
   </div>`);
 }
 async function simpanCatatanTukang(id){
+  if(cekViewer())return;
   const isi=(($('ctIsi')||{}).value||'').trim();
   const btn=$('ctBtn');if(btn){btn.disabled=true;btn.textContent='Menyimpan…';}
   const {error}=await sb.from('profiles').update({catatan:isi||null}).eq('id',id);
@@ -2388,6 +2444,7 @@ function renderKasbonSheet(id,nama){
   </div>`);
 }
 async function tambahKasbon(id,nama){
+  if(cekViewer())return;
   const jumlah=+(($('kbJumlah')||{}).value)||0;
   const catatan=(($('kbCatatan')||{}).value||'').trim();
   if(!jumlah){toast('Isi jumlah kasbon');return}
@@ -2397,6 +2454,7 @@ async function tambahKasbon(id,nama){
   toast('✅ Kasbon dicatat');await openKasbonTukang(id);
 }
 async function lunasiKasbonNow(kasbonId,tukangId,nama){
+  if(cekViewer())return;
   if(!confirm('Tandai kasbon ini lunas?'))return;
   const {error}=await sb.rpc('lunasi_kasbon',{p_kasbon_id:kasbonId});
   if(error){toast('Gagal: '+error.message);return}
@@ -2409,12 +2467,14 @@ async function selesaikanPaksaOwner(id){
   toast('✅ Pesanan diselesaikan & dana dicairkan');await refresh();openOrder(id);
 }
 async function batalkanAdmin(id){
+  if(cekViewer())return;
   if(!confirm('Batalkan pesanan ini? (Belum ada dana masuk, aman dibatalkan)'))return;
   const {error}=await sb.rpc('batalkan_pesanan_admin',{p_order_id:id});
   if(error){toast('Gagal: '+error.message);return}
   toast('✅ Pesanan dibatalkan');await refresh();renderAdmin();
 }
 function openEditPesananAdmin(id){
+  if(cekViewer())return;
   const o=ORDERS.find(x=>x.id===id);if(!o)return;
   const totalSaatIni=o.termin?((o.dp_nominal||0)+(o.pelunasan_nominal||0)):(o.biaya||fee(o.harga)).escrow;
   openSheet(`<div style="padding:20px;max-height:82vh;overflow:auto">
@@ -2435,6 +2495,7 @@ function openEditPesananAdmin(id){
   </div>`);
 }
 async function simpanEditPesananAdmin(id){
+  if(cekViewer())return;
   const o=ORDERS.find(x=>x.id===id);if(!o)return;
   const judul=(($('epJudul')||{}).value||'').trim();
   const desk=(($('epDesk')||{}).value||'').trim()||'-';
@@ -2466,6 +2527,7 @@ async function simpanEditPesananAdmin(id){
   toast('✅ Pesanan diperbarui');closeSheet();await refresh();renderAdmin();
 }
 function pilihBuktiAdmin(id){
+  if(cekViewer())return;
   const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
   inp.onchange=async()=>{if(inp.files&&inp.files[0]){toast('Memproses foto…');try{const dataUrl=await kompresFoto(inp.files[0]);await uploadBuktiAdmin(id,dataUrl);}catch(e){toast('Gagal memproses foto');}}inp.remove();};
   inp.click();
@@ -2616,6 +2678,7 @@ async function loadTukangList(boxId,area){
   }catch(e){box.innerHTML='<div class="card" style="padding:16px;text-align:center;color:var(--muted);font-size:12px">Gagal memuat tukang.</div>';}
 }
 async function ubahNamaAdmin(uid,namaLama){
+  if(cekViewer())return;
   if(!ME.is_owner&&!ME.is_admin){toast('Khusus admin/owner');return}
   const baru=prompt('Ubah nama menjadi:',namaLama||'');
   if(baru===null)return;
@@ -2627,6 +2690,7 @@ async function ubahNamaAdmin(uid,namaLama){
   toast('✅ Nama diperbarui');openSemuaPengguna();
 }
 async function ubahPeranAdmin(uid,peranLama){
+  if(cekViewer())return;
   if(!ME.is_owner&&!ME.is_admin){toast('Khusus admin/owner');return}
   const peranBaru=peranLama==='tukang'?'pemilik':'tukang';
   const label=peranBaru==='tukang'?'TUKANG':'PEMILIK';
