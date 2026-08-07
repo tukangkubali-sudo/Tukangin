@@ -1165,7 +1165,11 @@ function openBuatPesananManual(){
     <div id="pmBorongan">
       <input id="pmHarga" inputmode="numeric" placeholder="Total yang dibayar konsumen (Rp)" oninput="pmPreviewHarga()" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:6px">
       <p id="pmHargaNote" style="font-size:11px;color:var(--muted);margin-bottom:8px">Ketik angka yang benar-benar disepakati dengan konsumen — biaya layanan sudah dihitung otomatis di dalamnya, tidak ditambah lagi.</p>
-      <label style="display:flex;align-items:flex-start;gap:9px;margin:2px 2px 10px;font-size:12px;color:#2c4642;line-height:1.45;border:1px solid var(--line);border-radius:10px;padding:10px 11px"><input type="checkbox" id="pmTermin" onchange="draft.pmTermin=this.checked;pmPreviewHarga()" style="width:18px;height:18px;flex:none;margin-top:1px"> <span><b>Bayar bertahap</b> — DP 50% di awal, sisanya saat pekerjaan mendekati selesai.</span></label>
+      <label style="display:flex;align-items:flex-start;gap:9px;margin:2px 2px 10px;font-size:12px;color:#2c4642;line-height:1.45;border:1px solid var(--line);border-radius:10px;padding:10px 11px"><input type="checkbox" id="pmTermin" onchange="draft.pmTermin=this.checked;const el=$('pmDpWrap');if(el)el.style.display=this.checked?'block':'none';pmPreviewHarga()" style="width:18px;height:18px;flex:none;margin-top:1px"> <span><b>Bayar bertahap</b> — DP sebagian di awal, sisanya saat pekerjaan mendekati selesai.</span></label>
+      <div id="pmDpWrap" style="display:none;margin:2px 2px 10px">
+        <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px">Persentase DP (sesuai kesepakatan)</label>
+        <input id="pmDpPersen" inputmode="numeric" value="50" placeholder="50" oninput="draft.pmDpPersen=Math.max(1,Math.min(90,+this.value.replace(/\\D/g,'')||50));pmPreviewHarga()" style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-size:13.5px">
+      </div>
     </div>
     <div id="pmHarian" style="display:none">
       <input id="pmTarif" inputmode="numeric" placeholder="Tarif per hari (Rp)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
@@ -1180,8 +1184,9 @@ function pmPreviewHarga(){
   if(!v){note.textContent='Ketik angka yang benar-benar disepakati dengan konsumen — biaya layanan sudah dihitung otomatis di dalamnya, tidak ditambah lagi.';return}
   const h=hargaDariTotal(v),b=fee(h);
   if(draft.pmTermin){
-    const dp=Math.round(b.escrow*0.5/1000)*1000;
-    note.textContent=`Tukang terima ${rp(b.payout)} · DP ${rp(dp)} di awal, pelunasan ${rp(b.escrow-dp)} · total tetap ${rp(b.escrow)}`;
+    const persen=Math.max(1,Math.min(90,+draft.pmDpPersen||50));
+    const dp=Math.round(b.escrow*persen/100/1000)*1000;
+    note.textContent=`Tukang terima ${rp(b.payout)} · DP ${rp(dp)} (${persen}%) di awal, pelunasan ${rp(b.escrow-dp)} · total tetap ${rp(b.escrow)}`;
   }else{
     note.textContent=`Tukang terima ${rp(b.payout)} · biaya layanan ${rp(b.layanan+b.komisi)} · total konsumen tetap ${rp(b.escrow)}`;
   }
@@ -1218,7 +1223,8 @@ async function submitPesananManual(){
     params={p_pemilik_id:pemilikId,p_kat:kat,p_judul:judul,p_desk:desk,p_material:false,p_lokasi:lokasi,p_jarak_km:jarakKm,p_lat:null,p_lng:null,
       p_kode_selesai:otp(),p_sistem:'borongan',p_harga:harga,p_biaya:biaya};
     if(draft.pmTermin){
-      const dp=Math.round(biaya.escrow*0.5/1000)*1000;
+      const persen=Math.max(1,Math.min(90,+draft.pmDpPersen||50));
+      const dp=Math.round(biaya.escrow*persen/100/1000)*1000;
       params.p_termin=true;params.p_dp_nominal=dp;params.p_pelunasan_nominal=biaya.escrow-dp;
     }
   }
@@ -1582,7 +1588,11 @@ function sheetBuat(kat){
       <div class="estbox" id="estbox"><div class="lab">✨ Estimasi</div><div class="rng">Belum ditaksir</div><div class="note">Tekan tombol di bawah.</div></div>
       <button class="btn btn-brass" id="aibtn" style="margin-top:10px" onclick="estimasiAI()">✨ Taksir Harga</button></div>
     <div class="field"><label>Harga tawaran Anda</label><input class="input" id="d_harga" inputmode="numeric" placeholder="Rp" oninput="draft.harga=this.value.replace(/\\D/g,'');this.value=draft.harga?rp(+draft.harga):''"></div>
-    <label style="display:flex;align-items:flex-start;gap:9px;margin:2px 2px 4px;font-size:12px;color:#2c4642;line-height:1.45;border:1px solid var(--line);border-radius:10px;padding:10px 11px"><input type="checkbox" id="d_termin" onchange="draft.termin=this.checked" style="width:18px;height:18px;flex:none;margin-top:1px"> <span><b>Bayar bertahap</b> — DP 50% di awal, sisanya saat pekerjaan mendekati selesai. Cocok untuk pekerjaan bernilai besar.</span></label>
+    <label style="display:flex;align-items:flex-start;gap:9px;margin:2px 2px 4px;font-size:12px;color:#2c4642;line-height:1.45;border:1px solid var(--line);border-radius:10px;padding:10px 11px"><input type="checkbox" id="d_termin" onchange="draft.termin=this.checked;const el=$('d_dppersen_wrap');if(el)el.style.display=this.checked?'block':'none'" style="width:18px;height:18px;flex:none;margin-top:1px"> <span><b>Bayar bertahap</b> — DP sebagian di awal, sisanya saat pekerjaan mendekati selesai. Cocok untuk pekerjaan bernilai besar.</span></label>
+    <div id="d_dppersen_wrap" style="display:none;margin:2px 2px 10px">
+      <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px">Persentase DP (sesuai kesepakatan dengan tukang)</label>
+      <input id="d_dppersen" inputmode="numeric" value="50" placeholder="50" oninput="draft.dpPersen=Math.max(1,Math.min(90,+this.value.replace(/\\D/g,'')||50))" style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-size:13.5px">
+    </div>
     </div>
     <div id="harian" style="display:none">
       <div class="field"><label>Tarif tukang per hari</label><input class="input" id="d_tarif" inputmode="numeric" placeholder="Rp / hari" oninput="draft.tarif=this.value.replace(/\\D/g,'');this.value=draft.tarif?rp(+draft.tarif):'';hitungHarian()"></div>
@@ -1692,7 +1702,8 @@ async function submitPesanan(){
     const biaya=fee(+draft.harga);
     row={...dasar,harga:+draft.harga,biaya,sistem:'borongan'};
     if(draft.termin){
-      const dp=Math.round(biaya.escrow*0.5/1000)*1000;
+      const persen=Math.max(1,Math.min(90,+draft.dpPersen||50));
+      const dp=Math.round(biaya.escrow*persen/100/1000)*1000;
       row.termin=true;row.dp_nominal=dp;row.pelunasan_nominal=biaya.escrow-dp;row.pelunasan_status='belum';
     }
   }
@@ -1751,7 +1762,7 @@ async function renderDetail(){
   // actions per role & status
   if(amPemilik){
     if(o.status==='MENUNGGU_DANA')actions=`<div class="card" style="padding:16px;border:1.5px solid var(--brass);background:var(--hold-bg)">
-        <div style="font-size:11.5px;color:#8a6a2a;font-weight:800;letter-spacing:.5px">${o.termin?'TRANSFER DP (50%)':'TRANSFER PEMBAYARAN'}</div>
+        <div style="font-size:11.5px;color:#8a6a2a;font-weight:800;letter-spacing:.5px">${o.termin?`TRANSFER DP (${((o.dp_nominal||0)+(o.pelunasan_nominal||0))?Math.round((o.dp_nominal||0)/((o.dp_nominal||0)+(o.pelunasan_nominal||0))*100):50}%)`:'TRANSFER PEMBAYARAN'}</div>
         <div style="font-size:24px;font-weight:800;margin:2px 0 8px">${rp(o.termin?o.dp_nominal:b.escrow)}</div>
         ${o.termin?`<div style="font-size:11.5px;color:#8a6a2a;margin-bottom:6px">Sisa <b>${rp(o.pelunasan_nominal)}</b> dibayar saat pekerjaan mendekati selesai.</div>`:''}
         <div style="font-size:12.5px;color:#314b47">ke rekening berikut:</div>
@@ -2251,7 +2262,8 @@ function adminPaymentInfo(o,b){
     const log=(o.biaya&&o.biaya.dp_dicairkan_log)||[];
     const logHtml=log.length?`<div style="margin-top:6px">${log.map(l=>`<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:5px 0;border-top:1px dashed var(--line)"><span style="color:var(--muted)">${tgljamID(l.tgl)} ${jamID(l.tgl)}</span><b>${rp(l.jumlah)}</b>${l.bukti_url?`<span onclick="window.open('${l.bukti_url}')" style="color:var(--brand);text-decoration:underline;cursor:pointer">📷 bukti</span>`:'<span style="color:var(--muted)">tanpa foto</span>'}</div>`).join('')}</div>`:'';
     const pelunasanLunas=o.pelunasan_status==='lunas';
-    inner=`<div style="display:flex;justify-content:space-between;font-size:13px"><span>DP (50%)</span><b>${rp(o.dp_nominal)}</b></div>
+    const dpPersenAktual=((o.dp_nominal||0)+(o.pelunasan_nominal||0))?Math.round((o.dp_nominal||0)/((o.dp_nominal||0)+(o.pelunasan_nominal||0))*100):50;
+    inner=`<div style="display:flex;justify-content:space-between;font-size:13px"><span>DP (${dpPersenAktual}%)</span><b>${rp(o.dp_nominal)}</b></div>
       ${proof(o.bukti_transfer_url,'DP')}
       ${dpVerified?`<div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:10px">
         <div style="display:flex;justify-content:space-between;font-size:12.5px"><span>Sudah dicairkan ke tukang</span><b style="color:var(--ok)">${rp(dpCair)}</b></div>
@@ -2485,7 +2497,11 @@ function openEditPesananAdmin(id){
     <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px">Tanggal pesanan</label>
     <input id="epTanggal" type="date" value="${o.dibuat?new Date(o.dibuat).toISOString().slice(0,10):''}" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
     ${o.sistem==='borongan'?`<input id="epHarga" inputmode="numeric" value="${totalSaatIni}" placeholder="Total yang dibayar konsumen (Rp)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
-    <label style="display:flex;align-items:flex-start;gap:9px;margin:2px 2px 10px;font-size:12px;color:#2c4642;line-height:1.45;border:1px solid var(--line);border-radius:10px;padding:10px 11px"><input type="checkbox" id="epTermin" ${o.termin?'checked':''} style="width:18px;height:18px;flex:none;margin-top:1px"> <span><b>Bayar bertahap</b> — DP 50% di awal, sisanya saat pekerjaan mendekati selesai.</span></label>
+    <label style="display:flex;align-items:flex-start;gap:9px;margin:2px 2px 10px;font-size:12px;color:#2c4642;line-height:1.45;border:1px solid var(--line);border-radius:10px;padding:10px 11px"><input type="checkbox" id="epTermin" ${o.termin?'checked':''} onchange="const el=$('epDpWrap');if(el)el.style.display=this.checked?'block':'none'" style="width:18px;height:18px;flex:none;margin-top:1px"> <span><b>Bayar bertahap</b> — DP sebagian di awal, sisanya saat pekerjaan mendekati selesai.</span></label>
+    <div id="epDpWrap" style="display:${o.termin?'block':'none'};margin:2px 2px 10px">
+      <label style="font-size:11.5px;color:var(--muted);display:block;margin-bottom:4px">Persentase DP (sesuai kesepakatan)</label>
+      <input id="epDpPersen" inputmode="numeric" value="${o.termin&&totalSaatIni?Math.round((o.dp_nominal||0)/totalSaatIni*100):50}" placeholder="50" style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-size:13.5px">
+    </div>
     <p style="font-size:11px;color:var(--muted);margin-bottom:8px">Biaya layanan dihitung ulang otomatis, total tetap sesuai angka ini.</p>`:''}
     ${o.sistem==='harian'?`<input id="epTarif" inputmode="numeric" value="${o.tarif_harian||''}" placeholder="Tarif per hari (Rp)" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
     <input id="epHari" inputmode="numeric" value="${o.hari||''}" placeholder="Jumlah hari" style="width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;margin-bottom:8px">
@@ -2510,7 +2526,8 @@ async function simpanEditPesananAdmin(id){
     const terminBaru=(($('epTermin')||{}).checked)||false;
     params.p_harga=harga;params.p_biaya=biaya;params.p_termin=terminBaru;
     if(terminBaru){
-      const dp=Math.round(biaya.escrow*0.5/1000)*1000;
+      const persen=Math.max(1,Math.min(90,+(($('epDpPersen')||{}).value)||50));
+      const dp=Math.round(biaya.escrow*persen/100/1000)*1000;
       params.p_dp_nominal=dp;params.p_pelunasan_nominal=biaya.escrow-dp;
     }else{
       params.p_dp_nominal=null;params.p_pelunasan_nominal=null;
